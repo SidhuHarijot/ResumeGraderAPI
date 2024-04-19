@@ -4,6 +4,22 @@ from pydantic import BaseModel, model_validator
 from openai import OpenAI
 import PyPDF2 as pypdf2
 import docx2txt
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+origins = [
+    "http://localhost:3000",  # Adjust this to include the URL of your Next.js app
+    "https://your-nextjs-deployment-url.com"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Allows all origins, adjust for security in production
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 
 class GradeRequestData(BaseModel):
@@ -23,7 +39,6 @@ class ExtractRequestData(BaseModel):
     stringData: str
     apiKey: str
 
-app = FastAPI()
 handler = Mangum(app)
 
 @app.get("/")
