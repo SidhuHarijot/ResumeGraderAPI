@@ -140,4 +140,33 @@ def extractFromFile(filetype: str, file: UploadFile = File(...)):
         extractedText = pypdf2.PdfReader(file.file).pages[0].extract_text()
     elif filetype == "txt":
         extractedText = file.file.read().decode("utf-8")
-    return extractedText
+    return {"extractedText" : extractedText}
+
+
+@app.post("/extract/resumeJSON/ChatGPT")
+def extractResumeJSON(dataString: str, api_key: str):
+    """
+    Extracts resume data from a str and converts it to JSON format with ChatGPT.
+    Args:
+    - dataString (str): The resume data in string format.
+    - api_key (str): The API key for authenticating with the OpenAI API.
+
+    Returns:
+    - dict: A dictionary containing the extracted resume data in JSON format.
+    """
+    client = OpenAI(api_key=api_key, organization="org-GOis1CERYv7FHaZeiFsY7VWA", project="proj_D4n3EBiP1DL9FWS2BkiuuGTa")
+
+    systemString = "Use the given resume data to and convert it to json format. " + \
+    "The format would be: {name: [firstName, lastName], phoneNo: '+XX-XXXXXXXXXX', email: email, " + \
+    "experience: [\{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}, \{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}],"+\
+    "skills: ['skill1', 'skill2'], education: [\{'DDMMYYYY-DDMMYYYY': \{'INSTITUTION': 'COURSE NAME'\}\}, ...]}  for dates if none given use 00000000" + \
+    "the keys in the list should exactly be the same as in the format no matter what is being used in the resume data."
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": systemString},
+            {"role": "user", "content": dataString}
+        ]
+    )
+    return response.choices[0].message.content
