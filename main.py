@@ -165,7 +165,9 @@ def extractResumeJSON(requestData: ExtractRequestData):
     "experience: [\{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}, \{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}],"+\
     "skills: ['skill1', 'skill2'], education: [\{'DDMMYYYY-DDMMYYYY': \{'INSTITUTION': 'COURSE NAME'\}\}, ...]," + \
     "certificates: \{'institution name': 'certificate name'\}\}  for dates if none given use 00000000" + \
-    "the keys in the list should exactly be the same as in the format no matter what is being used in the resume data. You have to adhere strictly to the format given, you cant use July 2024 for dates convert it to like 00072024 "
+    "the keys in the list should exactly be the same as in the format no matter what is being used in the resume data." + \
+    "You have to adhere strictly to the format given, you cant use July 2024 for dates convert it to like 00072024 " + \
+    "Similarly for phone number just use hyper between the country code and the number. like +XX-XXXXXXXXXX so that the data is consistent. " 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
