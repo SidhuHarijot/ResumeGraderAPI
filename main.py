@@ -19,6 +19,10 @@ class GradeRequestData(BaseModel):
         return self
 
 
+class ExtractRequestData(BaseModel):
+    stringData: str
+    apiKey: str
+
 app = FastAPI()
 handler = Mangum(app)
 
@@ -144,7 +148,7 @@ def extractFromFile(filetype: str, file: UploadFile = File(...)):
 
 
 @app.post("/extract/resumeJSON/ChatGPT")
-def extractResumeJSON(dataString: str, api_key: str):
+def extractResumeJSON(requestData: ExtractRequestData):
     """
     Extracts resume data from a str and converts it to JSON format with ChatGPT.
     Args:
@@ -154,18 +158,24 @@ def extractResumeJSON(dataString: str, api_key: str):
     Returns:
     - dict: A dictionary containing the extracted resume data in JSON format.
     """
-    client = OpenAI(api_key=api_key, organization="org-GOis1CERYv7FHaZeiFsY7VWA", project="proj_D4n3EBiP1DL9FWS2BkiuuGTa")
+    client = OpenAI(api_key=requestData.apiKey, organization="org-GOis1CERYv7FHaZeiFsY7VWA", project="proj_D4n3EBiP1DL9FWS2BkiuuGTa")
 
     systemString = "Use the given resume data to and convert it to json format. " + \
     "The format would be: {name: [firstName, lastName], phoneNo: '+XX-XXXXXXXXXX', email: email, " + \
     "experience: [\{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}, \{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}],"+\
-    "skills: ['skill1', 'skill2'], education: [\{'DDMMYYYY-DDMMYYYY': \{'INSTITUTION': 'COURSE NAME'\}\}, ...]}  for dates if none given use 00000000" + \
-    "the keys in the list should exactly be the same as in the format no matter what is being used in the resume data."
+    "skills: ['skill1', 'skill2'], education: [\{'DDMMYYYY-DDMMYYYY': \{'INSTITUTION': 'COURSE NAME'\}\}, ...]," + \
+    "certificates: \{'institution name': 'certificate name'\}\}  for dates if none given use 00000000" + \
+    "the keys in the list should exactly be the same as in the format no matter what is being used in the resume data. You have to adhere strictly to the format given, you cant use July 2024 for dates convert it to like 00072024 "
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": systemString},
-            {"role": "user", "content": dataString}
-        ]
+            {"role": "user", "content": requestData.stringData}
+        ],
+        response_format={"type": "json_object"}
     )
     return response.choices[0].message.content
+
+
+if __name__ == "__main__":
+    print(extractResumeJSON("Experience: Senior Software Developer, ABC Tech July 2020 - Present Led a team of developers in designing and implementing mobile applications using React Native; successfully reduced app load time by 30%. Developed dynamic, responsive web applications tailored for high traffic with React.js, enhancing user experience and interface accessibility. Collaborated closely with UX/UI designers and implemented CSS in JS to ensure applications are both functionally and aesthetically appealing. Skills: Languages: JavaScript (ES6+), TypeScript, HTML5, CSS3 Frameworks: React.js, React Native Tools: Git, Jenkins, Docker, AWS Education: B.S. in Computer Science, University of Tech, 2015-2019 Certifications: Certified React Developer, Tech Certification Institute, 2021", "sk-proj-rm22j6StTEDEZVhu3VtHT3BlbkFJYXBMtcQJ9RPE6jj9lI6T"))
