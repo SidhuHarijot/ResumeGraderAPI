@@ -163,7 +163,6 @@ def extractResumeJSON(dataString: str, api_key: str):
     "the keys in the list should exactly be the same as in the format no matter what is being used in the resume data."
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
-        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": systemString},
             {"role": "user", "content": dataString}
