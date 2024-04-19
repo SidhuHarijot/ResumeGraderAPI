@@ -4,3 +4,4 @@ openai
 pypdf2
 docx2txt
 pydantic
+uvicorn
