@@ -6,3 +6,4 @@ docx2txt
 pydantic
 uvicorn
 python-multipart
+psycopg2

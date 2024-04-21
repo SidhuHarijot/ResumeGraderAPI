@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from mangum import Mangum
 from pydantic import BaseModel, model_validator
 from openai import OpenAI
@@ -8,6 +8,9 @@ import psycopg2
 import psycopg2.pool
 from fastapi.middleware.cors import CORSMiddleware
 import json
+from typing import List, Optional, Dict
+from datetime import datetime
+from psycopg2.extras import RealDictCursor
 
 
 #region Constants
@@ -24,18 +27,32 @@ applicationCodes = {
 
 #region Connection Pool
 try:
+    # Attempt to connect using the internal URL
     connection_pool = psycopg2.pool.SimpleConnectionPool(
-        1,  # Minimum number of idle connections in the pool
-        10, # Maximum number of connections allowed
+        1, 10,
         database="resume_grader",
         user="bugslayerz",
         password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
-        host="dpg-coi9t65jm4es739kjul0-a.oregon-postgres.render.com"
+        host="dpg-coi9t65jm4es739kjul0-a"  # Use your internal URL here
     )
     if connection_pool:
-        print("Connection pool created successfully")
-except (Exception, psycopg2.DatabaseError) as error:
-    print("Error while connecting to PostgreSQL", error)
+        print("Connection to internal URL successful.")
+except (Exception, psycopg2.DatabaseError) as internal_error:
+    print("Failed to connect using internal URL:", internal_error)
+    
+    try:
+        # Fallback to the external URL if internal fails
+        connection_pool = psycopg2.pool.SimpleConnectionPool(
+            1, 10,
+            database="resume_grader",
+            user="bugslayerz",
+            password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
+            host="dpg-coi9t65jm4es739kjul0-a.oregon-postgres.render.com"  # External URL
+        )
+        if connection_pool:
+            print("Connection to external URL successful.")
+    except (Exception, psycopg2.DatabaseError) as external_error:
+        print("Failed to connect using external URL:", external_error)
 #endregion
 
 #region Fast API Initialization
@@ -93,6 +110,39 @@ class ExtractRequestData(BaseModel):
 class ApplicationData(BaseModel):
     resume_id: int
     job_id: int
+
+class Resume(BaseModel):
+    resume_id: int
+    resume_data: dict
+
+class Job(BaseModel):
+    job_id: int
+    job_data: dict
+    active: bool
+
+class Grade(BaseModel):
+    resume_id: int
+    job_id: int
+    grade: int
+
+class Application(BaseModel):
+    application_id: int
+    resume_id: int
+    job_id: int
+    application_date: datetime
+    status: str
+    status_code: int
+
+class ResumeWithGrade(BaseModel):
+    resume_id: int
+    resume_data: Dict
+    grade: Optional[int] = None
+
+class GradingRequest(BaseModel):
+    job_id: int
+    resume_id: int = -1
+    apiKey : str
+    maxGrade: int = 1
 #endregion
 
 handler = Mangum(app)
@@ -105,31 +155,30 @@ def read_root():
             "Description": "This is an API to grade resumes for a provided job description."}
 
 #region Grading Endpoints
-@app.post("/grade/ChatGPT/{maxGrade}")
-async def grade_chatgpt(maxGrade: int, requestData: GradeRequestData):
-    """
-    grades resumes using ChatGPT model.
-    Args:
-    - maxGrade (int): The maximum possible grade.
-    - requestData (GradeRequestData): The request data containing the resume data and job description.
+@app.post("/grade/ChatGPT/", response_model=Grade)
+async def grade_resume(request: GradingRequest):
+    # Assume request contains all needed data
+    if request.resume_id == -1:
+        raise HTTPException(status_code=400, detail="Invalid resume ID")
+    grade = await _grade_resume_chatGPT(request.apiKey, request.job_id, [request.resume_id], request.maxGrade)[0]
+    result = await save_grade(request.resume_id, request.job_id, grade)
+    return result
 
-    Returns:
-    - dict: A dictionary containing the grades for each resume and an error log.
-    """
-    grades: dict[int, int] = {}
-    errorLog = {}
-    ids = [*requestData.resumeData.keys()]
-    resumeData = [*requestData.resumeData.values()]
-    response = await _grade_resume_chatGPT(requestData.apiKey, requestData.jobDescription, resumeData, maxGrade)
-    for i in range(len(ids)):
-        if "Error: " not in response[i]:
-            grades[ids[i]] = int(response[i])
-        else:
-            errorLog[ids[i]] = response[i]
-    return {"Grades" : grades, "errorLog": errorLog}
+async def save_grade(resume_id: int, job_id: int, grade: int):
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO grades (resume_id, job_id, grade)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (resume_id, job_id) DO UPDATE SET grade = EXCLUDED.grade
+            """, (resume_id, job_id, grade))
+            con.commit()
+        return Grade(resume_id=resume_id, job_id=job_id, grade=grade)
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save grade: {str(e)}")
 
-
-async def _grade_resume_chatGPT(api_key, jobDescription, resumeList, maxGrade):
+async def _grade_resume_chatGPT(api_key, jobId: int, resumeIds: List[int], maxGrade):
     """
     Grades a resume based on a job description using GPT-4.
     
@@ -145,6 +194,9 @@ async def _grade_resume_chatGPT(api_key, jobDescription, resumeList, maxGrade):
 
     client = OpenAI(api_key=api_key, organization="org-GOis1CERYv7FHaZeiFsY7VWA", project="proj_D4n3EBiP1DL9FWS2BkiuuGTa")
     grades = []
+
+    jobDescription = str(getJob(jobId))
+    resumeList = [str(getResume(resumeId)) for resumeId in resumeIds]
 
     systemString = f"Grade resumes for this job description: \"{jobDescription}\" Maximum grade is {maxGrade}. " + \
                    "Just answer in the number or the grade nothing else. " + \
@@ -166,57 +218,53 @@ async def _grade_resume_chatGPT(api_key, jobDescription, resumeList, maxGrade):
             # Assuming each response contains a number directly (you may need to parse or process text)
             last_message = response.choices[0].message.content.strip()
             if int(last_message) == -1:
-                grades.append("Error: ChatGPT could not grade the resume, based on the given data.")
+                grades.append(-1)
             else:
                 grades.append(last_message)
         except Exception as e:
-            grades.append("Error: " + str(e))
+            grades.append(-1)
 
     return grades
 
-@app.post("/grade/ChatGPT/")
-async def grade_chatgpt(requestData: GradeRequestData):
+@app.post("/grade/ChatGPT/job/{job_id}")
+async def gradeAllFromJob(request: GradingRequest):
     """
-    grades resumes using ChatGPT model.
+    Grades all resumes for a job.
     Args:
-    - requestData (GradeRequestData): The request data containing the resume data and job description.
+    - job_id (int): The ID of the job to grade resumes for.
 
     Returns:
-    - dict: A dictionary containing the grades for each resume and an error log.
+    - dict: A dictionary containing the grades for each resume.
     """
-    grades: dict[int, int] = {}
-    errorLog = {}
-    ids = [*requestData.resumeData.keys()]
-    resumeData = [*requestData.resumeData.values()]
-    response = await _grade_resume_chatGPT(requestData.apiKey, requestData.jobDescription, resumeData, 1)
-    for i in range(len(ids)):
-        if "Error: " not in response[i]:
-            grades[ids[i]] = int(response[i])
-        else:
-            errorLog[ids[i]] = response[i]
-    return {"Grades" : grades, "errorLog": errorLog}
+    statusCode = 502
+    status = "Error Unknown"
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("SELECT resume_id FROM applications WHERE job_id = %s", (request.job_id,))
+            resume_ids = cursor.fetchall()
+            cursor.execute("SELECT job_data FROM jobs WHERE job_id = %s", (request.job_id,))
+            job_data = cursor.fetchone()
+            if job_data:
+                grades = await _grade_resume_chatGPT(request.apiKey, request.job_id, resume_ids, request.maxGrade)
+                for resume_id, grade in grades.items():
+                    cursor.execute("INSERT INTO grades (resume_id, job_id, grade) VALUES (%s, %s, %s)", (resume_id, request.job_id, grade))
+                con.commit()
+                statusCode = 100
+                status = ""
+            else:
+                statusCode = 404
+                status = "Job not found"
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+        con.rollback()
+        statusCode = 500
+    finally:
+        connection_pool.putconn(con)
+    return {"status": applicationCodes[statusCode] + status, "statusCode": statusCode}
 #endregion
 
 #region Extracting Endpoints
-@app.post("/extract/Text/{filetype}")
-def extractFromFile(filetype: str, file: UploadFile = File(...)):
-    """
-    Extracts resume data from a file.
-    Args:
-    - filetype (str): The type of the file, e.g., "pdf", "docx", etc.
-    - file (UploadFile): The file to extract data from.
-
-    Returns:
-    - dict: A dictionary containing the extracted resume data.
-    """
-    extractedText = ""
-    if filetype == "docx":
-        extractedText = docx2txt.process(file.file)
-    elif filetype == "pdf":
-        extractedText = pypdf2.PdfReader(file.file).pages[0].extract_text()
-    elif filetype == "txt":
-        extractedText = file.file.read().decode("utf-8")
-    return {"extractedText" : extractedText}
 
 
 @app.post("/extract/resumeJSON/ChatGPT")
@@ -232,14 +280,21 @@ def extractResumeJSON(requestData: ExtractRequestData):
     """
     client = OpenAI(api_key=requestData.apiKey, organization="org-GOis1CERYv7FHaZeiFsY7VWA", project="proj_D4n3EBiP1DL9FWS2BkiuuGTa")
 
-    systemString = "Use the given resume data to and convert it to json format. " + \
-    "The format would be: {name: [firstName, lastName], phoneNo: '+XX-XXXXXXXXXX', email: email, " + \
-    "experience: [\{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}, \{'DDMMYYYY-DDMMYYYY': \{'COMPANY NAME': 'DESCRIPTION'\}\}],"+\
-    "skills: ['skill1', 'skill2'], education: [\{'DDMMYYYY-DDMMYYYY': \{'INSTITUTION': 'COURSE NAME'\}\}, ...]," + \
-    "certificates: \{'institution name': 'certificate name'\}\}  for dates if none given use 00000000" + \
-    "the keys in the list should exactly be the same as in the format no matter what is being used in the resume data." + \
-    "You have to adhere strictly to the format given, you cant use July 2024 for dates convert it to like 00072024 " + \
-    "Similarly for phone number just use hyper between the country code and the number. like +XX-XXXXXXXXXX so that the data is consistent. " 
+    systemString = """
+    Convert the given resume data into a structured JSON format. Adhere strictly to this format: 
+    {
+        "name": ["FirstName", "LastName"], 
+        "phoneNo": "+XX-XXXXXXXXXX", 
+        "email": "email@example.com", 
+        "experience": [{"DDMMYYYY-DDMMYYYY": {"COMPANY NAME": "DESCRIPTION"}}, {"DDMMYYYY-DDMMYYYY": {"COMPANY NAME": "DESCRIPTION"}}],
+        "skills": ["skill1", "skill2"],
+        "education": [{"DDMMYYYY-DDMMYYYY": {"INSTITUTION": "COURSE NAME"}}],
+        "certificates": {"institution name": "certificate name"}
+    }
+    Dates must be formatted as DDMMYYYY or 00000000 if no date is available.
+    Ensure the phone number format includes a hyphen between the country code and the number. 
+    It is critical that you follow the format precisely as described to ensure the data can be parsed correctly by the program without errors.
+    """ 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -253,61 +308,52 @@ def extractResumeJSON(requestData: ExtractRequestData):
 
 
 #region Upload Endpoints
-@app.post("/upload/job")
-def uploadJob(jobData: dict[str, str]):
-    """
-    Uploads a job description file.
-    Args:
-    - file (UploadFile): The job description file to upload.
+@app.post("/upload/resume/")
+async def upload_resume(file: UploadFile = File(...), apiKey: str = None):
+    resume_text = await extract_text(file)
+    resume_json = await convert_to_json(resume_text, apiKey)
+    return await save_resume_data(resume_json)
 
-    Returns:
-    - dict: A dictionary containing the status of the upload.
-    """
-    status = ""
-    statusCode = 200
-    job_id = -1
+@app.post("/upload/job/")
+async def upload_job(file: UploadFile = File(...), apiKey: str = None):
+    job_description_text = await extract_text(file)
+    job_description_json = await convert_to_json(job_description_text, apiKey)
+    return await save_job_data(job_description_json)
+
+async def extract_text(file: UploadFile):
+    if file.filename.endswith('.pdf'):
+        content = pypdf2.PdfReader(file.file).pages[0].extract_text()
+    elif file.filename.endswith('.docx'):
+        content = docx2txt.process(file.file)
+    else:
+        content = await file.read().decode('utf-8')
+    return content
+
+async def convert_to_json(text: str, apiKey: str):
+    jsonData = extractResumeJSON(ExtractRequestData(stringData=text, apiKey=apiKey))
+    return jsonData  # Replace this with actual call to ChatGPT for parsing
+
+async def save_resume_data(resume_data: dict):
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
-            cursor.execute("INSERT INTO jobs (job_data) VALUES (%s)", (jobData))
-            job_id = cursor.fetchone()[0]
-            con.commit()
-    except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
-        con.rollback()
-        status = str(e)
-        statusCode = 500
-    finally:
-        connection_pool.putconn(con)
-    return {"status": status, "statusCode": statusCode, "id": job_id}
-
-@app.post("/upload/resume")
-def uploadResume(resumeData: dict[str, str]):
-    """
-    Uploads resume data
-    Args:
-    - resumeData (dict[str, str]): The resume data to upload.
-
-    Returns:
-    - dict: A dictionary containing the status of the upload.
-    """
-    status = ""
-    statusCode = 200
-    try:
-        con = connection_pool.getconn()
-        resume_id = -1
-        with con.cursor() as cursor:
-            cursor.execute("INSERT INTO resume (resume_Data) VALUES (%s)", (resumeData))
+            cursor.execute("INSERT INTO resume (resume_data) VALUES (%s) RETURNING resume_id", (json.dumps(resume_data),))
             resume_id = cursor.fetchone()[0]
             con.commit()
+        return {"status": "Resume uploaded successfully", "resume_id": resume_id}
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
-        con.rollback()
-        status = str(e)
-        statusCode = 500
-    finally:
-        connection_pool.putconn(con)
-    return {"status": status, "statusCode": statusCode, "id": resume_id}
+        return {"status": "Failed to upload resume", "error": str(e)}
+
+async def save_job_data(job_data: dict):
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("INSERT INTO jobs (job_data) VALUES (%s) RETURNING job_id", (json.dumps(job_data),))
+            job_id = cursor.fetchone()[0]
+            con.commit()
+        return {"status": "Job uploaded successfully", "job_id": job_id}
+    except psycopg2.Error as e:
+        return {"status": "Failed to upload job", "error": str(e)}
 
 @app.post("/upload/application")
 def uploadApplication(data: ApplicationData):
@@ -324,7 +370,7 @@ def uploadApplication(data: ApplicationData):
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
-            cursor.execute("INSERT INTO applications (resume_id, job_id) VALUES (%s, %s)", (data.resume_id, data.job_id))
+            cursor.execute("INSERT INTO applications (resume_id, job_id) VALUES (%s, %s) RETURNING application_id", (data.resume_id, data.job_id))
             con.commit()
         statusCode = 100
         status = ""
@@ -374,8 +420,9 @@ def createTables():
                     FOREIGN KEY (job_id) REFERENCES jobs(job_id)
                 """
             }
-            for table_name, table_schema in tables.items():
+            for table_name, table_schema in tables.items().__reversed__():
                 cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+            for table_name, table_schema in tables.items():
                 cursor.execute(f"CREATE TABLE {table_name} ({table_schema})")
             con.commit() 
     except psycopg2.Error as e:
@@ -391,6 +438,162 @@ def createTables():
         return {"status": "An error occurred while creating tables, " + sqlError, "sqlError": sqlError, "statusCode": 500}
 #endregion
 
+#region Retrieve Endpoints
+@app.get("/retrieve/resume/{resume_id}", response_model=Resume)
+def getResume(resume_id: int):
+    """
+    Retrieves a resume.
+    Args:
+    - resume_id (int): The ID of the resume to retrieve.
+
+    Returns:
+    - Resume: The retrieved resume.
+    """
+    resume = None
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("SELECT * FROM resume WHERE resume_id = %s", (resume_id,))
+            resume = cursor.fetchone()
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        connection_pool.putconn(con)
+    return resume
+
+
+@app.get("/retrieve/job/{job_id}", response_model=Job)
+def getJob(job_id: int):
+    """
+    Retrieves a job.
+    Args:
+    - job_id (int): The ID of the job to retrieve.
+
+    Returns:
+    - Job: The retrieved job.
+    """
+    job = None
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("SELECT * FROM jobs WHERE job_id = %s", (job_id,))
+            job = cursor.fetchone()
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        connection_pool.putconn(con)
+    return job
+
+
+@app.get("/retrieve/application/{application_id}", response_model=Application)
+def getApplication(application_id: int):
+    """
+    Retrieves an application.
+    Args:
+    - application_id (int): The ID of the application to retrieve.
+
+    Returns:
+    - Application: The retrieved application.
+    """
+    application = None
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("SELECT * FROM applications WHERE application_id = %s", (application_id,))
+            application = cursor.fetchone()
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+    finally:
+        connection_pool.putconn(con)
+    return application
+
+
+@app.get("/retrieve/resumes/", response_model=List[Resume])
+async def get_resumes(resume_id: Optional[int] = None):
+    con = connection_pool.getconn()
+    try:
+        with con.cursor(cursor_factory=RealDictCursor) as cursor:
+            if resume_id:
+                cursor.execute("SELECT * FROM resume WHERE resume_id = %s", (resume_id,))
+            else:
+                cursor.execute("SELECT * FROM resume")
+            results = cursor.fetchall()
+            return [Resume(**resume) for resume in results]
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+
+@app.get("/retrieve/jobs/", response_model=List[Job])
+async def get_jobs(active: Optional[bool] = None):
+    con = connection_pool.getconn()
+    try:
+        with con.cursor(cursor_factory=RealDictCursor) as cursor:
+            if active is not None:
+                cursor.execute("SELECT * FROM jobs WHERE active = %s", (active,))
+            else:
+                cursor.execute("SELECT * FROM jobs")
+            results = cursor.fetchall()
+            return [Job(**job) for job in results]
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+
+@app.get("/retrieve/grades/", response_model=List[Grade])
+async def get_grades(resume_id: Optional[int] = None, job_id: Optional[int] = None):
+    con = connection_pool.getconn()
+    try:
+        with con.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = "SELECT * FROM grades"
+            conditions = []
+            params = []
+            if resume_id:
+                conditions.append("resume_id = %s")
+                params.append(resume_id)
+            if job_id:
+                conditions.append("job_id = %s")
+                params.append(job_id)
+            if conditions:
+                query += " WHERE " + " AND ".join(conditions)
+            cursor.execute(query, tuple(params))
+            results = cursor.fetchall()
+            return [Grade(**grade) for grade in results]
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+@app.get("/retrieve/resumes_with_grades/", response_model=List[ResumeWithGrade])
+async def get_resumes_with_grades(job_id: int):
+    con = connection_pool.getconn()
+    try:
+        with con.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = """
+            SELECT r.resume_id, r.resume_data, g.grade
+            FROM resume r
+            LEFT JOIN grades g ON r.resume_id = g.resume_id AND g.job_id = %s
+            WHERE EXISTS (
+                SELECT 1 FROM grades WHERE job_id = %s AND resume_id = r.resume_id
+            )
+            """
+            cursor.execute(query, (job_id, job_id))
+            results = cursor.fetchall()
+            return [ResumeWithGrade(**resume) for resume in results]
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+#endregion
+
+
+
 if __name__ == "__main__":
     createTables()
-    uploadJob({"Title": "Software Engineer", "description": "Grade resumes for a Software Engineer position.", "employer": "Google"})
+    print(uploadJob({"Title": "Software Engineer", "description": "Grade resumes for a Software Engineer position.", "employer": "Google"}))
