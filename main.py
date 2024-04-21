@@ -310,8 +310,12 @@ def extractResumeJSON(requestData: ExtractRequestData):
 #region Upload Endpoints
 @app.post("/upload/resume/")
 async def upload_resume(file: UploadFile = File(...), apiKey: str = None):
-    resume_text = await extract_text(file)
-    resume_json = await convert_to_json(resume_text, apiKey)
+    try:
+        resume_text = await extract_text(file)
+        resume_json = await convert_to_json(resume_text, apiKey)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"status": "Failed to extract resume data", "error": str(e)}
     return await save_resume_data(resume_json)
 
 @app.post("/upload/job/")
