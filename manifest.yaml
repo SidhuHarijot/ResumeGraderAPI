@@ -1,6 +1,0 @@
-functions:
-  ResumeGrader:
-    requirements: ./requirements.txt
-    image: lambci/lambda:build-python3.8
-    include:
-    - ./main.py

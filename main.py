@@ -11,6 +11,8 @@ import json
 from typing import List, Optional, Dict
 from datetime import datetime
 from psycopg2.extras import RealDictCursor
+import shutil
+from pathlib import Path
 
 
 #region Constants
@@ -193,10 +195,10 @@ async def _grade_resume_chatGPT(api_key, jobId: int, resumeIds: List[int], maxGr
     """
 
     client = OpenAI(api_key=api_key, organization="org-GOis1CERYv7FHaZeiFsY7VWA", project="proj_D4n3EBiP1DL9FWS2BkiuuGTa")
-    grades = []
+    grades = {}
 
     jobDescription = str(getJob(jobId))
-    resumeList = [str(getResume(resumeId)) for resumeId in resumeIds]
+    resumeList = [getResume(resumeId) for resumeId in resumeIds]
 
     systemString = f"Grade resumes for this job description: \"{jobDescription}\" Maximum grade is {maxGrade}. " + \
                    "Just answer in the number or the grade nothing else. " + \
@@ -207,8 +209,9 @@ async def _grade_resume_chatGPT(api_key, jobId: int, resumeIds: List[int], maxGr
     messages = [{"role": "system", "content": systemString}]
 
     for resume in resumeList:
+
         individual_messages = messages.copy()  # Copy the base messages list
-        individual_messages.append({"role": "user", "content": resume})
+        individual_messages.append({"role": "user", "content": str(resume)})
 
         try:
             response = client.chat.completions.create(
@@ -218,11 +221,11 @@ async def _grade_resume_chatGPT(api_key, jobId: int, resumeIds: List[int], maxGr
             # Assuming each response contains a number directly (you may need to parse or process text)
             last_message = response.choices[0].message.content.strip()
             if int(last_message) == -1:
-                grades.append(-1)
+                grades[resume.resume_id] = -1
             else:
-                grades.append(last_message)
+                grades[resume.resume_id] = int(last_message)
         except Exception as e:
-            grades.append(-1)
+            grades[resume.resume_id] = -1
 
     return grades
 
@@ -261,7 +264,7 @@ async def gradeAllFromJob(request: GradingRequest):
         statusCode = 500
     finally:
         connection_pool.putconn(con)
-    return {"status": applicationCodes[statusCode] + status, "statusCode": statusCode}
+    return {"status": applicationCodes[statusCode] + status, "statusCode": statusCode, "grades": grades}
 #endregion
 
 #region Extracting Endpoints
@@ -327,7 +330,7 @@ def extractJobDescriptionJSON(requestData: ExtractRequestData):
         "Must Haves": ["Requirement 1", "Requirement 2"],
     }
     Ensure that the job description is concise and clearly describes the role, responsibilities, and requirements for the position.
-    for must have requirements, List them only if given in the job description.
+    for must have requirements, List them only if given in the job description. Must haves are the responsibilities or requirements that are mandatory for the job.
     """ 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -340,31 +343,57 @@ def extractJobDescriptionJSON(requestData: ExtractRequestData):
     return response.choices[0].message.content
 #endregion
 
-
 #region Upload Endpoints
 @app.post("/upload/resume/")
-async def upload_resume(file: UploadFile = File(...), apiKey: str = None):
+async def upload_resume(apiKey: str, file: UploadFile = File(...)):
     try:
-        resume_text = await extract_text(file)
-        resume_json = await extractResumeJSON(ExtractRequestData(stringData=resume_text, apiKey=apiKey))
+        temp_file_path = await save_temp_file(file)
+        resume_text = await extract_text(temp_file_path)
+        data = ExtractRequestData(stringData=resume_text, apiKey=apiKey)
+        # Assuming extractResumeJSON is properly defined to handle JSON conversion
+        resume_json = extractResumeJSON(data)
+        temp_file_path.unlink() 
     except Exception as e:
+        # More informative and appropriate handling using HTTPException
         print(f"An error occurred: {e}")
-        return {"status": "Failed to extract resume data", "error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Failed to extract resume data: {str(e)}")
     return await save_resume_data(resume_json)
 
 @app.post("/upload/job/")
-async def upload_job(file: UploadFile = File(...), apiKey: str = None):
-    job_description_text = await extract_text(file)
-    job_description_json = await extractJobDescriptionJSON(ExtractRequestData(stringData=job_description_text, apiKey=apiKey))
-    return await save_job_data(job_description_json)
+async def upload_job(apiKey: str, file: UploadFile = File(...)):
+    try:
+        temp_file_path = await save_temp_file(file)
+        job_text = await extract_text(temp_file_path)
+        # Assuming extractResumeJSON is properly defined to handle JSON conversion
+        job_json = extractJobDescriptionJSON(ExtractRequestData(stringData=job_text, apiKey=apiKey))
+        temp_file_path.unlink()  # Ensure the file is deleted even if an error occurs
+    except Exception as e:
+        # More informative and appropriate handling using HTTPException
+        raise HTTPException(status_code=500, detail=f"Failed to extract job data: {str(e)}")
+    return await save_job_data(job_json)
 
-async def extract_text(file: UploadFile):
-    if file.filename.endswith('.pdf'):
-        content = pypdf2.PdfReader(file.file).pages[0].extract_text()
-    elif file.filename.endswith('.docx'):
-        content = docx2txt.process(file.file)
+async def save_temp_file(file: UploadFile):
+    # Create a temporary file path
+    temp_file_path = Path(f"temp_files/{file.filename}")
+    # Ensure the directory exists
+    temp_file_path.parent.mkdir(parents=True, exist_ok=True)
+    # Write the uploaded file to a temporary file
+    with temp_file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return temp_file_path
+
+async def extract_text(file_path: Path):
+    # Correct usage of suffix attribute, checking the file extension
+    if file_path.suffix == '.pdf':
+        with open(file_path, 'rb') as file:
+            pdf_reader = pypdf2.PdfReader(file)
+            content = pdf_reader.pages[0].extract_text() if pdf_reader.pages else ""
+    elif file_path.suffix == '.docx':
+        # docx2txt.process expects a string path, not a file object
+        content = docx2txt.process(str(file_path))
     else:
-        content = await file.read().decode('utf-8')
+        with file_path.open("r", encoding='utf-8') as file:
+            content = file.read()
     return content
 
 
@@ -377,7 +406,10 @@ async def save_resume_data(resume_data: dict):
             con.commit()
         return {"status": "Resume uploaded successfully", "resume_id": resume_id}
     except psycopg2.Error as e:
-        return {"status": "Failed to upload resume", "error": str(e)}
+        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload resume, error: {str(e)}")
+    finally:
+        connection_pool.putconn(con)
 
 async def save_job_data(job_data: dict):
     try:
@@ -402,10 +434,12 @@ def uploadApplication(data: ApplicationData):
     """
     statusCode = 502
     status = "Error Unknown"
+    applicationId = -1
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
             cursor.execute("INSERT INTO applications (resume_id, job_id) VALUES (%s, %s) RETURNING application_id", (data.resume_id, data.job_id))
+            applicationId = cursor.fetchone()[0]
             con.commit()
         statusCode = 100
         status = ""
@@ -415,7 +449,7 @@ def uploadApplication(data: ApplicationData):
         statusCode = 500
     finally:
         connection_pool.putconn(con)
-    return {"status": applicationCodes[statusCode]  + status, "statusCode": statusCode}
+    return {"status": applicationCodes[statusCode]  + status, "statusCode": statusCode, "application_id": applicationId}
     
 #endregion
 
@@ -490,6 +524,8 @@ def getResume(resume_id: int):
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM resume WHERE resume_id = %s", (resume_id,))
             resume = cursor.fetchone()
+            resume_data = json.loads(resume[1])
+            resume = Resume(resume_id=resume[0], resume_data=resume_data)
     except psycopg2.Error as e:
         print(f"An error occurred: {e}")
     finally:
@@ -513,6 +549,8 @@ def getJob(job_id: int):
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM jobs WHERE job_id = %s", (job_id,))
             job = cursor.fetchone()
+            job_data = json.loads(job[1])
+            job = Job(job_id=job[0], job_data=job_data, active=job[2])
     except psycopg2.Error as e:
         print(f"An error occurred: {e}")
     finally:
@@ -536,6 +574,7 @@ def getApplication(application_id: int):
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM applications WHERE application_id = %s", (application_id,))
             application = cursor.fetchone()
+            application = Application(application_id=application[0], resume_id=application[1], job_id=application[2], application_date=application[3], status=application[4], status_code=application[5])
     except psycopg2.Error as e:
         print(f"An error occurred: {e}")
     finally:
@@ -632,3 +671,4 @@ async def get_resumes_with_grades(job_id: int):
 if __name__ == "__main__":
     createTables()
     print(uploadJob({"Title": "Software Engineer", "description": "Grade resumes for a Software Engineer position.", "employer": "Google"}))
+
