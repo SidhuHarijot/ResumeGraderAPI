@@ -304,6 +304,40 @@ def extractResumeJSON(requestData: ExtractRequestData):
         response_format={"type": "json_object"}
     )
     return response.choices[0].message.content
+
+@app.post("/extract/jobDescriptionJSON/ChatGPT")
+def extractJobDescriptionJSON(requestData: ExtractRequestData):
+    """
+    Extracts job description data from a str and converts it to JSON format with ChatGPT.
+    Args:
+    - dataString (str): The job description data in string format.
+    - api_key (str): The API key for authenticating with the OpenAI API.
+
+    Returns:
+    - dict: A dictionary containing the extracted job description data in JSON format.
+    """
+    client = OpenAI(api_key=requestData.apiKey, organization="org-GOis1CERYv7FHaZeiFsY7VWA", project="proj_D4n3EBiP1DL9FWS2BkiuuGTa")
+
+    systemString = """
+    Convert the given job description data into a structured JSON format. Adhere strictly to this format: 
+    {
+        "Title": "Job Title",
+        "description": "Job Description",
+        "employer": "Employer Name",
+        "Must Haves": ["Requirement 1", "Requirement 2"],
+    }
+    Ensure that the job description is concise and clearly describes the role, responsibilities, and requirements for the position.
+    for must have requirements, List them only if given in the job description.
+    """ 
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": systemString},
+            {"role": "user", "content": requestData.stringData}
+        ],
+        response_format={"type": "json_object"}
+    )
+    return response.choices[0].message.content
 #endregion
 
 
@@ -312,7 +346,7 @@ def extractResumeJSON(requestData: ExtractRequestData):
 async def upload_resume(file: UploadFile = File(...), apiKey: str = None):
     try:
         resume_text = await extract_text(file)
-        resume_json = await convert_to_json(resume_text, apiKey)
+        resume_json = await extractResumeJSON(ExtractRequestData(stringData=resume_text, apiKey=apiKey))
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"status": "Failed to extract resume data", "error": str(e)}
@@ -321,7 +355,7 @@ async def upload_resume(file: UploadFile = File(...), apiKey: str = None):
 @app.post("/upload/job/")
 async def upload_job(file: UploadFile = File(...), apiKey: str = None):
     job_description_text = await extract_text(file)
-    job_description_json = await convert_to_json(job_description_text, apiKey)
+    job_description_json = await extractJobDescriptionJSON(ExtractRequestData(stringData=job_description_text, apiKey=apiKey))
     return await save_job_data(job_description_json)
 
 async def extract_text(file: UploadFile):
@@ -333,9 +367,6 @@ async def extract_text(file: UploadFile):
         content = await file.read().decode('utf-8')
     return content
 
-async def convert_to_json(text: str, apiKey: str):
-    jsonData = extractResumeJSON(ExtractRequestData(stringData=text, apiKey=apiKey))
-    return jsonData  # Replace this with actual call to ChatGPT for parsing
 
 async def save_resume_data(resume_data: dict):
     try:
