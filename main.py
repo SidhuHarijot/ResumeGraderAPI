@@ -4,8 +4,41 @@ from pydantic import BaseModel, model_validator
 from openai import OpenAI
 import PyPDF2 as pypdf2
 import docx2txt
+import psycopg2
+import psycopg2.pool
 from fastapi.middleware.cors import CORSMiddleware
+import json
 
+
+#region Constants
+applicationCodes = {
+    100: "Application received",
+    101: "Application reviewed",
+    200: "Application closed",
+    404: "Application not found",
+    500: "Internal Server Error",
+    501: "Database Error",
+    502: "Could not process"
+}
+#endregion
+
+#region Connection Pool
+try:
+    connection_pool = psycopg2.pool.SimpleConnectionPool(
+        1,  # Minimum number of idle connections in the pool
+        10, # Maximum number of connections allowed
+        database="resume_grader",
+        user="bugslayerz",
+        password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
+        host="dpg-coi9t65jm4es739kjul0-a.oregon-postgres.render.com"
+    )
+    if connection_pool:
+        print("Connection pool created successfully")
+except (Exception, psycopg2.DatabaseError) as error:
+    print("Error while connecting to PostgreSQL", error)
+#endregion
+
+#region Fast API Initialization
 app = FastAPI()
 
 origins = [
@@ -24,19 +57,21 @@ app.add_middleware(
 )
 
 origins = [
-    "http://localhost:3000",  # Adjust this to include the URL of your Next.js app
+    "http://localhost:3000", 
     "https://your-nextjs-deployment-url.com"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Allows all origins, adjust for security in production
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],  
+    allow_headers=["*"],
 )
+#endregion
 
 
+#region Pydantic Models
 class GradeRequestData(BaseModel):
     resumeData: dict[int, str]
     jobDescription:str
@@ -54,6 +89,12 @@ class ExtractRequestData(BaseModel):
     stringData: str
     apiKey: str
 
+
+class ApplicationData(BaseModel):
+    resume_id: int
+    job_id: int
+#endregion
+
 handler = Mangum(app)
 
 @app.get("/")
@@ -63,7 +104,7 @@ def read_root():
             "Title": "Resume Grader",
             "Description": "This is an API to grade resumes for a provided job description."}
 
-
+#region Grading Endpoints
 @app.post("/grade/ChatGPT/{maxGrade}")
 async def grade_chatgpt(maxGrade: int, requestData: GradeRequestData):
     """
@@ -154,8 +195,9 @@ async def grade_chatgpt(requestData: GradeRequestData):
         else:
             errorLog[ids[i]] = response[i]
     return {"Grades" : grades, "errorLog": errorLog}
+#endregion
 
-
+#region Extracting Endpoints
 @app.post("/extract/Text/{filetype}")
 def extractFromFile(filetype: str, file: UploadFile = File(...)):
     """
@@ -207,7 +249,148 @@ def extractResumeJSON(requestData: ExtractRequestData):
         response_format={"type": "json_object"}
     )
     return response.choices[0].message.content
+#endregion
 
+
+#region Upload Endpoints
+@app.post("/upload/job")
+def uploadJob(jobData: dict[str, str]):
+    """
+    Uploads a job description file.
+    Args:
+    - file (UploadFile): The job description file to upload.
+
+    Returns:
+    - dict: A dictionary containing the status of the upload.
+    """
+    status = ""
+    statusCode = 200
+    job_id = -1
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("INSERT INTO jobs (job_data) VALUES (%s)", (jobData))
+            job_id = cursor.fetchone()[0]
+            con.commit()
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+        con.rollback()
+        status = str(e)
+        statusCode = 500
+    finally:
+        connection_pool.putconn(con)
+    return {"status": status, "statusCode": statusCode, "id": job_id}
+
+@app.post("/upload/resume")
+def uploadResume(resumeData: dict[str, str]):
+    """
+    Uploads resume data
+    Args:
+    - resumeData (dict[str, str]): The resume data to upload.
+
+    Returns:
+    - dict: A dictionary containing the status of the upload.
+    """
+    status = ""
+    statusCode = 200
+    try:
+        con = connection_pool.getconn()
+        resume_id = -1
+        with con.cursor() as cursor:
+            cursor.execute("INSERT INTO resume (resume_Data) VALUES (%s)", (resumeData))
+            resume_id = cursor.fetchone()[0]
+            con.commit()
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+        con.rollback()
+        status = str(e)
+        statusCode = 500
+    finally:
+        connection_pool.putconn(con)
+    return {"status": status, "statusCode": statusCode, "id": resume_id}
+
+@app.post("/upload/application")
+def uploadApplication(data: ApplicationData):
+    """
+    Uploads an application.
+    Args:
+    - data (ApplicationData): The application data to upload.
+
+    Returns:
+    - dict: A dictionary containing the status of the upload.
+    """
+    statusCode = 502
+    status = "Error Unknown"
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            cursor.execute("INSERT INTO applications (resume_id, job_id) VALUES (%s, %s)", (data.resume_id, data.job_id))
+            con.commit()
+        statusCode = 100
+        status = ""
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+        con.rollback()
+        statusCode = 500
+    finally:
+        connection_pool.putconn(con)
+    return {"status": applicationCodes[statusCode]  + status, "statusCode": statusCode}
+    
+#endregion
+
+#region SQL Endpoints
+@app.post("/createTables")
+def createTables():
+    sqlError = ""
+    try:
+        con = connection_pool.getconn()
+        with con.cursor() as cursor:
+            tables = {
+                "resume": """
+                    resume_id SERIAL PRIMARY KEY,
+                    resume_data JSON
+                """,
+                "jobs": """
+                    job_id SERIAL PRIMARY KEY,
+                    job_data JSON,
+                    active BOOLEAN DEFAULT TRUE
+                """,
+                "grades": """
+                    resume_id INT,
+                    job_id INT,
+                    grade INT,
+                    PRIMARY KEY (resume_id, job_id),
+                    FOREIGN KEY (resume_id) REFERENCES resume(resume_id),
+                    FOREIGN KEY (job_id) REFERENCES jobs(job_id)
+                """,
+                "applications": """
+                    application_id SERIAL PRIMARY KEY,
+                    resume_id INT,
+                    job_id INT,
+                    application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    status TEXT,
+                    statusCode INT,
+                    FOREIGN KEY (resume_id) REFERENCES resume(resume_id),
+                    FOREIGN KEY (job_id) REFERENCES jobs(job_id)
+                """
+            }
+            for table_name, table_schema in tables.items():
+                cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+                cursor.execute(f"CREATE TABLE {table_name} ({table_schema})")
+            con.commit() 
+    except psycopg2.Error as e:
+        print(f"An error occurred: {e}")
+        con.rollback()
+        sqlError = str(e)
+    finally:
+        connection_pool.putconn(con)
+
+    if sqlError != "":
+        return {"status": "Tables created successfully", "statusCode": 200} 
+    else:
+        return {"status": "An error occurred while creating tables, " + sqlError, "sqlError": sqlError, "statusCode": 500}
+#endregion
 
 if __name__ == "__main__":
-    print(extractResumeJSON("Experience: Senior Software Developer, ABC Tech July 2020 - Present Led a team of developers in designing and implementing mobile applications using React Native; successfully reduced app load time by 30%. Developed dynamic, responsive web applications tailored for high traffic with React.js, enhancing user experience and interface accessibility. Collaborated closely with UX/UI designers and implemented CSS in JS to ensure applications are both functionally and aesthetically appealing. Skills: Languages: JavaScript (ES6+), TypeScript, HTML5, CSS3 Frameworks: React.js, React Native Tools: Git, Jenkins, Docker, AWS Education: B.S. in Computer Science, University of Tech, 2015-2019 Certifications: Certified React Developer, Tech Certification Institute, 2021", "sk-proj-rm22j6StTEDEZVhu3VtHT3BlbkFJYXBMtcQJ9RPE6jj9lI6T"))
+    createTables()
+    uploadJob({"Title": "Software Engineer", "description": "Grade resumes for a Software Engineer position.", "employer": "Google"})
