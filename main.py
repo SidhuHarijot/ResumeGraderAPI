@@ -667,8 +667,3 @@ async def get_resumes_with_grades(job_id: int):
 #endregion
 
 
-
-if __name__ == "__main__":
-    createTables()
-    print(uploadJob({"Title": "Software Engineer", "description": "Grade resumes for a Software Engineer position.", "employer": "Google"}))
-
