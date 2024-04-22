@@ -667,4 +667,29 @@ async def get_resumes_with_grades(job_id: int):
             connection_pool.putconn(con)
 #endregion
 
+#region Update Endpoints
+@app.put("/update/job/{job_id}")
+async def update_job(job_id: int, job_data: dict):
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("UPDATE jobs SET job_data = %s WHERE job_id = %s", (json.dumps(job_data), job_id))
+            con.commit()
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
 
+@app.put("/update/resume/{resume_id}")
+async def update_resume(resume_id: int, resume_data: dict):
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("UPDATE resume SET resume_data = %s WHERE resume_id = %s", (json.dumps(resume_data), resume_id))
+            con.commit()
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
