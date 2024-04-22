@@ -587,13 +587,13 @@ def getApplication(application_id: int):
 async def get_resumes(resume_id: Optional[int] = None):
     con = connection_pool.getconn()
     try:
-        with con.cursor(cursor_factory=RealDictCursor) as cursor:
+        with con.cursor() as cursor:
             if resume_id:
                 cursor.execute("SELECT * FROM resume WHERE resume_id = %s", (resume_id,))
             else:
                 cursor.execute("SELECT * FROM resume")
             results = cursor.fetchall()
-            return [Resume(**resume) for resume in results]
+            return [Resume(resume_id=resume[0], resume_data=json.loads(resume[1])) for resume in results]
     except psycopg2.Error as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -605,13 +605,14 @@ async def get_resumes(resume_id: Optional[int] = None):
 async def get_jobs(active: Optional[bool] = None):
     con = connection_pool.getconn()
     try:
-        with con.cursor(cursor_factory=RealDictCursor) as cursor:
+        with con.cursor() as cursor:
             if active is not None:
                 cursor.execute("SELECT * FROM jobs WHERE active = %s", (active,))
             else:
                 cursor.execute("SELECT * FROM jobs")
             results = cursor.fetchall()
-            return [Job(**job) for job in results]
+            
+            return [Job(job_id=job[0], job_data=json.loads(job[1]), active=job[2]) for job in results]
     except psycopg2.Error as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -693,3 +694,4 @@ async def update_resume(resume_id: int, resume_data: dict):
     finally:
         if con:
             connection_pool.putconn(con)
+#endregion
