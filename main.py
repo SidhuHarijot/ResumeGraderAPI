@@ -66,8 +66,8 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "https://client-resume-upload-p9g0bmvaf-harijot-singhs-projects.vercel.app",
-    "https://client-resume-upload.vercel.app/",
-    "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app/"
+    "https://client-resume-upload.vercel.app",
+    "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app"
 ]
 
 app.add_middleware(
@@ -75,19 +75,6 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-origins = [
-    "http://localhost:3000", 
-    "https://your-nextjs-deployment-url.com"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],  
     allow_headers=["*"],
 )
 #endregion
