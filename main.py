@@ -65,6 +65,9 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:8080",
+    "https://client-resume-upload-p9g0bmvaf-harijot-singhs-projects.vercel.app",
+    "https://client-resume-upload.vercel.app/",
+    "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app/"
 ]
 
 app.add_middleware(
