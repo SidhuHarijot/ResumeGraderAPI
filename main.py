@@ -526,6 +526,7 @@ def getResume(resume_id: int):
             resume = cursor.fetchone()
             resume_data = json.loads(resume[1])
             resume = Resume(resume_id=resume[0], resume_data=resume_data)
+            print("[RETREIVED RESUME]: ", resume)
     except psycopg2.Error as e:
         print(f"An error occurred: {e}")
     finally:
