@@ -82,59 +82,85 @@ app.add_middleware(
 
 #region Pydantic Models
 class GradeRequestData(BaseModel):
-    resumeData: dict[int, str]
-    jobDescription:str
-    noOfResumes: int
-    apiKey: str
+    """
+    Represents a request to grade multiple resumes against a job description. 
+    Ensures the count of resumes matches the expected number.
+    """
+    resumeData: Dict[int, str] = Field(..., description="Mapping of resume IDs to their respective data.")
+    jobDescription: str = Field(..., description="Description of the job for which resumes are being graded.")
+    noOfResumes: int = Field(..., description="Expected number of resumes to be provided.")
+    apiKey: str = Field(..., description="API key for authentication.")
 
     @model_validator(mode="after")
     def checkResumeCount(self):
         if len(self.resumeData) != self.noOfResumes:
-            raise ValueError("No of resumes does not match the number of resume data provided in the resumeData")
+            raise ValueError("Number of resumes does not match the number of resume data provided.")
         return self
 
-
 class ExtractRequestData(BaseModel):
-    stringData: str
-    apiKey: str
-
+    """
+    Contains data for an extraction request using a specific API key.
+    """
+    stringData: str = Field(..., description="String data to be extracted.")
+    apiKey: str = Field(..., description="API key for authentication.")
 
 class ApplicationData(BaseModel):
-    resume_id: int
-    job_id: int
+    """
+    Represents the association of a resume with a job, useful for application tracking.
+    """
+    resume_id: int = Field(..., description="Unique identifier for the resume.")
+    job_id: int = Field(..., description="Unique identifier for the job.")
 
 class Resume(BaseModel):
-    resume_id: int
-    resume_data: dict
+    """
+    Defines a resume with its unique ID and associated data.
+    """
+    resume_id: int = Field(..., description="Unique identifier for the resume.")
+    resume_data: dict = Field(..., description="Data pertaining to the resume.")
 
 class Job(BaseModel):
-    job_id: int
-    job_data: dict
-    active: bool
+    """
+    Represents a job listing, including its active status and relevant data.
+    """
+    job_id: int = Field(..., description="Unique identifier for the job.")
+    job_data: dict = Field(..., description="Data pertaining to the job.")
+    active: bool = Field(..., description="Status of the job, whether it is active or not.")
 
 class Grade(BaseModel):
-    resume_id: int
-    job_id: int
-    grade: int
+    """
+    Represents a grading of a resume for a particular job.
+    """
+    resume_id: int = Field(..., description="Unique identifier for the resume being graded.")
+    job_id: int = Field(..., description="Unique identifier for the job related to the grade.")
+    grade: int = Field(..., description="Grade assigned to the resume for the specified job.")
 
 class Application(BaseModel):
-    application_id: int
-    resume_id: int
-    job_id: int
-    application_date: datetime
-    status: str
-    status_code: int
+    """
+    Details of a job application, including identifiers for associated resume and job, and the application's status.
+    """
+    application_id: int = Field(..., description="Unique identifier for the job application.")
+    resume_id: int = Field(..., description="Unique identifier of the resume used in the application.")
+    job_id: int = Field(..., description="Unique identifier of the job applied for.")
+    application_date: datetime = Field(..., description="Date when the application was submitted.")
+    status: str = Field(..., description="Current status of the application.")
+    status_code: int = Field(..., description="Numerical code representing the status of the application.")
 
 class ResumeWithGrade(BaseModel):
-    resume_id: int
-    resume_data: Dict
-    grade: Optional[int] = None
+    """
+    Extends the Resume model to include an optional grade.
+    """
+    resume_id: int = Field(..., description="Unique identifier for the resume.")
+    resume_data: Dict = Field(..., description="Data of the resume.")
+    grade: Optional[int] = Field(None, description="Optional grade assigned to the resume.")
 
 class GradingRequest(BaseModel):
-    job_id: int
-    resume_id: int = -1
-    apiKey : str
-    maxGrade: int = 1
+    """
+    Represents a request to grade a specific resume for a specified job.
+    """
+    job_id: int = Field(..., description="Unique identifier for the job.")
+    resume_id: int = Field(default=-1, description="Unique identifier for the resume, default is -1 indicating no specific resume.")
+    apiKey: str = Field(..., description="API key for authentication.")
+    maxGrade: int = Field(default=1, description="Maximum grade that can be assigned.")
 #endregion
 
 handler = Mangum(app)
