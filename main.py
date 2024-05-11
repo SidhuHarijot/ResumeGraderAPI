@@ -190,7 +190,8 @@ async def grade_resume(request: GradingRequest):
     # Assume request contains all needed data
     if request.resume_id == -1:
         raise HTTPException(status_code=400, detail="Invalid resume ID")
-    grade = await _grade_resume_chatGPT(request.apiKey, request.job_id, [request.resume_id], request.maxGrade)[0]
+    grade = await _grade_resume_chatGPT(request.apiKey, request.job_id, [request.resume_id], request.maxGrade)
+    grade = grade[request.resume_id]
     result = await save_grade(request.resume_id, request.job_id, grade)
     return result
 
