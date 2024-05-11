@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from mangum import Mangum
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, Field
 from openai import OpenAI
 import PyPDF2 as pypdf2
 import docx2txt
