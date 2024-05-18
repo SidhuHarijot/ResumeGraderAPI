@@ -584,32 +584,49 @@ def createTables():
         con = connection_pool.getconn()
         with con.cursor() as cursor:
             tables = {
-                "resume": """
+                "Users": """
+                    user_id SERIAL PRIMARY KEY,
+                    username VARCHAR(50) NOT NULL,
+                    email VARCHAR(100) NOT NULL UNIQUE,
+                    password_hash VARCHAR(100) NOT NULL,
+                    is_admin BOOLEAN DEFAULT FALSE, 
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                """,
+                "Resumes": """
                     resume_id SERIAL PRIMARY KEY,
-                    resume_data JSON
+                    user_id INT NOT NULL,
+                    resume_file VARCHAR(2000) NOT NULL,
+                    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES Users(user_id)
                 """,
-                "jobs": """
+                "JobDescriptions": """
                     job_id SERIAL PRIMARY KEY,
-                    job_data JSON,
-                    active BOOLEAN DEFAULT TRUE
+                    title VARCHAR(100) NOT NULL,
+                    company VARCHAR(100) NOT NULL,
+                    description TEXT NOT NULL,
+                    required_skills TEXT,
+                    application_deadline DATE,
+                    location VARCHAR(100),
+                    salary DECIMAL(10, 2),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 """,
-                "grades": """
-                    resume_id INT,
-                    job_id INT,
-                    grade INT,
-                    PRIMARY KEY (resume_id, job_id),
-                    FOREIGN KEY (resume_id) REFERENCES resume(resume_id),
-                    FOREIGN KEY (job_id) REFERENCES jobs(job_id)
+                "Matches": """
+                    match_id SERIAL PRIMARY KEY,
+                    resume_id INT NOT NULL,
+                    job_id INT NOT NULL,
+                    match_percentage DECIMAL(5, 2),
+                    FOREIGN KEY (resume_id) REFERENCES Resumes(resume_id),
+                    FOREIGN KEY (job_id) REFERENCES JobDescriptions(job_id)
                 """,
-                "applications": """
-                    application_id SERIAL PRIMARY KEY,
-                    resume_id INT,
-                    job_id INT,
-                    application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    status TEXT,
-                    statusCode INT,
-                    FOREIGN KEY (resume_id) REFERENCES resume(resume_id),
-                    FOREIGN KEY (job_id) REFERENCES jobs(job_id)
+                "Feedback": """
+                    feedback_id SERIAL PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    resume_id INT NOT NULL,
+                    feedback_text TEXT NOT NULL,
+                    rating INT CHECK (rating >= 1 AND rating <= 5),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+                    FOREIGN KEY (resume_id) REFERENCES Resumes(resume_id)
                 """
             }
             for table_name, table_schema in tables.items().__reversed__():
