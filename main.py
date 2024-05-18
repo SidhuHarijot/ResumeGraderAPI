@@ -170,7 +170,7 @@ def read_root():
     '''Root endpoint for the API. Provides basic information about the API.
     '''
     return {"version": "1.0",
-            "author": "Harijot Singh",
+            "author": "Harijot Singh, Yuvraj Singh Chohan",
             "Title": "Resume Grader",
             "Description": "This is an API to grade resumes for a provided job description."}
 
