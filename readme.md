@@ -218,6 +218,117 @@ By focusing on these detailed improvements, the API will become more secure, eff
 # Updates
 - [Version 1.0.0](#version-100)
 - [Version 2.0.0](#version-200)
+- [version 2.5.0](#version-250)
+
+# Version 2.5.0
+
+### Changes in the Table Structures
+
+#### Updated Table Structures
+
+##### Users Table
+
+    ```sql
+    CREATE TABLE Users (
+        user_id SERIAL PRIMARY KEY,
+        name VARCHAR(100),
+        dob DATE,
+        uid VARCHAR(50) NOT NULL,
+        is_owner BOOLEAN DEFAULT FALSE,
+        is_admin BOOLEAN DEFAULT FALSE,
+        phone_number VARCHAR(10),
+        email VARCHAR(100) NOT NULL UNIQUE
+    );
+    ```
+
+##### Resumes Table
+
+    ```sql
+    CREATE TABLE Resumes (
+        resume_id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        skills VARCHAR(100)[],
+        experience VARCHAR(1000)[],
+        education VARCHAR(1000)[],
+        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    );
+    ```
+
+##### JobDescriptions Table
+
+    ```sql
+    CREATE TABLE JobDescriptions (
+        job_id SERIAL PRIMARY KEY,
+        title VARCHAR(100) NOT NULL,
+        company VARCHAR(100) NOT NULL,
+        description TEXT NOT NULL,
+        required_skills TEXT,
+        application_deadline DATE,
+        location VARCHAR(100),
+        salary DECIMAL(10, 2),
+        highly_preferred_skills VARCHAR(100)[],
+        low_preferred_skills VARCHAR(100)[],
+        rating DECIMAL(5, 2)
+    );
+    ```
+
+##### Matches Table
+
+    ```sql
+    CREATE TABLE Matches (
+        match_id SERIAL PRIMARY KEY,
+        resume_id INT NOT NULL,
+        job_id INT NOT NULL,
+        match_percentage DECIMAL(5, 2),
+        status VARCHAR(100),
+        status_code INT,
+        grade INT,
+        highly_preferred_skills VARCHAR(100)[],
+        low_preferred_skills VARCHAR(100)[],
+        FOREIGN KEY (resume_id) REFERENCES Resumes(resume_id),
+        FOREIGN KEY (job_id) REFERENCES JobDescriptions(job_id)
+    );
+    ```
+
+##### Feedback Table
+
+    ```sql
+    CREATE TABLE Feedback (
+        feedback_id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        resume_id INT NOT NULL,
+        feedback_text TEXT NOT NULL,
+        rating INT CHECK (rating >= 1 AND rating <= 5),
+        FOREIGN KEY (user_id) REFERENCES Users(user_id),
+        FOREIGN KEY (resume_id) REFERENCES Resumes(resume_id)
+    );
+    ```
+
+### Updated Functions and Endpoints
+
+#### Table Creation
+
+- Updated the `createTables` function to drop old tables and create new tables according to the new structure.
+
+#### Endpoint Updates
+
+- `/upload/application`: Updated to reflect the changes in the `Matches` table.
+- `/retrieve/resume/{resume_id}`: Updated to query the `Resumes` table.
+- `/retrieve/job/{job_id}`: Updated to query the `JobDescriptions` table.
+- `/retrieve/match/{match_id}`: Updated to query the `Matches` table.
+- `/retrieve/resumes/`: Updated to query the `Resumes` table.
+- `/retrieve/jobs/`: Updated to query the `JobDescriptions` table.
+- `/retrieve/grades/`: Updated to query the `grades` table.
+- `/retrieve/resumes_with_grades/`: Updated to join the `Resumes` and `grades` tables.
+- `/update/job/{job_id}`: Updated to reflect changes in the `JobDescriptions` table.
+- `/update/resume/{resume_id}`: Updated to reflect changes in the `Resumes` table.
+
+#### Added Endpoints
+
+- `/upload/user`: Endpoint for registering a new user.
+- `/retrieve/profile/{uid}`: Endpoint for retrieving a user's profile, including user and resume data.
+- `/update/profile/{uid}`: Endpoint for updating a user's profile, including user and resume data.
+- `/extract/resume`: Endpoint for uploading a resume file and extracting data.
 
 
 # Version 2.0.0
