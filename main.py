@@ -615,8 +615,14 @@ def createTables():
             for table_name, table_schema in tables.items().__reversed__():
                 cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
             for table_name, table_schema in tables.items():
+<<<<<<< Updated upstream
                 cursor.execute(f"CREATE TABLE {table_name} ({table_schema})")
             con.commit() 
+=======
+                cursor.execute(table_schema)
+            con.commit()
+            logSQL("Tables created successfully", "createTables")
+>>>>>>> Stashed changes
     except psycopg2.Error as e:
         print(f"An error occurred: {e}")
         con.rollback()
@@ -888,3 +894,10 @@ async def update_resume(resume_id: int, resume_data: dict):
         if con:
             connection_pool.putconn(con)
 #endregion
+
+#region Logging Endpoints
+def logSQL(msg: str, func: str, level: str = "INFO"):
+    print(f"[ResumeGraderAPI] [SQL] [{level}] ({func}): {msg};")
+
+def logAPI(msg: str, func: str, level: str = "INFO"):
+    print(f"[ResumeGraderAPI] [{level}] [API]({func}): {msg};")
