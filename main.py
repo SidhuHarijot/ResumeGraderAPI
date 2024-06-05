@@ -119,7 +119,16 @@ class Resume(BaseModel):
 
 class Job(BaseModel):
     job_id: int = Field(..., description="Unique identifier for the job.")
-    job_data: dict = Field(..., description="Data pertaining to the job.")
+    title: str = Field(..., description="Title of the job.")
+    company: str = Field(..., description="Company name.")
+    description: str = Field(..., description="Description of the job.")
+    required_skills: str = Field(..., description="Required skills for the job.")
+    application_deadline: str = Field(..., description="Deadline for job applications.")
+    location: str = Field(..., description="Location of the job.")
+    salary: float = Field(..., description="Salary for the job.")
+    highly_preferred_skills: List[str] = Field(..., description="List of highly preferred skills.")
+    low_preferred_skills: List[str] = Field(..., description="List of low preferred skills.")
+    rating: float = Field(..., description="Rating of the job.")
     active: bool = Field(..., description="Status of the job, whether it is active or not.")
 
 class Match(BaseModel):
@@ -640,7 +649,7 @@ async def upload_resume(api_key: str, uid: str, file: UploadFile = File(...)):
         logAPI(f"An error occurred: {e}", "upload_resume", "ERROR")
         raise HTTPException(status_code=500, detail=f"Failed to extract resume data: {str(e)}")
 
-@app.post("/upload/job/")
+@app.post("/upload/job/file")
 async def upload_job(api_key: str, file: UploadFile = File(...)):
     """
     Upload a job description file and save the extracted data.
@@ -675,6 +684,42 @@ async def upload_job(api_key: str, file: UploadFile = File(...)):
     except Exception as e:
         logAPI(f"An error occurred: {e}", "upload_job", "ERROR")
         raise HTTPException(status_code=500, detail=f"Failed to extract job data: {str(e)}")
+
+@app.post("/upload/job")
+def upload_job_data(job_data: Job):
+    """
+    Upload job description data to the database.
+
+    Args:
+        job_data (Job): Job description data to be uploaded.
+        Example:
+        {
+            "job_id": 1,
+            "title": "Job Title",
+            "company": "Company Name",
+            "description": "Job Description",
+            "required_skills": "Skills",
+            "application_deadline": "2024-12-31",
+            "location": "Location",
+            "salary": 100000.00,
+            "highly_preferred_skills": ["skill1", "skill2"],
+            "low_preferred_skills": ["skill3", "skill4"],
+            "rating": 4.5
+        }
+
+    Returns:
+        dict: Dictionary containing the status and job_id.
+        Example:
+        {
+            "status": "Job uploaded successfully",
+            "job_id": 1
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the upload.
+    """
+    logAPI(f"Uploading job {job_data.title} at {job_data.company}", "upload_job_data", "INFO")
+    return save_job_data(job_data)
 
 async def save_temp_file(file: UploadFile):
     """
@@ -727,7 +772,7 @@ async def extract_text(file_path: Path):
             content = file.read()
     return content
 
-async def save_resume_data(resume_data: Resume):
+def save_resume_data(resume_data: Resume):
     """
     Save the extracted resume data to the database.
 
@@ -768,12 +813,12 @@ async def save_resume_data(resume_data: Resume):
         if con:
             connection_pool.putconn(con)
 
-async def save_job_data(job_data: dict):
+def save_job_data(job_data: Job):
     """
     Save the extracted job description data to the database.
 
     Args:
-        job_data (dict): Extracted job description data.
+        job_data (Job): Extracted job description data.
         Example:
         {
             "title": "Job Title",
@@ -799,15 +844,25 @@ async def save_job_data(job_data: dict):
     Raises:
         HTTPException: If an error occurs during saving.
     """
-    logAPI(f"Saving job {job_data['title']} at {job_data['company']}", "save_job_data", "INFO")
+    logAPI(f"Saving job {job_data.title} at {job_data.company}", "save_job_data", "INFO")
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
-            cursor.execute("INSERT INTO jobdescriptions (title, company, description, required_skills, application_deadline, location, salary, highly_preferred_skills, low_preferred_skills, rating) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING job_id", 
-                           (job_data['title'], job_data['company'], job_data['description'], job_data['required_skills'], job_data['application_deadline'], job_data['location'], job_data['salary'], json.dumps(job_data['highly_preferred_skills']), json.dumps(job_data['low_preferred_skills']), job_data['rating']))
+            cursor.execute("""
+                INSERT INTO jobdescriptions (
+                    title, company, description, required_skills, application_deadline, 
+                    location, salary, highly_preferred_skills, low_preferred_skills, rating
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s::text[], %s::text[], %s
+                ) RETURNING job_id
+            """, (
+                job_data.title, job_data.company, job_data.description, job_data.required_skills, 
+                job_data.application_deadline, job_data.location, job_data.salary, 
+                job_data.highly_preferred_skills, job_data.low_preferred_skills, job_data.rating
+            ))
             job_id = cursor.fetchone()[0]
             con.commit()
-            logSQL(f"Job {job_data['title']} saved successfully with job_id {job_id}", "save_job_data")
+            logSQL(f"Job {job_data.title} saved successfully with job_id {job_id}", "save_job_data")
         return {"status": "Job uploaded successfully", "job_id": job_id}
     except psycopg2.Error as e:
         logAPI(f"An error occurred: {e}", "save_job_data", "ERROR")
@@ -980,7 +1035,8 @@ def create_tables():
                         salary DECIMAL(10, 2),
                         highly_preferred_skills VARCHAR(100)[],
                         low_preferred_skills VARCHAR(100)[],
-                        rating DECIMAL(5, 2)
+                        rating DECIMAL(5, 2),
+                        active BOOLEAN DEFAULT TRUE
                     );
                 """,
                 "matches": """
@@ -1001,12 +1057,9 @@ def create_tables():
                 "feedback": """
                     CREATE TABLE feedback (
                         feedback_id SERIAL PRIMARY KEY,
-                        uid VARCHAR(50) NOT NULL,
-                        resume_id INT NOT NULL,
+                        match_id INT NOT NULL,
                         feedback_text TEXT NOT NULL,
-                        rating INT CHECK (rating >= 1 AND rating <= 5),
-                        FOREIGN KEY (uid) REFERENCES users(uid),
-                        FOREIGN KEY (resume_id) REFERENCES resumes(resume_id)
+                        FOREIGN KEY (match_id) REFERENCES matches(match_id)
                     );
                 """
             }
@@ -1233,34 +1286,30 @@ async def get_jobs(active: Optional[bool] = None):
         [
             {
                 "job_id": 1,
-                "job_data": {
-                    "title": "Job Title",
-                    "company": "Company Name",
-                    "description": "Job Description",
-                    "required_skills": "Skills",
-                    "application_deadline": "2024-12-31",
-                    "location": "Location",
-                    "salary": 100000.00,
-                    "highly_preferred_skills": ["skill1", "skill2"],
-                    "low_preferred_skills": ["skill3", "skill4"],
-                    "rating": 4.5
-                },
+                "title": "Job Title",
+                "company": "Company Name",
+                "description": "Job Description",
+                "required_skills": "Skills",
+                "application_deadline": "2024-12-31",
+                "location": "Location",
+                "salary": 100000.00,
+                "highly_preferred_skills": ["skill1", "skill2"],
+                "low_preferred_skills": ["skill3", "skill4"],
+                "rating": 4.5,
                 "active": true
             },
             {
                 "job_id": 2,
-                "job_data": {
-                    "title": "Another Job Title",
-                    "company": "Another Company",
-                    "description": "Another Job Description",
-                    "required_skills": "More Skills",
-                    "application_deadline": "2024-12-31",
-                    "location": "Another Location",
-                    "salary": 120000.00,
-                    "highly_preferred_skills": ["skill5", "skill6"],
-                    "low_preferred_skills": ["skill7", "skill8"],
-                    "rating": 4.7
-                },
+                "title": "Another Job Title",
+                "company": "Another Company",
+                "description": "Another Job Description",
+                "required_skills": "More Skills",
+                "application_deadline": "2024-12-31",
+                "location": "Another Location",
+                "salary": 120000.00,
+                "highly_preferred_skills": ["skill5", "skill6"],
+                "low_preferred_skills": ["skill7", "skill8"],
+                "rating": 4.7,
                 "active": false
             }
         ]
@@ -1278,7 +1327,18 @@ async def get_jobs(active: Optional[bool] = None):
                 cursor.execute("SELECT * FROM jobdescriptions")
             results = cursor.fetchall()
             
-            return [Job(job_id=job[0], job_data=json.loads(job[1]), active=job[2]) for job in results]
+            return [Job(job_id=job[0],
+                title=job[1],
+                company=job[2],
+                description=job[3],
+                required_skills=job[4],
+                application_deadline=job[5],
+                location=job[6],
+                salary=job[7],
+                highly_preferred_skills=json.loads(job[8]),
+                low_preferred_skills=json.loads(job[9]),
+                rating=job[10],
+                active=job[11]) for job in results]
     except psycopg2.Error as e:
         logAPI(f"An error occurred: {e}", "get_jobs", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1662,76 +1722,406 @@ def logAPI(msg: str, func: str, level: str = "INFO"):
 @app.get("/printTables/USERS")
 def print_users():
     con = connection_pool.getconn()
+    users = []
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM users")
             results = cursor.fetchall()
             for user in results:
-                print(user)
+                users.append(user)
     except psycopg2.Error as e:
         print(e)
     finally:
         if con:
             connection_pool.putconn(con)
+    return users
 
 @app.get("/printTables/RESUMES")
 def print_resumes():
     con = connection_pool.getconn()
+    resumes = []
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM resumes")
             results = cursor.fetchall()
             for resume in results:
-                print(resume)
+                resumes.append(resume)
     except psycopg2.Error as e:
         print(e)
     finally:
         if con:
             connection_pool.putconn(con)
+    return resumes
 
 @app.get("/printTables/JOBDESCRIPTIONS")
 def print_jobs():
     con = connection_pool.getconn()
+    jobs = []
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM jobdescriptions")
             results = cursor.fetchall()
             for job in results:
-                print(job)
+                jobs.append(job)
     except psycopg2.Error as e:
         print(e)
     finally:
         if con:
             connection_pool.putconn(con)
+    return jobs
 
 
 @app.get("/printTables/MATCHES")
 def print_matches():
     con = connection_pool.getconn()
+    matches = []
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM matches")
             results = cursor.fetchall()
             for match in results:
-                print(match)
+                matches.append(match)
     except psycopg2.Error as e:
         print(e)
     finally:
         if con:
             connection_pool.putconn(con)
+    return matches
 
 @app.get("/printTables/FEEDBACK")
 def print_feedback():
     con = connection_pool.getconn()
+    feedbacks = []
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM feedback")
             results = cursor.fetchall()
             for feedback in results:
-                print(feedback)
+                feedbacks.append(feedback)
     except psycopg2.Error as e:
         print(e)
     finally:
         if con:
             connection_pool.putconn(con)
+    return feedbacks
+
+@app.get("/printTables/Profiles")
+def print_profiles():
+    con = connection_pool.getconn()
+    profiles = []
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("SELECT * FROM users")
+            results = cursor.fetchall()
+            for user in results:
+                cursor.execute("SELECT * FROM resumes WHERE uid = %s", (user[0],))
+                resume = cursor.fetchone()
+                profiles.append({"uid": user[0], "name": user[1], "dob": user[2], "is_owner": user[3], "is_admin": user[4], "phone_number": user[5], "email": user[6], "resume": resume})
+    except psycopg2.Error as e:
+        print(e)
+    finally:
+        if con:
+            connection_pool.putconn(con)
+    return profiles
 #endregion
+
+#region DELETE endpoints
+@app.delete("/delete/user/{uid}")
+def delete_user(uid: str):
+    """
+    Delete a user by user ID.
+
+    Args:
+        uid (str): User ID.
+        Example:
+        {
+            "uid": "1234567890"
+        }
+
+    Returns:
+        dict: Dictionary containing the status of the operation.
+        Example:
+        {
+            "status": "User deleted successfully",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the deletion process.
+    """
+    logAPI(f"Deleting user {uid}", "delete_user", "INFO")
+    con = connection_pool.getconn()
+    try:
+        delete_resume(uid)
+        delete_matches(uid)
+        with con.cursor() as cursor:
+            cursor.execute("DELETE FROM users WHERE uid = %s", (uid,))
+            con.commit()
+            logSQL(f"User {uid} deleted successfully", "delete_user")
+    except psycopg2.Error as e:
+        logSQL(f"An error occurred: {e}", "delete_user", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+@app.delete("/delete/resume/{uid}")
+def delete_resume(uid: str):
+    """
+    Delete a resume by user ID.
+
+    Args:
+        uid (str): User ID.
+        Example:
+        {
+            "uid": "1234567890"
+        }
+
+    Returns:
+        dict: Dictionary containing the status of the operation.
+        Example:
+        {
+            "status": "Resume deleted successfully",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the deletion process.
+    """
+    logAPI(f"Deleting resume for user {uid}", "delete_resume", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("DELETE FROM resumes WHERE uid = %s", (uid,))
+            con.commit()
+            logSQL(f"Resume for user {uid} deleted successfully", "delete_resume")
+    except psycopg2.Error as e:
+        logSQL(f"An error occurred: {e}", "delete_resume", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+@app.delete("/delete/job/{job_id}")
+def delete_job(job_id: int):
+    """
+    Delete a job by job ID.
+
+    Args:
+        job_id (int): Job ID.
+        Example:
+        {
+            "job_id": 1
+        }
+
+    Returns:
+        dict: Dictionary containing the status of the operation.
+        Example:
+        {
+            "status": "Job deleted successfully",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the deletion process.
+    """
+    logAPI(f"Deleting job {job_id}", "delete_job", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("DELETE FROM jobdescriptions WHERE job_id = %s", (job_id,))
+            con.commit()
+            logSQL(f"Job {job_id} deleted successfully", "delete_job")
+    except psycopg2.Error as e:
+        logSQL(f"An error occurred: {e}", "delete_job", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+@app.delete("/delete/matches/{uid}")
+def delete_matches(uid: str):
+    """
+    Delete matches by user ID.
+
+    Args:
+        uid (str): User ID.
+        Example:
+        {
+            "uid": "1234567890"
+        }
+
+    Returns:
+        dict: Dictionary containing the status of the operation.
+        Example:
+        {
+            "status": "Matches deleted successfully",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the deletion process.
+    """
+    logAPI(f"Deleting matches for user {uid}", "delete_matches", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("SELECT match_id FROM matches WHERE uid = %s", (uid,))
+            matches = cursor.fetchall()
+            for match in matches:
+                delete_feedbacks(match[0])
+            cursor.execute("DELETE FROM matches WHERE uid = %s", (uid,))
+            con.commit()
+            logSQL(f"Matches for user {uid} deleted successfully", "delete_matches")
+    except psycopg2.Error as e:
+        logSQL(f"An error occurred: {e}", "delete_matches", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+@app.delete("/delete/match/{match_id}")
+def delete_match(match_id: int):
+    """
+    Delete a match by match ID.
+
+    Args:
+        match_id (int): Match ID.
+        Example:
+        {
+            "match_id": 1
+        }
+
+    Returns:
+        dict: Dictionary containing the status of the operation.
+        Example:
+        {
+            "status": "Match deleted successfully",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the deletion process.
+    """
+    logAPI(f"Deleting match {match_id}", "delete_match", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("SELECT match_id FROM matches WHERE uid = %s", (uid,))
+            matches = cursor.fetchall()
+            for match in matches:
+                delete_feedbacks(match[0])
+            cursor.execute("DELETE FROM matches WHERE match_id = %s", (match_id,))
+            con.commit()
+            logSQL(f"Match {match_id} deleted successfully", "delete_match")
+    except psycopg2.Error as e:
+        logSQL(f"An error occurred: {e}", "delete_match", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+@app.delete("/delete/feedback/{feedback_id}")
+def delete_feedback(feedback_id: int):
+    """
+    Delete feedback by feedback ID.
+
+    Args:
+        feedback_id (int): Feedback ID.
+        Example:
+        {
+            "feedback_id": 1
+        }
+
+    Returns:
+        dict: Dictionary containing the status of the operation.
+        Example:
+        {
+            "status": "Feedback deleted successfully",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the deletion process.
+    """
+    logAPI(f"Deleting feedback {feedback_id}", "delete_feedback", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("DELETE FROM feedback WHERE feedback_id = %s", (feedback_id,))
+            con.commit()
+            logSQL(f"Feedback {feedback_id} deleted successfully", "delete_feedback")
+    except psycopg2.Error as e:
+        logSQL(f"An error occurred: {e}", "delete_feedback", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+
+@app.delete("/delete/feedback/matchId/{match_id}")
+def delete_feedbacks(match_id: int):
+    """
+    Delete feedbacks by match ID.
+
+    Args:
+        match_id (int): Match ID.
+        Example:
+        {
+            "match_id": 1
+        }
+
+    Returns:
+        dict: Dictionary containing the status of the operation.
+        Example:
+        {
+            "status": "Feedbacks deleted successfully",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the deletion process.
+    """
+    logAPI(f"Deleting feedbacks for match {match_id}", "delete_feedbacks", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("DELETE FROM feedback WHERE match_id = %s", (match_id,))
+            con.commit()
+            logSQL(f"Feedbacks for match {match_id} deleted successfully", "delete_feedbacks")
+    except psycopg2.Error as e:
+        logSQL(f"An error occurred: {e}", "delete_feedbacks", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
+#endregion
+
+if __name__ == "__main__":
+    # add some dummy job data
+    job = Job(job_id=1, title="Software Engineer", company="Google", description="Software Engineer at Google", required_skills="Python, Java, C++", application_deadline="31122024", location="Mountain View, CA", salary=120000.00, highly_preferred_skills=["Python", "Java"], low_preferred_skills=["C++"], rating=4.5, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=2, title="Data Scientist", company="Facebook", description="Data Scientist at Facebook", required_skills="Python, R, SQL", application_deadline="31122024", location="Menlo Park, CA", salary=130000.00, highly_preferred_skills=["Python", "R"], low_preferred_skills=["SQL"], rating=4.7, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=3, title="Product Manager", company="Amazon", description="Product Manager at Amazon", required_skills="Product Management, Agile, Scrum", application_deadline="31122024", location="Seattle, WA", salary=140000.00, highly_preferred_skills=["Product Management", "Agile"], low_preferred_skills=["Scrum"], rating=4.8, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=4, title="Software Engineer", company="Microsoft", description="Software Engineer at Microsoft", required_skills="C#, .NET, Azure", application_deadline="31122024", location="Redmond, WA", salary=125000.00, highly_preferred_skills=["C#", ".NET"], low_preferred_skills=["Azure"], rating=4.6, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=5, title="Data Analyst", company="Apple", description="Data Analyst at Apple", required_skills="Excel, SQL, Tableau", application_deadline="31122024", location="Cupertino, CA", salary=110000.00, highly_preferred_skills=["Excel", "SQL"], low_preferred_skills=["Tableau"], rating=4.4, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=6, title="Product Designer", company="Netflix", description="Product Designer at Netflix", required_skills="UI/UX Design, Figma, Sketch", application_deadline="31122024", location="Los Gatos, CA", salary=115000.00, highly_preferred_skills=["UI/UX Design", "Figma"], low_preferred_skills=["Sketch"], rating=4.3, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=7, title="Software Engineer", company="Uber", description="Software Engineer at Uber", required_skills="Java, Kotlin, Android", application_deadline="31122024", location="San Francisco, CA", salary=130000.00, highly_preferred_skills=["Java", "Kotlin"], low_preferred_skills=["Android"], rating=4.5, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=8, title="Data Scientist", company="Airbnb", description="Data Scientist at Airbnb", required_skills="Python, R, SQL", application_deadline="31122024", location="San Francisco, CA", salary=135000.00, highly_preferred_skills=["Python", "R"], low_preferred_skills=["SQL"], rating=4.7, active=True)
+    upload_job_data(job)
+
+    job = Job(job_id=9, title="Product Manager", company="Salesforce", description="Product Manager at Salesforce", required_skills="Product Management, Agile, Scrum", application_deadline="31122024", location="San Francisco, CA", salary=140000.00, highly_preferred_skills=["Product Management", "Agile"], low_preferred_skills=["Scrum"], rating=4.8, active=True)
+    upload_job_data(job)
+    print_jobs()
