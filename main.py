@@ -16,7 +16,7 @@ import shutil
 from pathlib import Path
 #endregion
 
-#region Constants
+# region Constants
 applicationCodes = {
     100: "Application received",
     101: "Application reviewed",
@@ -28,7 +28,7 @@ applicationCodes = {
 }
 #endregion
 
-#region Connection Pool
+# region Connection Pool
 try:
     # Attempt to connect using the internal URL
     connection_pool = psycopg2.pool.SimpleConnectionPool(
@@ -58,7 +58,7 @@ except (Exception, psycopg2.DatabaseError) as internal_error:
         print("Failed to connect using external URL:", external_error)
 #endregion
 
-#region Fast API Initialization
+# region Fast API Initialization
 app = FastAPI()
 
 origins = [
@@ -66,6 +66,10 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:8080",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://localhost",
+    "http://localhost:3006",
     "https://client-resume-upload-p9g0bmvaf-harijot-singhs-projects.vercel.app",
     "https://client-resume-upload.vercel.app",
     "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app"
@@ -90,7 +94,7 @@ def read_root():
 
 #endregion
 
-#region Pydantic Models
+# region Pydantic Models
 class GradeRequestData(BaseModel):
     resumeData: Dict[int, str] = Field(..., description="Mapping of resume IDs to their respective data.")
     jobDescription: str = Field(..., description="Description of the job for which resumes are being graded.")
@@ -159,7 +163,7 @@ class User(BaseModel):
     email: str = Field(..., description="Email of the user.")
 #endregion
 
-#region Grading Endpoints
+# region Grading Endpoints
 @app.post("/grade/ChatGPT/", response_model=Match)
 async def grade_resume(request: GradingRequest):
     """
@@ -188,7 +192,9 @@ async def grade_resume(request: GradingRequest):
     Raises:
         HTTPException: If an error occurs during grading.
     """
+    logAPI(f"Grading resume {request.resume_id} for job {request.job_id}", "grade_resume", "INFO")
     if request.resume_id == -1:
+        logAPI(f"Invalid resume ID {request.resume_id}", "grade_resume", "ERROR")
         raise HTTPException(status_code=400, detail="Invalid resume ID")
     grade = await _grade_resume_chatGPT(request.apiKey, request.job_id, [request.resume_id], request.maxGrade)
     grade = grade[request.resume_id]
@@ -217,6 +223,7 @@ async def save_match(resume_id: int, job_id: int, grade: int):
     Raises:
         HTTPException: If an error occurs during saving.
     """
+    logAPI(f"Saving match for resume {resume_id} and job {job_id} with grade {grade}", "save_match", "INFO")
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
@@ -226,8 +233,10 @@ async def save_match(resume_id: int, job_id: int, grade: int):
                 ON CONFLICT (resume_id, job_id) DO UPDATE SET grade = EXCLUDED.grade
             """, (resume_id, job_id, grade))
             con.commit()
+            logSQL(f"Match for resume {resume_id} and job {job_id} saved successfully", "save_match")
         return Match(resume_id=resume_id, job_id=job_id, grade=grade)
     except psycopg2.Error as e:
+        logAPI(f"Failed to save match: {e}", "save_match", "ERROR")
         raise HTTPException(status_code=500, detail=f"Failed to save match: {str(e)}")
 
 async def _grade_resume_chatGPT(api_key, job_id: int, resume_ids: List[int], max_grade: int):
@@ -314,6 +323,7 @@ async def grade_all_from_job(request: GradingRequest):
     Raises:
         HTTPException: If an error occurs during grading.
     """
+    logAPI(f"Grading all resumes for job {request.job_id}", "grade_all_from_job", "INFO")
     status_code = 502
     status = "Error Unknown"
     try:
@@ -332,13 +342,14 @@ async def grade_all_from_job(request: GradingRequest):
                         ON CONFLICT (resume_id, job_id) DO UPDATE SET grade = EXCLUDED.grade
                     """, (resume_id, request.job_id, grade))
                 con.commit()
+                logSQL(f"All resumes for job {request.job_id} graded successfully", "grade_all_from_job")
                 status_code = 100
                 status = ""
             else:
                 status_code = 404
                 status = "Job not found"
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "grade_all_from_job", "ERROR")
         con.rollback()
         status_code = 500
     finally:
@@ -346,7 +357,7 @@ async def grade_all_from_job(request: GradingRequest):
     return {"status": applicationCodes[status_code] + status, "status_code": status_code, "grades": grades}
 #endregion
 
-#region Extracting Endpoints
+# region Extracting Endpoints
 @app.post("/extract/resumeJSON/ChatGPT")
 def extract_resume_json(request_data: ExtractRequestData):
     """
@@ -425,6 +436,7 @@ async def extract_resume(api_key: str, uid: str, file: UploadFile = File(...)):
     Raises:
         HTTPException: If an error occurs during the extraction process.
     """
+    logAPI(f"Extracting resume data for user {uid}", "extract_resume", "INFO")
     try:
         temp_file_path = await save_temp_file(file)
         resume_text = await extract_text(temp_file_path)
@@ -433,13 +445,13 @@ async def extract_resume(api_key: str, uid: str, file: UploadFile = File(...)):
         temp_file_path.unlink()
         resume = Resume(
             resume_id=-1,
-            user_id=-1,  # Placeholder, should be updated when saving to DB
+            user_id=await get_user_id(uid),
             skills=resume_json["skills"],
             experience=resume_json["experience"],
             education=resume_json["education"]
         )
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "extract_resume", "ERROR")
         raise HTTPException(status_code=500, detail=f"Failed to extract resume data: {str(e)}")
     return resume
 
@@ -493,7 +505,7 @@ def extract_job_description_json(request_data: ExtractRequestData):
     return response.choices[0].message.content
 #endregion
 
-#region checkPermission Endpoints
+# region checkPermission Endpoints
 def check_is_admin(uid: str):
     """
     Check if the user is an admin.
@@ -511,13 +523,14 @@ def check_is_admin(uid: str):
     Raises:
         Exception: If an error occurs during the check.
     """
+    logAPI(f"Checking if user {uid} is admin", "check_is_admin", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT is_admin FROM users WHERE uid = %s", (uid,))
             return cursor.fetchone()[0]
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "check_is_admin", "ERROR")
     finally:
         connection_pool.putconn(con)
     return False
@@ -539,19 +552,49 @@ def check_is_owner(uid: str):
     Raises:
         Exception: If an error occurs during the check.
     """
+    logAPI(f"Checking if user {uid} is owner", "check_is_owner", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT is_owner FROM users WHERE uid = %s", (uid,))
             return cursor.fetchone()[0]
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "check_is_owner", "ERROR")
+    finally:
+        connection_pool.putconn(con)
+    return False
+
+def checkEmailInUse(email: str):
+    """
+    Check if the email is already in use.
+
+    Args:
+        email (str): Email ID.
+        Example:
+        {
+            "email": "something@some.com"
+        }
+
+    Returns:
+        bool: True if the email is in use, False otherwise.
+
+    Raises:
+        Exception: If an error occurs during the check.
+    """
+    logAPI(f"Checking if email {email} is in use", "checkEmailInUse", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+            return cursor.fetchone() is not None
+    except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "checkEmailInUse", "ERROR")
     finally:
         connection_pool.putconn(con)
     return False
 #endregion
 
-#region Upload Endpoints
+# region Upload Endpoints
 @app.post("/upload/resume/")
 async def upload_resume(api_key: str, uid: str, file: UploadFile = File(...)):
     """
@@ -579,6 +622,7 @@ async def upload_resume(api_key: str, uid: str, file: UploadFile = File(...)):
     Raises:
         HTTPException: If an error occurs during the upload.
     """
+    logAPI(f"Uploading resume for user {uid}", "upload_resume", "INFO")
     try:
         temp_file_path = await save_temp_file(file)
         resume_text = await extract_text(temp_file_path)
@@ -594,7 +638,7 @@ async def upload_resume(api_key: str, uid: str, file: UploadFile = File(...)):
         )
         return await save_resume_data(resume)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "upload_resume", "ERROR")
         raise HTTPException(status_code=500, detail=f"Failed to extract resume data: {str(e)}")
 
 @app.post("/upload/job/")
@@ -622,6 +666,7 @@ async def upload_job(api_key: str, file: UploadFile = File(...)):
     Raises:
         HTTPException: If an error occurs during the upload.
     """
+    logAPI("Uploading job description", "upload_job", "INFO")
     try:
         temp_file_path = await save_temp_file(file)
         job_text = await extract_text(temp_file_path)
@@ -629,6 +674,7 @@ async def upload_job(api_key: str, file: UploadFile = File(...)):
         temp_file_path.unlink()
         return await save_job_data(job_json)
     except Exception as e:
+        logAPI(f"An error occurred: {e}", "upload_job", "ERROR")
         raise HTTPException(status_code=500, detail=f"Failed to extract job data: {str(e)}")
 
 async def save_temp_file(file: UploadFile):
@@ -648,6 +694,7 @@ async def save_temp_file(file: UploadFile):
     Raises:
         Exception: If an error occurs during saving.
     """
+    logAPI(f"Saving temporary file {file.filename}", "save_temp_file", "INFO")
     temp_file_path = Path(f"temp_files/{file.filename}")
     temp_file_path.parent.mkdir(parents=True, exist_ok=True)
     with temp_file_path.open("wb") as buffer:
@@ -671,6 +718,7 @@ async def extract_text(file_path: Path):
     Raises:
         Exception: If an error occurs during extraction.
     """
+    logAPI(f"Extracting text from file {file_path}", "extract_text", "INFO")
     if file_path.suffix == '.pdf':
         with open(file_path, 'rb') as file:
             pdf_reader = pypdf2.PdfReader(file)
@@ -708,6 +756,7 @@ async def save_resume_data(resume_data: Resume):
     Raises:
         HTTPException: If an error occurs during saving.
     """
+    logAPI(f"Saving resume data for user {resume_data.user_id}", "save_resume_data", "INFO")
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
@@ -715,9 +764,10 @@ async def save_resume_data(resume_data: Resume):
                            (resume_data.user_id, json.dumps(resume_data.skills), json.dumps(resume_data.experience), json.dumps(resume_data.education)))
             resume_id = cursor.fetchone()[0]
             con.commit()
+            logSQL(f"Resume data for user {resume_data.user_id} saved successfully", "save_resume_data")
         return {"status": "Resume uploaded successfully", "resume_id": resume_id}
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "save_resume_data", "ERROR")
         raise HTTPException(status_code=500, detail=f"Failed to upload resume, error: {str(e)}")
     finally:
         connection_pool.putconn(con)
@@ -753,15 +803,18 @@ async def save_job_data(job_data: dict):
     Raises:
         HTTPException: If an error occurs during saving.
     """
+    logAPI(f"Saving job data for job {job_data['title']}", "save_job_data", "INFO")
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
-            cursor.execute("INSERT INTO jobdescriptions (title, company, description, required_skills, application_deadline, location, salary, highly_preferred_skills, low_preferred_skills, rating) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING job_id", 
-                           (job_data['title'], job_data['company'], job_data['description'], job_data['required_skills'], job_data['application_deadline'], job_data['location'], job_data['salary'], json.dumps(job_data['highly_preferred_skills']), json.dumps(job_data['low_preferred_skills']), job_data['rating']))
+            cursor.execute("INSERT INTO jobdescriptions (title, company, description, required_skills, location, salary, highly_preferred_skills, low_preferred_skills, rating) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING job_id", 
+                           (job_data['title'], job_data['company'], job_data['description'], job_data['required_skills'], job_data['location'], job_data['salary'], json.dumps(job_data['highly_preferred_skills']), json.dumps(job_data['low_preferred_skills']), job_data['rating']))
             job_id = cursor.fetchone()[0]
             con.commit()
+            logSQL(f"Job data for job {job_data['title']} saved successfully", "save_job_data")
         return {"status": "Job uploaded successfully", "job_id": job_id}
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "save_job_data", "ERROR")
         return {"status": "Failed to upload job", "error": str(e)}
     finally:
         connection_pool.putconn(con)
@@ -794,20 +847,22 @@ def upload_application(data: Match):
     Raises:
         HTTPException: If an error occurs during the upload.
     """
+    logAPI(f"Uploading application for resume {data.resume_id} and job {data.job_id}", "upload_application", "INFO")
     status_code = 502
     status = "Error Unknown"
     match_id = -1
     try:
         con = connection_pool.getconn()
         with con.cursor() as cursor:
-            cursor.execute("INSERT INTO matches (resume_id, job_id, status, status_code, grade) VALUES (%s, %s, %s, %s, %s) RETURNING match_id", 
-                           (data.resume_id, data.job_id, data.status, data.status_code, data.grade))
+            cursor.execute("INSERT INTO matches (resume_id, job_id, grade) VALUES (%s, %s, %s) RETURNING match_id", 
+                           (data.resume_id, data.job_id, data.grade))
             match_id = cursor.fetchone()[0]
             con.commit()
+            logSQL(f"Application for resume {data.resume_id} and job {data.job_id} uploaded successfully", "upload_application")
         status_code = 100
         status = ""
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "upload_application", "ERROR")
         con.rollback()
         status_code = 500
     finally:
@@ -843,6 +898,7 @@ def upload_user(data: User):
     Raises:
         HTTPException: If an error occurs during the upload process.
     """
+    logAPI(f"Uploading user {data.uid}", "upload_user", "INFO")
     status_code = 502
     status = "Error Unknown"
     try:
@@ -856,10 +912,11 @@ def upload_user(data: User):
                 ON CONFLICT (uid) DO UPDATE SET name = EXCLUDED.name, dob = EXCLUDED.dob, is_owner = EXCLUDED.is_owner, is_admin = EXCLUDED.is_admin, phone_number = EXCLUDED.phone_number, email = EXCLUDED.email
             """, (data.name, data.dob, data.uid, data.is_owner, data.is_admin, data.phone_number, data.email))
             con.commit()
+            logSQL(f"User {data.uid} uploaded successfully", "upload_user")
             status_code = 100
             status = ""
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "upload_user", "ERROR")
         con.rollback()
         status_code = 500
     finally:
@@ -867,7 +924,7 @@ def upload_user(data: User):
     return {"status": applicationCodes[status_code] + status, "status_code": status_code}
 #endregion
 
-#region SQL Endpoints
+# region SQL Endpoints
 @app.post("/createTables")
 def create_tables():
     """
@@ -884,6 +941,7 @@ def create_tables():
     Raises:
         HTTPException: If an error occurs during the table creation process.
     """
+    logAPI("Creating tables in the database", "create_tables", "INFO")
     sql_error = ""
     try:
         con = connection_pool.getconn()
@@ -918,7 +976,6 @@ def create_tables():
                         company VARCHAR(100) NOT NULL,
                         description TEXT NOT NULL,
                         required_skills TEXT,
-                        application_deadline DATE,
                         location VARCHAR(100),
                         salary DECIMAL(10, 2),
                         highly_preferred_skills VARCHAR(100)[],
@@ -932,8 +989,6 @@ def create_tables():
                         resume_id INT NOT NULL,
                         job_id INT NOT NULL,
                         match_percentage DECIMAL(5, 2),
-                        status VARCHAR(100),
-                        status_code INT,
                         grade INT,
                         highly_preferred_skills VARCHAR(100)[],
                         low_preferred_skills VARCHAR(100)[],
@@ -960,7 +1015,7 @@ def create_tables():
             con.commit() 
             logSQL("Tables Updated Successfully", "createTables")
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred while creating tables: {e}", "create_tables", "ERROR")
         con.rollback()
         sql_error = str(e)
     finally:
@@ -972,7 +1027,7 @@ def create_tables():
         return {"status": "Tables created successfully", "status_code": 200}
 #endregion
 
-#region Retrieve Endpoints
+# region Retrieve Endpoints
 @app.get("/retrieve/resume/{uid}", response_model=Resume)
 def get_resume(uid: str):
     """
@@ -999,6 +1054,7 @@ def get_resume(uid: str):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving resume for user {uid}", "get_resume", "INFO")
     resume = None
     try:
         con = connection_pool.getconn()
@@ -1008,8 +1064,9 @@ def get_resume(uid: str):
             if resume:
                 resume_data = json.loads(resume[2])
                 resume = Resume(resume_id=resume[0], user_id=resume[1], skills=resume_data['skills'], experience=resume_data['experience'], education=resume_data['education'])
+                logSQL(f"Resume for user {uid} retrieved successfully", "get_resume")
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "get_resume", "ERROR")
     finally:
         connection_pool.putconn(con)
     return resume
@@ -1036,7 +1093,6 @@ def get_job(job_id: int):
                 "company": "Company Name",
                 "description": "Job Description",
                 "required_skills": "Skills",
-                "application_deadline": "2024-12-31",
                 "location": "Location",
                 "salary": 100000.00,
                 "highly_preferred_skills": ["skill1", "skill2"],
@@ -1049,6 +1105,7 @@ def get_job(job_id: int):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving job {job_id}", "get_job", "INFO")
     job = None
     try:
         con = connection_pool.getconn()
@@ -1058,8 +1115,9 @@ def get_job(job_id: int):
             if job:
                 job_data = json.loads(job[1])
                 job = Job(job_id=job[0], job_data=job_data, active=job[2])
+                logSQL(f"Job {job_id} retrieved successfully", "get_job")
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "get_job", "ERROR")
     finally:
         connection_pool.putconn(con)
     return job
@@ -1091,6 +1149,7 @@ def get_match(match_id: int):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving match {match_id}", "get_match", "INFO")
     match = None
     try:
         con = connection_pool.getconn()
@@ -1098,23 +1157,24 @@ def get_match(match_id: int):
             cursor.execute("SELECT * FROM matches WHERE match_id = %s", (match_id,))
             match = cursor.fetchone()
             if match:
-                match = Match(match_id=match[0], resume_id=match[1], job_id=match[2], status=match[4], status_code=match[5], grade=match[6])
+                match = Match(match_id=match[0], resume_id=match[1], job_id=match[2], match_percentage=match[3], highly_preferred_skills=match[4], low_preferred_skills=match[5], rating=match[6])
+                logSQL(f"Match {match_id} retrieved successfully", "get_match")
     except psycopg2.Error as e:
-        print(f"An error occurred: {e}")
+        logAPI(f"An error occurred: {e}", "get_match", "ERROR")
     finally:
         connection_pool.putconn(con)
     return match
 
 @app.get("/retrieve/resumes/", response_model=List[Resume])
-async def get_resumes(resume_id: Optional[int] = None):
+async def get_resumes(uid: Optional[str] = None):
     """
     Retrieve all resumes or a specific resume by resume ID.
 
     Args:
-        resume_id (Optional[int]): Resume ID (optional).
+        uid (Optional[str]): User ID (optional).
         Example:
         {
-            "resume_id": 1
+            "uid": "1234567890"
         }
 
     Returns:
@@ -1140,16 +1200,19 @@ async def get_resumes(resume_id: Optional[int] = None):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving resumes, filter by user {uid} if provided", "get_resumes", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
-            if resume_id:
-                cursor.execute("SELECT * FROM resumes WHERE resume_id = %s", (resume_id,))
+            if uid:
+                cursor.execute("SELECT * FROM resumes WHERE user_id = (SELECT user_id FROM users WHERE uid = %s)", (uid,))
             else:
                 cursor.execute("SELECT * FROM resumes")
             results = cursor.fetchall()
+            logSQL("Resumes retrieved successfully", "get_resumes")
             return [Resume(resume_id=resume[0], user_id=resume[1], skills=json.loads(resume[2])['skills'], experience=json.loads(resume[2])['experience'], education=json.loads(resume[2])['education']) for resume in results]
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "get_resumes", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
@@ -1178,7 +1241,6 @@ async def get_jobs(active: Optional[bool] = None):
                     "company": "Company Name",
                     "description": "Job Description",
                     "required_skills": "Skills",
-                    "application_deadline": "2024-12-31",
                     "location": "Location",
                     "salary": 100000.00,
                     "highly_preferred_skills": ["skill1", "skill2"],
@@ -1194,7 +1256,6 @@ async def get_jobs(active: Optional[bool] = None):
                     "company": "Another Company",
                     "description": "Another Job Description",
                     "required_skills": "More Skills",
-                    "application_deadline": "2024-12-31",
                     "location": "Another Location",
                     "salary": 120000.00,
                     "highly_preferred_skills": ["skill5", "skill6"],
@@ -1208,6 +1269,7 @@ async def get_jobs(active: Optional[bool] = None):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving jobs, filter by active {active} if provided", "get_jobs", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
@@ -1216,9 +1278,10 @@ async def get_jobs(active: Optional[bool] = None):
             else:
                 cursor.execute("SELECT * FROM jobdescriptions")
             results = cursor.fetchall()
-            
+            logSQL("Jobs retrieved successfully", "get_jobs")
             return [Job(job_id=job[0], job_data=json.loads(job[1]), active=job[2]) for job in results]
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "get_jobs", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
@@ -1265,6 +1328,7 @@ async def get_resumes_with_grades(job_id: int):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving resumes with grades for job {job_id}", "get_resumes_with_grades", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
@@ -1278,8 +1342,10 @@ async def get_resumes_with_grades(job_id: int):
             """
             cursor.execute(query, (job_id, job_id))
             results = cursor.fetchall()
+            logSQL(f"Resumes with grades for job {job_id} retrieved successfully", "get_resumes_with_grades")
             return [ResumeWithGrade(resume_id=resume[0], resume_data={"user_id": resume[1], "skills": json.loads(resume[2])['skills'], "experience": json.loads(resume[2])['experience'], "education": json.loads(resume[2])['education']}, grade=resume[5]) for resume in results]
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "get_resumes_with_grades", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
@@ -1313,12 +1379,14 @@ async def get_user(uid: str):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving user {uid}", "get_user", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE uid = %s", (uid,))
             user = cursor.fetchone()
             if user:
+                logSQL(f"User {uid} retrieved successfully", "get_user")
                 return User(
                     name=user[1],
                     dob=user[2],
@@ -1329,6 +1397,7 @@ async def get_user(uid: str):
                     email=user[7]
                 )
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "get_user", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
@@ -1369,6 +1438,7 @@ async def get_profile(uid: str):
     Raises:
         HTTPException: If an error occurs during the retrieval process.
     """
+    logAPI(f"Retrieving profile for user {uid}", "get_profile", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
@@ -1376,6 +1446,7 @@ async def get_profile(uid: str):
             user = cursor.fetchone()
             if user:
                 resume = get_resume(uid)
+                logSQL(f"Profile for user {uid} retrieved successfully", "get_profile")
                 return Profile(
                     uid=user[3],
                     name=user[1],
@@ -1387,13 +1458,14 @@ async def get_profile(uid: str):
                     email=user[7]
                 )
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "get_profile", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
             connection_pool.putconn(con)
 #endregion
 
-#region Update Endpoints
+# region Update Endpoints
 @app.put("/update/user/makeAdmin/{uid}")
 async def make_user_admin(uid: str, owner_uid: str):
     """
@@ -1419,14 +1491,18 @@ async def make_user_admin(uid: str, owner_uid: str):
     Raises:
         HTTPException: If an error occurs during the update process.
     """
+    logAPI(f"Making user {uid} an admin", "make_user_admin", "INFO")
     con = connection_pool.getconn()
     try:
         if not check_is_owner(owner_uid):
+            logAPI(f"User {owner_uid} does not have permission to make user {uid} an admin", "make_user_admin", "ERROR")
             raise HTTPException(status_code=403, detail="You do not have permission to make this user an admin.")
         with con.cursor() as cursor:
             cursor.execute("UPDATE users SET is_admin = TRUE WHERE uid = %s", (uid,))
             con.commit()
+            logSQL(f"User {uid} made admin successfully", "make_user_admin")
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "make_user_admin", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
@@ -1468,24 +1544,27 @@ async def update_job(job_id: int, job_data: dict):
     Raises:
         HTTPException: If an error occurs during the update process.
     """
+    logAPI(f"Updating job {job_id}", "update_job", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
             cursor.execute("UPDATE jobdescriptions SET job_data = %s WHERE job_id = %s", (json.dumps(job_data), job_id))
             con.commit()
+            logSQL(f"Job {job_id} updated successfully", "update_job")
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "update_job", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
             connection_pool.putconn(con)
 
-@app.put("/update/resume/{resume_id}")
-async def update_resume(resume_id: int, resume_data: dict):
+@app.put("/update/resume/{uid}")
+async def update_resume(uid: int, resume_data: dict):
     """
     Update a resume.
 
     Args:
-        resume_id (int): Resume ID.
+        uid (int): User id
         resume_data (dict): Resume data to be updated.
         Example:
         {
@@ -1509,12 +1588,15 @@ async def update_resume(resume_id: int, resume_data: dict):
     Raises:
         HTTPException: If an error occurs during the update process.
     """
+    logAPI(f"Updating resume {resume_id}", "update_resume", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
             cursor.execute("UPDATE resumes SET resume_data = %s WHERE resume_id = %s", (json.dumps(resume_data), resume_id))
             con.commit()
+            logSQL(f"Resume {resume_id} updated successfully", "update_resume")
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "update_resume", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
@@ -1557,6 +1639,7 @@ async def update_profile(uid: str, profile: Profile):
     Raises:
         HTTPException: If an error occurs during the update process.
     """
+    logAPI(f"Updating profile for user {uid}", "update_profile", "INFO")
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
@@ -1570,14 +1653,16 @@ async def update_profile(uid: str, profile: Profile):
                            (json.dumps(profile.resume_data.skills), json.dumps(profile.resume_data.experience), json.dumps(profile.resume_data.education), uid))
             
             con.commit()
+            logSQL(f"Profile for user {uid} updated successfully", "update_profile")
     except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "update_profile", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if con:
             connection_pool.putconn(con)
 #endregion
 
-#region Logging Endpoints
+# region Logging Endpoints
 def logSQL(msg: str, func: str, level: str = "INFO"):
     print(f"[ResumeGraderAPI] [SQL] [{level}] ({func}): {msg};")
 
