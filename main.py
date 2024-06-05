@@ -1335,8 +1335,8 @@ async def get_jobs(active: Optional[bool] = None):
                 application_deadline=job[5],
                 location=job[6],
                 salary=job[7],
-                highly_preferred_skills=json.loads(job[8]),
-                low_preferred_skills=json.loads(job[9]),
+                highly_preferred_skills=job[8],
+                low_preferred_skills=job[9],
                 rating=job[10],
                 active=job[11]) for job in results]
     except psycopg2.Error as e:
