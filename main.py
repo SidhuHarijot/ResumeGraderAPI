@@ -127,8 +127,6 @@ class Job(BaseModel):
     location: str = Field(..., description="Location of the job.")
     salary: float = Field(..., description="Salary for the job.")
     highly_preferred_skills: List[str] = Field(..., description="List of highly preferred skills.")
-    low_preferred_skills: List[str] = Field(..., description="List of low preferred skills.")
-    rating: float = Field(..., description="Rating of the job.")
     active: bool = Field(..., description="Status of the job, whether it is active or not.")
 
 class Match(BaseModel):
@@ -137,7 +135,6 @@ class Match(BaseModel):
     job_id: int = Field(..., description="Unique identifier of the job applied for.")
     match_percentage: Optional[float] = Field(None, description="Match percentage between resume and job.")
     highly_preferred_skills: Optional[List[str]] = Field(None, description="List of highly preferred skills.")
-    low_preferred_skills: Optional[List[str]] = Field(None, description="List of low preferred skills.")
     rating: Optional[float] = Field(None, description="Rating of the match.")
 
 class ResumeWithGrade(BaseModel):
@@ -703,8 +700,6 @@ def upload_job_data(job_data: Job):
             "location": "Location",
             "salary": 100000.00,
             "highly_preferred_skills": ["skill1", "skill2"],
-            "low_preferred_skills": ["skill3", "skill4"],
-            "rating": 4.5
         }
 
     Returns:
@@ -829,8 +824,6 @@ def save_job_data(job_data: Job):
             "location": "Location",
             "salary": 100000.00,
             "highly_preferred_skills": ["skill1", "skill2"],
-            "low_preferred_skills": ["skill3", "skill4"],
-            "rating": 4.5
         }
 
     Returns:
@@ -851,14 +844,14 @@ def save_job_data(job_data: Job):
             cursor.execute("""
                 INSERT INTO jobdescriptions (
                     title, company, description, required_skills, application_deadline, 
-                    location, salary, highly_preferred_skills, low_preferred_skills, rating
+                    location, salary, highly_preferred_skills, active
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s::text[], %s::text[], %s
+                    %s, %s, %s, %s, %s, %s, %s, %s::text[], %s
                 ) RETURNING job_id
             """, (
                 job_data.title, job_data.company, job_data.description, job_data.required_skills, 
                 job_data.application_deadline, job_data.location, job_data.salary, 
-                job_data.highly_preferred_skills, job_data.low_preferred_skills, job_data.rating
+                job_data.highly_preferred_skills, job_data.active
             ))
             job_id = cursor.fetchone()[0]
             con.commit()
@@ -1034,8 +1027,6 @@ def create_tables():
                         location VARCHAR(100),
                         salary DECIMAL(10, 2),
                         highly_preferred_skills VARCHAR(100)[],
-                        low_preferred_skills VARCHAR(100)[],
-                        rating DECIMAL(5, 2),
                         active BOOLEAN DEFAULT TRUE
                     );
                 """,
@@ -1048,8 +1039,6 @@ def create_tables():
                         status VARCHAR(100),
                         status_code INT,
                         grade INT,
-                        highly_preferred_skills VARCHAR(100)[],
-                        low_preferred_skills VARCHAR(100)[],
                         FOREIGN KEY (uid) REFERENCES users(uid),
                         FOREIGN KEY (job_id) REFERENCES jobdescriptions(job_id)
                     );
@@ -1151,7 +1140,6 @@ def get_job(job_id: int):
                 "location": "Location",
                 "salary": 100000.00,
                 "highly_preferred_skills": ["skill1", "skill2"],
-                "low_preferred_skills": ["skill3", "skill4"],
                 "rating": 4.5
             },
             "active": true
@@ -1167,8 +1155,7 @@ def get_job(job_id: int):
             cursor.execute("SELECT * FROM jobdescriptions WHERE job_id = %s", (job_id,))
             job = cursor.fetchone()
             if job:
-                job_data = json.loads(job[1])
-                job = Job(job_id=job[0], job_data=job_data, active=job[2])
+                job = Job(job_id=job[0], title=job[1], company=job[2], description=job[3], required_skills=job[4], application_deadline=job[5], location=job[6], salary=job[7], highly_preferred_skills=job[8], active=job[9])
     except psycopg2.Error as e:
         logAPI(f"An error occurred: {e}", "get_job", "ERROR")
     finally:
@@ -1294,7 +1281,6 @@ async def get_jobs(active: Optional[bool] = None):
                 "location": "Location",
                 "salary": 100000.00,
                 "highly_preferred_skills": ["skill1", "skill2"],
-                "low_preferred_skills": ["skill3", "skill4"],
                 "rating": 4.5,
                 "active": true
             },
@@ -1308,7 +1294,6 @@ async def get_jobs(active: Optional[bool] = None):
                 "location": "Another Location",
                 "salary": 120000.00,
                 "highly_preferred_skills": ["skill5", "skill6"],
-                "low_preferred_skills": ["skill7", "skill8"],
                 "rating": 4.7,
                 "active": false
             }
@@ -1336,9 +1321,7 @@ async def get_jobs(active: Optional[bool] = None):
                 location=job[6],
                 salary=job[7],
                 highly_preferred_skills=job[8],
-                low_preferred_skills=job[9],
-                rating=job[10],
-                active=job[11]) for job in results]
+                active=job[9]) for job in results]
     except psycopg2.Error as e:
         logAPI(f"An error occurred: {e}", "get_jobs", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1515,6 +1498,50 @@ async def get_profile(uid: str):
     finally:
         if con:
             connection_pool.putconn(con)
+
+
+@app.get("/retrieve/role/{uid}")
+def get_user_role(uid: str):
+    """
+    Retrieve the role of a user.
+
+    Args:
+        uid (str): User ID.
+        Example:
+        {
+            "uid": "1234567890"
+        }
+
+    Returns:
+        dict: Dictionary containing the role of the user.
+        Example:
+        {
+            "role": "Owner",
+            "status_code": 100
+        }
+
+    Raises:
+        HTTPException: If an error occurs during the retrieval process.
+    """
+    logAPI(f"Retrieving role for user {uid}", "get_user_role", "INFO")
+    con = connection_pool.getconn()
+    try:
+        with con.cursor() as cursor:
+            cursor.execute("SELECT is_owner, is_admin FROM users WHERE uid = %s", (uid,))
+            user = cursor.fetchone()
+            if user:
+                if user[0]:
+                    return {"role": "Owner", "status_code": 100}
+                elif user[1]:
+                    return {"role": "Admin", "status_code": 100}
+                else:
+                    return {"role": "User", "status_code": 100}
+    except psycopg2.Error as e:
+        logAPI(f"An error occurred: {e}", "get_user_role", "ERROR")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if con:
+            connection_pool.putconn(con)
 #endregion
 
 #region Update Endpoints
@@ -1579,8 +1606,7 @@ async def update_job(job_id: int, job_data: dict):
                 "location": "Updated Location",
                 "salary": 120000.00,
                 "highly_preferred_skills": ["updated_skill1", "updated_skill2"],
-                "low_preferred_skills": ["updated_skill3", "updated_skill4"],
-                "rating": 4.8
+                active: true
             }
         }
 
@@ -1599,7 +1625,9 @@ async def update_job(job_id: int, job_data: dict):
     con = connection_pool.getconn()
     try:
         with con.cursor() as cursor:
-            cursor.execute("UPDATE jobdescriptions SET job_data = %s WHERE job_id = %s", (json.dumps(job_data), job_id))
+            cursor.execute("UPDATE jobdescriptions SET title = %s, company = %s, description = %s, required_skills = %s, application_deadline = %s, location = %s, salary = %s, highly_preferred_skills = %s, active = %s WHERE job_id = %s".format(
+                job_data["title"], job_data["company"], job_data["description"], job_data["required_skills"], job_data["application_deadline"], job_data["location"], job_data["salary"], job_data["highly_preferred_skills"], job_data["active"], job_id
+            ),)
             con.commit()
             logSQL(f"Job {job_id} updated successfully", "update_job")
     except psycopg2.Error as e:
@@ -2098,30 +2126,30 @@ def delete_feedbacks(match_id: int):
 
 if __name__ == "__main__":
     # add some dummy job data
-    job = Job(job_id=1, title="Software Engineer", company="Google", description="Software Engineer at Google", required_skills="Python, Java, C++", application_deadline="31122024", location="Mountain View, CA", salary=120000.00, highly_preferred_skills=["Python", "Java"], low_preferred_skills=["C++"], rating=4.5, active=True)
+    job = Job(job_id=1, title="Software Engineer", company="Google", description="Software Engineer at Google", required_skills="Python, Java, C++", application_deadline="31122024", location="Mountain View, CA", salary=120000.00, highly_preferred_skills=["Python", "Java"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=2, title="Data Scientist", company="Facebook", description="Data Scientist at Facebook", required_skills="Python, R, SQL", application_deadline="31122024", location="Menlo Park, CA", salary=130000.00, highly_preferred_skills=["Python", "R"], low_preferred_skills=["SQL"], rating=4.7, active=True)
+    job = Job(job_id=2, title="Data Scientist", company="Facebook", description="Data Scientist at Facebook", required_skills="Python, R, SQL", application_deadline="31122024", location="Menlo Park, CA", salary=130000.00, highly_preferred_skills=["Python", "R"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=3, title="Product Manager", company="Amazon", description="Product Manager at Amazon", required_skills="Product Management, Agile, Scrum", application_deadline="31122024", location="Seattle, WA", salary=140000.00, highly_preferred_skills=["Product Management", "Agile"], low_preferred_skills=["Scrum"], rating=4.8, active=True)
+    job = Job(job_id=3, title="Product Manager", company="Amazon", description="Product Manager at Amazon", required_skills="Product Management, Agile, Scrum", application_deadline="31122024", location="Seattle, WA", salary=140000.00, highly_preferred_skills=["Product Management", "Agile"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=4, title="Software Engineer", company="Microsoft", description="Software Engineer at Microsoft", required_skills="C#, .NET, Azure", application_deadline="31122024", location="Redmond, WA", salary=125000.00, highly_preferred_skills=["C#", ".NET"], low_preferred_skills=["Azure"], rating=4.6, active=True)
+    job = Job(job_id=4, title="Software Engineer", company="Microsoft", description="Software Engineer at Microsoft", required_skills="C#, .NET, Azure", application_deadline="31122024", location="Redmond, WA", salary=125000.00, highly_preferred_skills=["C#", ".NET"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=5, title="Data Analyst", company="Apple", description="Data Analyst at Apple", required_skills="Excel, SQL, Tableau", application_deadline="31122024", location="Cupertino, CA", salary=110000.00, highly_preferred_skills=["Excel", "SQL"], low_preferred_skills=["Tableau"], rating=4.4, active=True)
+    job = Job(job_id=5, title="Data Analyst", company="Apple", description="Data Analyst at Apple", required_skills="Excel, SQL, Tableau", application_deadline="31122024", location="Cupertino, CA", salary=110000.00, highly_preferred_skills=["Excel", "SQL"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=6, title="Product Designer", company="Netflix", description="Product Designer at Netflix", required_skills="UI/UX Design, Figma, Sketch", application_deadline="31122024", location="Los Gatos, CA", salary=115000.00, highly_preferred_skills=["UI/UX Design", "Figma"], low_preferred_skills=["Sketch"], rating=4.3, active=True)
+    job = Job(job_id=6, title="Product Designer", company="Netflix", description="Product Designer at Netflix", required_skills="UI/UX Design, Figma, Sketch", application_deadline="31122024", location="Los Gatos, CA", salary=115000.00, highly_preferred_skills=["UI/UX Design", "Figma"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=7, title="Software Engineer", company="Uber", description="Software Engineer at Uber", required_skills="Java, Kotlin, Android", application_deadline="31122024", location="San Francisco, CA", salary=130000.00, highly_preferred_skills=["Java", "Kotlin"], low_preferred_skills=["Android"], rating=4.5, active=True)
+    job = Job(job_id=7, title="Software Engineer", company="Uber", description="Software Engineer at Uber", required_skills="Java, Kotlin, Android", application_deadline="31122024", location="San Francisco, CA", salary=130000.00, highly_preferred_skills=["Java", "Kotlin"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=8, title="Data Scientist", company="Airbnb", description="Data Scientist at Airbnb", required_skills="Python, R, SQL", application_deadline="31122024", location="San Francisco, CA", salary=135000.00, highly_preferred_skills=["Python", "R"], low_preferred_skills=["SQL"], rating=4.7, active=True)
+    job = Job(job_id=8, title="Data Scientist", company="Airbnb", description="Data Scientist at Airbnb", required_skills="Python, R, SQL", application_deadline="31122024", location="San Francisco, CA", salary=135000.00, highly_preferred_skills=["Python", "R"], active=True)
     upload_job_data(job)
 
-    job = Job(job_id=9, title="Product Manager", company="Salesforce", description="Product Manager at Salesforce", required_skills="Product Management, Agile, Scrum", application_deadline="31122024", location="San Francisco, CA", salary=140000.00, highly_preferred_skills=["Product Management", "Agile"], low_preferred_skills=["Scrum"], rating=4.8, active=True)
+    job = Job(job_id=9, title="Product Manager", company="Salesforce", description="Product Manager at Salesforce", required_skills="Product Management, Agile, Scrum", application_deadline="31122024", location="San Francisco, CA", salary=140000.00, highly_preferred_skills=["Product Management", "Agile"], active=True)
     upload_job_data(job)
     print_jobs()
