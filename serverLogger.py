@@ -9,12 +9,17 @@ class Logger:
 
     @staticmethod
     def initialize():
+        print("Initializing Logger")
         if not os.path.exists(Logger.logFolder):
             os.makedirs(Logger.logFolder)
+            print("Created Logs Folder")
         if not os.path.exists(Logger.compressed):
             os.makedirs(Logger.compressed)
+            print("Created Compressed Folder")
         if not os.path.exists(Logger.decompressed):
             os.makedirs(Logger.decompressed)
+            print("Created Decompressed Folder")
+        
 
     @classmethod
     def log(self, type, message, func, level):
