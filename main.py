@@ -43,6 +43,8 @@ handler = Mangum(app)
 
 # Initialize database connection
 Database.initialize()
+# Initialize logger
+Logger.initialize()
 
 
 @app.get("/", tags=["Root"])

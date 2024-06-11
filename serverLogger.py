@@ -7,6 +7,15 @@ class Logger:
     compressed = "Logs/Compressed/"
     decompressed = "Logs/Decompressed/"
 
+    @staticmethod
+    def initialize():
+        if not os.path.exists(Logger.logFolder):
+            os.makedirs(Logger.logFolder)
+        if not os.path.exists(Logger.compressed):
+            os.makedirs(Logger.compressed)
+        if not os.path.exists(Logger.decompressed):
+            os.makedirs(Logger.decompressed)
+
     @classmethod
     def log(self, type, message, func, level):
         with open(self.logFolder + "/logs" + datetime.datetime.strftime(datetime.date.today(), "%d-%m-%Y") + ".txt", "a+") as logFile:
