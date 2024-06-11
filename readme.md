@@ -2,6 +2,7 @@
 
 ## Tables of Contents
 - [Introduction](#introduction)
+- [Resources](#resources)
 - [Key Functionalities](#key-functionalities)
 - [Documentation](#documentation)
 - [What's Next for this API](#whats-next-for-this-api)
@@ -10,6 +11,11 @@
 
 ## Introduction
 The Resume Grader API is an advanced, feature-rich platform designed to enhance the recruitment process through automation and intelligent data handling. This API offers a suite of tools to streamline the management of job applications and resumes, making it invaluable for HR professionals, recruitment agencies, and any organization involved in hiring.
+
+## Resources
+- [Endpoints](/endpoints.md)
+- [Documentation](https://resumegraderapi.onrender.com/docs)
+- [Documentation Redoc](https://resumegraderapi.onrender.com/redoc)
 
 ### Key Functionalities
 
@@ -219,6 +225,83 @@ By focusing on these detailed improvements, the API will become more secure, eff
 - [Version 1.0.0](#version-100)
 - [Version 2.0.0](#version-200)
 - [version 2.5.0](#version-250)
+- [version 3.0.0](#version-300)
+
+# Version 3.0.0
+### Introduction
+
+Version 3.0.0 of the Resume Grader API brings significant enhancements, refactoring, and new functionalities. This update focuses on improving the robustness, maintainability, and security of the API. It introduces static utility classes, comprehensive validation, new request models, and improved logging mechanisms. Here's a detailed look at the changes and improvements.
+
+### Key Updates
+
+#### 1. Refactoring and Code Organization
+
+**Static Utility Classes**
+
+- **OpenAI Utility**: This class handles interactions with OpenAI's API for tasks such as grading resumes and extracting structured data from resume texts. The class is designed to be reusable and easily configurable.
+- **File Utility**: A static class for managing file operations, including saving temporary files and extracting text from PDF, DOCX, and TXT files. This utility ensures efficient file handling and text extraction.
+
+**Services for Complex Tasks**
+
+Introduced service classes to handle complex operations, such as grading multiple resumes and processing file uploads. These services encapsulate business logic, making the codebase more modular and maintainable.
+
+#### 2. New Endpoints and Functionalities
+
+**File Upload and Processing**
+
+- `/upload/resume`: Endpoint to upload a resume file (PDF, DOCX, TXT) or a long string. Uses OpenAI to convert the resume content into a structured JSON format.
+- `/upload/job_description`: Similar to the resume upload, this endpoint handles job description files and extracts structured data using OpenAI.
+
+**Resume and Job Description Extraction**
+
+- `/extract/resume`: Converts uploaded resume files into a structured JSON format.
+- `/extract/job_description`: Converts uploaded job description files into a structured JSON format.
+
+**Grading**
+
+- `/grade/job/{job_id}`: Grades all resumes attached to a specific job using OpenAI's grading capabilities. This endpoint processes resumes in parallel to optimize performance.
+
+**Match Retrieval**
+
+- `/matches/{uid}`: Retrieves all matches (job applications) associated with a specific user ID. This endpoint ensures that users can track their application statuses efficiently.
+
+#### 3. Data Models and Validation
+
+**Comprehensive Data Models**
+
+- **User, Resume, Job, Match, Feedback**: Detailed data models using Pydantic to ensure data integrity and validation.
+- **Request Models**: Separate request models for operations that require additional authentication or validation, such as updating user privileges.
+
+**Validation**
+
+- **Validation Class**: Static methods to validate email, phone numbers, dates, and the integrity of User, Resume, Job, Match, and Feedback objects. Ensures that all data entering the system adheres to expected formats and constraints.
+
+#### 4. Logging and Error Handling
+
+**Logging**
+
+- **Logger Class**: Centralized logging for different parts of the application (factories, database, validation, services). Ensures consistent and detailed logging across the API.
+- **Log File Management**: Endpoints to compress and decompress log files for efficient storage and retrieval. This includes:
+    - `/logs/compress`: Compresses and downloads logs.
+    - `/logs/decompress`: Decompresses and downloads logs.
+
+#### 5. Database and Table Structures
+
+**Updated Table Structures**
+
+- **Users Table**: Enhanced to include detailed user information and roles.
+- **Resumes Table**: Stores structured resume data, including skills, experience, and education in JSONB format.
+- **JobDescriptions Table**: Stores job details with structured required skills and application deadlines.
+- **Matches Table**: Tracks job applications and their statuses.
+- **Feedback Table**: Stores feedback on job applications.
+
+#### 6. Removed Endpoints
+
+Certain endpoints that were deemed redundant or unnecessary were removed to streamline the API. These changes ensure that the API remains efficient and maintainable.
+
+### Conclusion
+
+Version 3.0.0 of the Resume Grader API represents a substantial upgrade, introducing new functionalities, improving existing features, and enhancing the overall structure and maintainability of the codebase. With static utility classes, comprehensive validation, robust logging, and efficient data handling, this version is well-equipped to meet the demands of modern recruitment processes.
 
 # Version 2.5.0
 
