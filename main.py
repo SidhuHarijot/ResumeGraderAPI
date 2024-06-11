@@ -41,10 +41,11 @@ app.add_middleware(
 
 handler = Mangum(app)
 
-# Initialize database connection
-Database.initialize()
+
 # Initialize logger
 Logger.initialize()
+# Initialize database connection
+Database.initialize()
 
 
 @app.get("/", tags=["Root"])
