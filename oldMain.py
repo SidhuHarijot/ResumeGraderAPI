@@ -2173,7 +2173,7 @@ async def create_temp_file(content: str, suffix: str) -> UploadFile:
     return UploadFile(filename=temp_file_path.name, file=open(temp_file_path, 'rb'))
 
 async def main():
-    api_key = "sk-proj-vTimyvG8rF6ohy4WrrPQT3BlbkFJzGNzjSpHkSNehZbugITH"
+    
     uid = ""
 
     # Test with TXT file
