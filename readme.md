@@ -13,7 +13,7 @@
 The Resume Grader API is an advanced, feature-rich platform designed to enhance the recruitment process through automation and intelligent data handling. This API offers a suite of tools to streamline the management of job applications and resumes, making it invaluable for HR professionals, recruitment agencies, and any organization involved in hiring.
 
 ## Resources
-- [Endpoints](/endpoints.md)
+- [Endpoints](/Endpoints.md)
 - [Documentation](https://resumegraderapi.onrender.com/docs)
 - [Documentation Redoc](https://resumegraderapi.onrender.com/redoc)
 
