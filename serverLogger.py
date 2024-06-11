@@ -50,7 +50,7 @@ class Logger:
                 continue
             if file == "Compressed" or file == "Decompressed":
                 continue
-            with open(self.logFolder + file, "rb") as logFile:
+            with open(self.logFolder + file, "rb+") as logFile:
                 compressed = zlib.compress(logFile.read())
                 with open(self.compressed + file, "wb+") as compressedFile:
                     compressedFile.write(compressed)
@@ -58,7 +58,7 @@ class Logger:
                 
     @classmethod
     def decompressLog(self, date):
-        with open(self.compressed + "logs" + date + ".txt", "rb") as compressedFile:
+        with open(self.compressed + "logs" + date + ".txt", "rb+") as compressedFile:
             decompressed = zlib.decompress(compressedFile.read())
             with open(self.decompressed + "logs" + date + ".txt", "wb+") as logFile:
                 logFile.write(decompressed)

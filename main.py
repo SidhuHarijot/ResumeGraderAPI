@@ -12,8 +12,34 @@ from requestmodels import *
 from services import *
 import datetime
 from factories import *
+from mangum import Mangum
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://localhost",
+    "http://localhost:3006",
+    "https://client-resume-upload-p9g0bmvaf-harijot-singhs-projects.vercel.app",
+    "https://client-resume-upload.vercel.app",
+    "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+handler = Mangum(app)
 
 # Initialize database connection
 Database.initialize()
