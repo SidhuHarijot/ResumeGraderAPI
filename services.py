@@ -32,7 +32,7 @@ class JobService:
         job_data = json.loads(job_json)
 
         return Job(
-            job_id=0,
+            job_id=-1,
             title=job_data["Title"],
             company=job_data["Employer"],
             description=job_data["description"],

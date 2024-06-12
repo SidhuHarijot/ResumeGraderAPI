@@ -3,7 +3,7 @@ from typing import List, Optional
 import re
 
 
-NAME_PATTERN = re.compile(r'^.*[A-Za-z]+.*-\s+$', re.IGNORECASE)
+NAME_PATTERN = '^[a-zA-Z\s\-]+$'
 
 
 
@@ -54,7 +54,7 @@ class Name(BaseModel):
     def first_name_must_be_valid(cls, v):
         if len(v) < 2 or len(v) > 50:
             raise ValueError('First name must be between 2 and 50 characters')
-        if not NAME_PATTERN.match(v):
+        if re.match(NAME_PATTERN, v) is None:
             raise ValueError('First name contains invalid characters')
         return v
     
@@ -62,7 +62,7 @@ class Name(BaseModel):
     def last_name_must_be_valid(cls, v):
         if len(v) < 2 or len(v) > 50:
             raise ValueError('Last name must be between 2 and 50 characters')
-        if not NAME_PATTERN.match(v):
+        if re.match(NAME_PATTERN, v) is None:
             raise ValueError('Last name contains invalid characters')
         return v
     
@@ -131,12 +131,3 @@ class User(BaseModel):
     phone_number: str = Field(..., description="Phone number of the user. Format: XX-XXXXXXXXXX")
     email: str = Field(..., description="Email of the user.")
 
-
-if __name__ == "__main__":
-    name = Name(first_name="John", last_name="Doe")
-    print(name)
-    name = str(name)
-    print(name)
-    name = Name.from_string(name)
-    print(name)
-    print(type(name))

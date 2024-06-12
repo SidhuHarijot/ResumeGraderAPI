@@ -507,3 +507,188 @@ async def grade_job(request: GradeJobRequest):
     except Exception as e:
         logError(f"Error in grade_job: {str(e)}", "grade_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+if __name__ == "__main__":
+    job1 = Job(job_id=-1, 
+               title="Software Engineer", 
+               company="Google", 
+               description="About the job\
+                            Our Security team works to create and maintain the safest operating environment for Google's users and developers. Security Engineers work with network equipment and actively monitor our systems for attacks and intrusions. In this role, you will also work with software engineers to proactively identify and fix security flaws and vulnerabilities.\
+                            The Off the Shelf (OTS) Hardware Security team focuses on securing the off-the-shelf hardware/firmware used by Cloud products. We work with a wide range of other external vendors, internal teams, and industry bodies to protect devices against all hardware and firmware security threats.\
+                            OTS Hardware Security team cares deeply about protecting the hardware/firmware used by Google Cloud products so that the upper layers of the stack can consider it trustworthy.\
+                            Google Cloud accelerates every organization’s ability to digitally transform its business and industry. We deliver enterprise-grade solutions that leverage Google’s cutting-edge technology, and tools that help developers build more sustainably. Customers in more than 200 countries and territories turn to Google Cloud as their trusted partner to enable growth and solve their most critical business problems.\
+                            Responsibilities\
+                            Identify business critical hardware/firmware devices within Cloud for team review. Perform in-depth and holistic hardware and firmware security review of critical business devices (e.g., Hardware Security Modules, Servers, Switches, Solid State Drives).\
+                            Write detailed threat models and reports to support and augment reviews. Present the risk findings and risk mitigation recommendations to technical and organizational leadership across different organizations.\
+                            Inform vendors of the hardware and firmware vulnerabilities found in their devices. Partner with vendor and internal teams in order to effectively mitigate identified risks.\
+                            Partner with device vendors to advocate for necessary design changes to hardware and firmware. Design changes due to risk findings both internally and to the vendor.\
+                            Collaborate with team members to come up with new attack scenarios, mitigation, vendor collaboration strategies, and to ensure consistency in team approach and methodology.", 
+                required_skills=["Python", "Java", "C++"], 
+                application_deadline=Date(day=31, month=6, year=2024), 
+                location="Mountain View, CA", 
+                salary=120000.0, 
+                job_type="FULL", 
+                active=True)
+    JobDatabase.create_job(job1)
+
+    job2 = Job(job_id=-1,
+                title="Data Scientist",
+                company="Facebook",
+                description="About the job\
+                             Facebook's mission is to give people the power to build community and bring the world closer together. Through our family of apps and services, we're building a different kind of company that connects billions of people around the world, gives them ways to share what matters most to them, and helps bring people closer together. Whether we're creating new products or helping a small business expand its reach, people at Facebook are builders at heart. Our global teams are constantly iterating, solving problems, and working together to empower people around the world to build community and connect in meaningful ways. Together, we can help people build stronger communities — we're just getting started.\
+                             Responsibilities\
+                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
+                             Build and prototype analysis pipelines iteratively to provide insights at scale. Develop comprehensive understanding of Facebook data structures and metrics, advocating for changes where needed for both products development and business insights.\
+                             Interact cross-functionally with a wide variety of people and teams. Work closely with data engineers to build data sets that are easy to understand and drive key product and business decisions.\
+                             Minimum Qualifications\
+                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
+                required_skills=["Python", "SQL", "Data Visualization"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Menlo Park, CA",
+                salary=130000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job2)
+
+    job3 = Job(job_id=-1,
+                title="Product Manager",
+                company="Amazon",
+                description="About the job\
+                             Amazon is looking for a talented, smart, and enthusiastic Product Manager to help us revolutionize the way customers shop online. We are looking for a Product Manager to drive the vision, roadmap, and execution of our product. You will work closely with a high-energy team of engineers, designers, and data scientists to drive product development from conception to launch.\
+                             Responsibilities\
+                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
+                             Work with cross-functional teams to launch your product.\
+                             Minimum Qualifications\
+                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
+                required_skills=["Product Management", "SQL", "Data Visualization"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Seattle, WA",
+                salary=125000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job3)
+
+    job4 = Job(job_id=-1,
+                title="Software Engineer",
+                company="Microsoft",
+                description="About the job\
+                             Microsoft is on a mission to empower every person and every organization on the planet to achieve more. Our culture is centered on embracing a growth mindset, a theme of inspiring excellence, and encouraging teams and leaders to bring their best each day. In doing so, we create life-changing innovations that impact billions of lives around the world. You can help us to achieve our mission.\
+                             Responsibilities\
+                             Design and develop software for the next generation of Microsoft products.\
+                             Minimum Qualifications\
+                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
+                required_skills=["Python", "Java", "C++"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Redmond, WA",
+                salary=120000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job4)
+
+    job5 = Job(job_id=-1,
+                title="Data Analyst",
+                company="Apple",
+                description="About the job\
+                             Apple is a place where extraordinary people gather to do their best work. Together we craft products and experiences people once couldn’t have imagined — and now can’t imagine living without. If you’re excited by the idea of making a real impact, and joining a team where we pride ourselves in being one of the most diverse and inclusive companies in the world, a career with Apple might be your dream job.\
+                             Responsibilities\
+                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
+                             Minimum Qualifications\
+                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools.",
+                required_skills=["SQL", "Data Visualization"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Cupertino, CA",
+                salary=125000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job5)
+
+    job6 = Job(job_id=-1,
+                title="Product Manager",
+                company="Google",
+                description="About the job\
+                             Google's mission is to organize the world's information and make it universally accessible and useful. Our Hardware team researches, designs, and develops new technologies and hardware to make our user's interaction with computing faster, more powerful, and seamless.\
+                             Responsibilities\
+                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
+                             Work with cross-functional teams to launch your product.\
+                             Minimum Qualifications\
+                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools.",
+                required_skills=["Product Management", "SQL", "Data Visualization"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Mountain View, CA",
+                salary=130000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job6)
+
+    job7 = Job(job_id=-1,
+                title="Software Engineer",
+                company="Facebook",
+                description="About the job\
+                             Facebook's mission is to give people the power to build community and bring the world closer together. Through our family of apps and services, we're building a different kind of company that connects billions of people around the world, gives them ways to share what matters most to them, and helps bring people closer together. Whether we're creating new products or helping a small business expand its reach, people at Facebook are builders at heart. Our global teams are constantly iterating, solving problems, and working together to empower people around the world to build community and connect in meaningful ways. Together, we can help people build stronger communities — we're just getting started.\
+                             Responsibilities\
+                             Design and develop software for the next generation of Facebook products.\
+                             Minimum Qualifications\
+                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
+                required_skills=["Python", "Java", "C++"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Menlo Park, CA",
+                salary=120000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job7)
+
+    job8 = Job(job_id=-1,
+                title="Data Scientist",
+                company="Amazon",
+                description="About the job\
+                             Amazon is looking for a talented, smart, and enthusiastic Data Scientist to help us revolutionize the way customers shop online. We are looking for a Data Scientist to drive the vision, roadmap, and execution of our product. You will work closely with a high-energy team of engineers, designers, and data scientists to drive product development from conception to launch.\
+                             Responsibilities\
+                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
+                             Build and prototype analysis pipelines iteratively to provide insights at scale. Develop comprehensive understanding of Amazon data structures and metrics, advocating for changes where needed for both products development and business insights.\
+                             Interact cross-functionally with a wide variety of people and teams. Work closely with data engineers to build data sets that are easy to understand and drive key product and business decisions.\
+                             Minimum Qualifications\
+                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
+                required_skills=["Python", "SQL", "Data Visualization"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Seattle, WA",
+                salary=130000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job8)
+
+    job9 = Job(job_id=-1,
+                title="Product Manager",
+                company="Microsoft",
+                description="About the job\
+                             Microsoft is on a mission to empower every person and every organization on the planet to achieve more. Our culture is centered on embracing a growth mindset, a theme of inspiring excellence, and encouraging teams and leaders to bring their best each day. In doing so, we create life-changing innovations that impact billions of lives around the world. You can help us to achieve our mission.\
+                             Responsibilities\
+                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
+                             Work with cross-functional teams to launch your product.\
+                             Minimum Qualifications\
+                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
+                required_skills=["Product Management", "SQL", "Data Visualization"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Redmond, WA",
+                salary=125000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job9)
+
+    job10 = Job(job_id=-1,
+                title="Software Engineer",
+                company="Apple",
+                description="About the job\
+                             Apple is a place where extraordinary people gather to do their best work. Together we craft products and experiences people once couldn’t have imagined — and now can’t imagine living without. If you’re excited by the idea of making a real impact, and joining a team where we pride ourselves in being one of the most diverse and inclusive companies in the world, a career with Apple might be your dream job.\
+                             Responsibilities\
+                             Design and develop software for the next generation of Apple products.\
+                             Minimum Qualifications\
+                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
+                required_skills=["Python", "Java", "C++"],
+                application_deadline=Date(day=31, month=6, year=2024),
+                location="Cupertino, CA",
+                salary=120000.0,
+                job_type="FULL",
+                active=True)
+    JobDatabase.create_job(job10)
+

@@ -126,8 +126,20 @@ class JobFactory:
     @staticmethod
     def to_db_row(job: Job):
         try:
-            log(f"Converting Job object to db row: {job}", "to_db_row")
+            log(f"Converting Job object to db row: {job.title} at {job.company}", "to_db_row")
             deadline_str = str(job.application_deadline)
+            if job.job_id == -1:
+                return (
+                    job.title,
+                    job.company,
+                    job.description,
+                    job.required_skills,
+                    deadline_str,
+                    job.location,
+                    job.salary,
+                    job.job_type,
+                    job.active
+                )
             return (
                 job.job_id,
                 job.title,
@@ -141,13 +153,13 @@ class JobFactory:
                 job.active
             )
         except Exception as e:
-            logError(f"Error converting Job object to db row: {job}. Error: {str(e)}", "to_db_row")
+            logError(f"Error converting Job object to db row: {job.title} at {job.company}. Error: {str(e)}", "to_db_row")
             raise
 
     @staticmethod
     def from_json(data: dict) -> Job:
         try:
-            log(f"Creating Job object from JSON: {data}", "from_json")
+            log(f"Creating Job object from JSON: {data['title']} at {data['company']}", "from_json")
             return Job(
                 job_id=data['job_id'],
                 title=data['title'],
@@ -167,7 +179,7 @@ class JobFactory:
     @staticmethod
     def to_json(job: Job) -> dict:
         try:
-            log(f"Converting Job object to JSON: {job}", "to_json")
+            log(f"Converting Job object to JSON: {job.title} at {job.company}", "to_json")
             return {
                 'job_id': job.job_id,
                 'title': job.title,
