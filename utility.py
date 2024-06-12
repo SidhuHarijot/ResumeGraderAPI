@@ -13,7 +13,8 @@ load_dotenv()
 
 class OpenAIUtility:
     def __init__(self):
-        self.api_key = os.environ.get("OPENAI_API_KEY")
+        print([key for key in os.environ.keys()])
+        self.api_key = os.environ["OPENAI_API_KEY"]
         if not self.api_key:
             raise ValueError("OpenAI API key not found in environment variables.")
         openai.api_key = self.api_key

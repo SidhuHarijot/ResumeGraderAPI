@@ -79,14 +79,17 @@ class Logger:
     
     @classmethod
     def decompressLogs(self):
+        self.log("Main", "Decompressing Logs", "decompressLogs", "INFO")
         for file in os.listdir(self.compressed):
             with open(self.compressed + file, "rb") as compressedFile:
                 decompressed = zlib.decompress(compressedFile.read())
                 with open(self.decompressed + file, "wb+") as logFile:
                     logFile.write(decompressed)
+        self.log("Main", "Decompressed Logs", "decompressLogs", "INFO")
         with open(self.logFolder + "logs" + datetime.datetime.strftime(datetime.date.today(), "%d-%m-%Y") + ".txt", "r") as logFile:
             with open(self.decompressed + "logs" + datetime.datetime.strftime(datetime.date.today(), "%d-%m-%Y") + ".txt", "w+") as decompressedFile:
                 decompressedFile.write(logFile.read())
+        self.log("Main", "Copied Today's Logs", "decompressLogs", "INFO")
     
     @classmethod
     def clearDecompressedLogs(self):

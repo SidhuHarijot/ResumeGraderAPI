@@ -1,6 +1,6 @@
 fastapi
 mangum
-openai
+openai==0.28
 pypdf2
 docx2txt
 pydantic
