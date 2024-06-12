@@ -3,6 +3,7 @@ from serverLogger import Logger
 from typing import List
 import json
 
+
 def log(message, func):
     Logger.logFactories(message, func)
 
@@ -14,7 +15,7 @@ class UserFactory:
     @staticmethod
     def from_db_row(row) -> User:
         try:
-            log(f"Creating User object from row: {row}", "from_db_row")
+            log(f"Creating User object from row: {row}", "UserFactory.from_db_row")
             return User(
                 uid=row[0],
                 name=Name.from_string(row[1]),
@@ -25,13 +26,14 @@ class UserFactory:
                 email=row[6]
             )
         except Exception as e:
-            logError(f"Error creating User object from row: {row}. Error: {str(e)}", "from_db_row")
-            raise
+            logError(f"Error creating User object from row: {row}. Error: {str(e)}", "UserFactory.from_db_row")
+            return User(uid=row[0], name=Name(first_name="Error", last_name="Error"), dob=Date(day=1, month=1, year=1), is_owner=False, is_admin=False, phone_number="00-0000000000", email="error@database.com")
+            
 
     @staticmethod
     def to_db_row(user: User):
         try:
-            log(f"Converting User object to db row: {user}", "to_db_row")
+            log(f"Converting User object to db row: {user}", "UserFactory.to_db_row")
             dob_str = str(user.dob)
             return (
                 user.uid,
@@ -43,13 +45,13 @@ class UserFactory:
                 user.email
             )
         except Exception as e:
-            logError(f"Error converting User object to db row: {user}. Error: {str(e)}", "to_db_row")
+            logError(f"Error converting User object to db row: {user}. Error: {str(e)}", "UserFactory.to_db_row")
             raise
 
     @staticmethod
     def from_json(data: dict) -> User:
         try:
-            log(f"Creating User object from JSON: {data}", "from_json")
+            log(f"Creating User object from JSON: {data}", "UserFactory.from_json")
             return User(
                 uid=data['uid'],
                 name=Name.from_string(data['name']),
@@ -60,13 +62,13 @@ class UserFactory:
                 email=data['email']
             )
         except Exception as e:
-            logError(f"Error creating User object from JSON: {data}. Error: {str(e)}", "from_json")
+            logError(f"Error creating User object from JSON: {data}. Error: {str(e)}", "UserFactory.from_json")
             raise
 
     @staticmethod
     def to_json(user: User) -> dict:
         try:
-            log(f"Converting User object to JSON: {user}", "to_json")
+            log(f"Converting User object to JSON: {user}", "UserFactory.to_json")
             return {
                 'uid': user.uid,
                 'name': str(user.name),
@@ -77,25 +79,26 @@ class UserFactory:
                 'email': user.email
             }
         except Exception as e:
-            logError(f"Error converting User object to JSON: {user}. Error: {str(e)}", "to_json")
+            logError(f"Error converting User object to JSON: {user}. Error: {str(e)}", "UserFactory.to_json")
             raise
 
     @staticmethod
     def from_db_rows(rows: List[tuple]) -> List[User]:
         try:
-            log(f"Creating list of User objects from rows: {rows}", "from_db_rows")
+            log(f"Creating list of User objects from rows: {rows}", "UserFactory.from_db_rows")
+            result = []
             return [UserFactory.from_db_row(row) for row in rows]
         except Exception as e:
-            logError(f"Error creating list of User objects from rows. Error: {str(e)}", "from_db_rows")
+            logError(f"Error creating list of User objects from rows. Error: {str(e)}", "UserFactory.from_db_rows")
             raise
 
     @staticmethod
     def to_db_rows(users: List[User]) -> List[tuple]:
         try:
-            log(f"Converting list of User objects to db rows: {users}", "to_db_rows")
+            log(f"Converting list of User objects to db rows: {users}", "UserFactory.to_db_rows")
             return [UserFactory.to_db_row(user) for user in users]
         except Exception as e:
-            logError(f"Error converting list of User objects to db rows. Error: {str(e)}", "to_db_rows")
+            logError(f"Error converting list of User objects to db rows. Error: {str(e)}", "UserFactory.to_db_rows")
             raise
 
 
@@ -387,6 +390,20 @@ class ExperienceFactory:
                 company_name=data['company_name'],
                 description=data['description']
             )
+        except TypeError:
+            log("Data is not a dictionary. Converting to json dict.", "from_json")
+            try:
+                data = json.loads(data)
+                return Experience(
+                    start_date=Date.from_string(data['start_date']),
+                    end_date=Date.from_string(data['end_date']),
+                    title=data['title'],
+                    company_name=data['company_name'],
+                    description=data['description']
+                )
+            except Exception as e:
+                logError(f"Error creating Experience object from JSON: {data}. Error: {str(e)}", "from_json")
+                raise
         except Exception as e:
             logError(f"Error creating Experience object from JSON: {data}. Error: {str(e)}", "from_json")
             raise
@@ -464,10 +481,10 @@ class ResumeFactory:
         try:
             log(f"Creating Resume object from row: {row}", "from_db_row")
             return Resume(
-                uid=row[0],
-                skills=row[1],
-                experience=ExperienceFactory.build_from_json(json.loads(row[2])),
-                education=EducationFactory.build_from_json(json.loads(row[3]))
+                uid=row[1],
+                skills=row[2],
+                experience=ExperienceFactory.build_from_json(row[3]),
+                education=EducationFactory.build_from_json(row[4])
             )
         except Exception as e:
             logError(f"Error creating Resume object from row: {row}. Error: {str(e)}", "from_db_row")
@@ -492,6 +509,10 @@ class ResumeFactory:
     def from_json(data: dict) -> Resume:
         try:
             log(f"Creating Resume object from JSON: {data}", "from_json")
+            try:
+                uid = data['uid']
+            except TypeError:
+                data = json.loads(data)
             return Resume(
                 uid=data['uid'],
                 skills=data['skills'],

@@ -8,12 +8,16 @@ class Date(BaseModel):
 
     @field_validator('day')
     def day_must_be_valid(cls, v):
+        if v == 0:
+            return v
         if v < 1 or v > 31:
             raise ValueError('Day must be between 1 and 31')
         return v
 
     @field_validator('month')
     def month_must_be_valid(cls, v):
+        if v == 0:
+            return v
         if v < 1 or v > 12:
             raise ValueError('Month must be between 1 and 12')
         return v

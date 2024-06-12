@@ -16,14 +16,8 @@ class ResumeService:
 
         openai_util = OpenAIUtility()
         resume_json = openai_util.extract_resume_json(resume_text)
-        resume_data = json.loads(resume_json)
-        
-        return Resume(
-            uid=resume_data["uid"],
-            skills=resume_data["skills"],
-            experience=resume_data["experience"],
-            education=resume_data["education"]
-        )
+        resume_data = resume_json
+        return ResumeFactory.from_json(resume_data)
     
 class JobService:
     @staticmethod

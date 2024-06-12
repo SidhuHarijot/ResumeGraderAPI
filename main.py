@@ -184,8 +184,8 @@ async def update_user_privileges(request: UpdateUserPrivilegesRequest):
         logError(f"Error in update_user_privileges: {str(e)}", "update_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.post("/resumes/", response_model=Resume, tags=["Resumes"])
-async def create_resume(file: UploadFile = File(None), resume_text: Optional[str] = None):
+@app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
+async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Optional[str] = None):
     try:
         log("Creating a new resume", "create_resume")
         resume = ResumeService.process_resume(file, resume_text)
@@ -193,6 +193,7 @@ async def create_resume(file: UploadFile = File(None), resume_text: Optional[str
         if not Validation.validate_resume(resume):
             raise HTTPException(status_code=400, detail="Invalid resume data.")
         
+        resume.uid = uid
         ResumeDatabase.create_resume(resume)
         return resume
     except HTTPException as e:

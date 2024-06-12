@@ -13,7 +13,6 @@ load_dotenv()
 
 class OpenAIUtility:
     def __init__(self):
-        print([key for key in os.environ.keys()])
         self.api_key = os.environ["OPENAI_API_KEY"]
         if not self.api_key:
             raise ValueError("OpenAI API key not found in environment variables.")
@@ -37,13 +36,15 @@ class OpenAIUtility:
         system_message = """
         Convert the given resume data into a structured JSON format. Adhere strictly to this format:
         {
-            "name": ["FirstName", "LastName"],
-            "experience": [{"DDMMYYYY-DDMMYYYY": {["JOB TITLE", "COMPANY NAME"]]: "DESCRIPTION"}}, {"DDMMYYYY-DDMMYYYY": {["JOB TITLE", "COMPANY NAME"]: "DESCRIPTION"}}],
+            "uid": "-1",
+            "experience": [{"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "title": "Job Title", "company_name": "Employer Name", description: "Job Description"}, {"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "title": "Job Title", "company_name": "Employer Name", description: "Job Description"}],
             "skills": ["skill1", "skill2"],
-            "education": [{"DDMMYYYY-DDMMYYYY": {"INSTITUTION": "COURSE NAME"}}]
+            "education": [{"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "course_name": "Degree", "institution": "Institution Name"}, {"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "degree": "course_name", "institution": "Institution Name"}],
         }
-        Dates must be formatted as DDMMYYYY or 00000000 if no date is available.
+        Dates must be formatted as DDMMYYYY or 00000000 if no date is available. if no month or day is available, use 00. for example, if year is 2000 use 00002000.
         Ensure the phone number format includes a hyphen between the country code and the number.
+        insure the phones number is total 13 chars with first two country code then hyphen then rest of the number
+        uid will always be "-1" for new resumes.
         """
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",

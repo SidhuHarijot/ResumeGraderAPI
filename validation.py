@@ -1,12 +1,15 @@
 import email_validator
 from datamodels import User, Resume, Job, Match, Feedback
 from authorize import Authorize
+from database import UserDatabase
 
 class Validation:
     @staticmethod
     def validate_email(email: str) -> bool:
         try:
-            email_validator.validate_email(email, check_deliverability=False)
+            validated_email = email_validator.validate_email(email, check_deliverability=False)
+            if not validated_email.normalized == email:
+                return False
             return True
         except email_validator.EmailNotValidError:
             return False
@@ -18,12 +21,17 @@ class Validation:
         return False
 
     @staticmethod
-    def validate_date(date: str) -> bool:
-        return len(date) == 8 and date.isnumeric()
-
-    @staticmethod
     def validate_name(name: str) -> bool:
         return name.isalpha() and 2 <= len(name) <= 50
+
+    @staticmethod
+    def validate_uid(uid: str) -> bool:
+        try:
+            UserDatabase.get_user(uid)
+            return True
+        except ValueError:
+            return False
+
 
     @staticmethod
     def validate_user(user: User) -> bool:
@@ -35,7 +43,7 @@ class Validation:
             return False
         if not Validation.validate_name(user.name.last_name):
             return False
-        if not Validation.validate_date(user.dob):
+        if not Validation.validate_uid(user.uid):   
             return False
         return True
 
@@ -45,12 +53,6 @@ class Validation:
             return False
         for skill in resume.skills:
             if not isinstance(skill, str) or not skill:
-                return False
-        for experience in resume.experience:
-            if not Validation.validate_date(experience.start_date) or not Validation.validate_date(experience.end_date):
-                return False
-        for education in resume.education:
-            if not Validation.validate_date(education.start_date) or not Validation.validate_date(education.end_date):
                 return False
         return True
 
@@ -63,8 +65,6 @@ class Validation:
         if not job.description or not isinstance(job.description, str):
             return False
         if not all(isinstance(skill, str) for skill in job.required_skills):
-            return False
-        if not Validation.validate_date(job.application_deadline):
             return False
         if not isinstance(job.location, str) or not job.location:
             return False
