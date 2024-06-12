@@ -201,7 +201,6 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
         raise e
     except Exception as e:
         logError(f"Error in create_resume: {str(e)}", "create_resume")
-        raise e
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])

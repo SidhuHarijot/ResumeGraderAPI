@@ -1,5 +1,11 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
+import re
+
+
+NAME_PATTERN = re.compile(r'^.*[A-Za-z]+.*-\s+$', re.IGNORECASE)
+
+
 
 class Date(BaseModel):
     day: int = Field(..., description="Day of the date.")
@@ -48,16 +54,16 @@ class Name(BaseModel):
     def first_name_must_be_valid(cls, v):
         if len(v) < 2 or len(v) > 50:
             raise ValueError('First name must be between 2 and 50 characters')
-        if not v.isalpha():
-            raise ValueError('First name must be alphabetic')
+        if not NAME_PATTERN.match(v):
+            raise ValueError('First name contains invalid characters')
         return v
     
     @field_validator('last_name')
     def last_name_must_be_valid(cls, v):
         if len(v) < 2 or len(v) > 50:
             raise ValueError('Last name must be between 2 and 50 characters')
-        if not v.isalpha():
-            raise ValueError('Last name must be alphabetic')
+        if not NAME_PATTERN.match(v):
+            raise ValueError('Last name contains invalid characters')
         return v
     
     def __str__(self):
