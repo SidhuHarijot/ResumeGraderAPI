@@ -58,6 +58,25 @@ def logError(message, func):
 
 @app.get("/", tags=["Root"])
 async def read_root():
+    """Root endpoint for the API. Returns a welcome message and information about the API.
+    
+    Params:
+        None
+        
+    Returns:
+        dict: A dictionary containing the welcome message and API information.
+        Example:
+        {
+            "message": "Welcome to the API!",
+            "author": "BugSlayerz.HarijotSingh",
+            "description": "This is a FastAPI project backend for a job matching system.",
+            "Contact us": "sidhuharijot@gmail.com",
+            "version": "3.0"
+        }
+        
+    Raises:
+        HTTPException: If an error occurs while accessing the root endpoint.
+    """
     try:
         log("Accessing root endpoint", "read_root")
         return {"message": "Welcome to the API!", "author": "BugSlayerz.HarijotSingh", "description": "This is a FastAPI project backend for a job matching system.", "Contact us": "sidhuharijot@gmail.com", "version": "3.0"}
@@ -68,6 +87,41 @@ async def read_root():
 
 @app.post("/users/", response_model=User, tags=["Users"])
 async def create_user(request: CreateUserRequest):
+    """Creates a new user with the provided data.
+    
+    Params:
+        request (CreateUserRequest): The request object containing the user data.
+        Example:
+        {
+            "uid": "12345",
+            "first_name": "John",
+            "last_name": "Doe",
+            "dob": "DDMMYYYY",
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Returns:
+        User: The user object created.
+        Example:
+        {
+            "uid": "12345",
+            "name": {
+                "first_name": "John",
+                "last_name": "Doe"
+            },
+            "dob": "DDMMYYYY",
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the user.
+    """
     try:
         log("Creating a new user", "create_user")
         user = User(
@@ -94,6 +148,32 @@ async def create_user(request: CreateUserRequest):
 
 @app.get("/users/{uid}", response_model=User, tags=["Users"])
 async def get_user(uid: str):
+    """Retrieves a user with the provided UID.
+
+    Params:
+        uid (str): The UID of the user to retrieve.
+        Example:
+            "12345"
+
+    Returns:
+        User: The user object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "name": {
+                "first_name": "John",
+                "last_name": "Doe"
+            },
+            "dob": "DDMMYYYY",
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the user.
+    """
     try:
         log(f"Retrieving user with UID: {uid}", "get_user")
         return UserDatabase.get_user(uid)
@@ -103,6 +183,43 @@ async def get_user(uid: str):
 
 @app.put("/users/{uid}", response_model=User, tags=["Users"])
 async def update_user(uid: str, request: UpdateUserRequest):
+    """Updates a user with the provided data.
+    
+    Params:
+        uid (str): The UID of the user to update.
+        Example:
+            "12345"
+        request (UpdateUserRequest): The request object containing the updated user data.
+        Example:
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "dob": "DDMMYYYY",
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com",
+            "is_owner": false,
+            "is_admin": false
+        }
+
+    Returns:
+        User: The user object updated.
+        Example:
+        {
+            "uid": "12345",
+            "name": {
+                "first_name": "John",
+                "last_name": "Doe"
+            },
+            "dob": "DDMMYYYY",
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the user.
+    """
     try:
         log(f"Updating user with UID: {uid}", "update_user")
         user = UserDatabase.get_user(uid)
@@ -136,6 +253,23 @@ async def update_user(uid: str, request: UpdateUserRequest):
 
 @app.delete("/users/{uid}", tags=["Users"])
 async def delete_user(uid: str):
+    """Deletes a user with the provided UID.
+
+    Params:
+        uid (str): The UID of the user to delete.
+        Example:
+            "12345"
+
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "User deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the user.
+    """
     try:
         log(f"Deleting user with UID: {uid}", "delete_user")
         UserDatabase.delete_user(uid)
@@ -161,6 +295,27 @@ async def get_all_users(auth_uid: str):
 
 @app.post("/users/update_privileges", tags=["Users"])
 async def update_user_privileges(request: UpdateUserPrivilegesRequest):
+    """Updates the privileges of a user with the provided data.
+    
+    Params:
+        request (UpdateUserPrivilegesRequest): The request object containing the updated user privileges.
+        Example:
+        {
+            "target_uid": "12345",
+            "is_admin": false,
+            "is_owner": false
+        }
+
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "User privileges updated successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the user privileges.
+    """
     try:
         log("Updating user privileges", "update_user_privileges")
         if not (Authorize.checkAuth(request.auth_uid, "ADMIN") or Authorize.checkAuth(request.auth_uid, "OWNER")):
@@ -186,6 +341,45 @@ async def update_user_privileges(request: UpdateUserPrivilegesRequest):
 
 @app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Optional[str] = None):
+    """Creates a new resume with the provided data.
+    
+    Params:
+        uid (str): The UID of the user associated with the resume.
+        Example:
+            "12345"
+        file (UploadFile): The resume file to upload.
+        resume_text (str): The text content of the resume.
+        Example:
+            "John Doe\nSoftware Engineer\nSkills: Python, Java, SQL\nExperience: 2 years\nEducation: Bachelor's in Computer Science"
+
+    Returns:
+        Resume: The resume object created.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the resume.
+    """
     try:
         log("Creating a new resume", "create_resume")
         resume = ResumeService.process_resume(file, resume_text)
@@ -205,6 +399,41 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def get_resume(uid: str):
+    """Retrieves a resume with the provided UID.
+    
+    Params:
+        uid (str): The UID of the resume to retrieve.
+        Example:
+            "12345"
+            
+    Returns:
+        Resume: The resume object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the resume.
+    """
     try:
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         return ResumeDatabase.get_resume(uid)
@@ -214,6 +443,64 @@ async def get_resume(uid: str):
 
 @app.put("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def update_resume(uid: str, resume: Resume):
+    """Updates a resume with the provided data.
+    
+    Params:
+        uid (str): The UID of the resume to update.
+        Example:
+            "12345"
+        resume (Resume): The resume object containing the updated data.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Returns:
+        Resume: The resume object updated.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date": "DDMMYYYY",
+                    "end_date": "DDMMYYYY",
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the resume.
+    """
     try:
         log(f"Updating resume with UID: {uid}", "update_resume")
         if not Validation.validate_resume(resume):
@@ -231,6 +518,23 @@ async def update_resume(uid: str, resume: Resume):
 
 @app.delete("/resumes/{uid}", tags=["Resumes"])
 async def delete_resume(uid: str):
+    """Deletes a resume with the provided UID.
+
+    Params:
+        uid (str): The UID of the resume to delete.
+        Example:
+            "12345"
+
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Resume deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the resume.
+    """
     try:
         log(f"Deleting resume with UID: {uid}", "delete_resume")
         ResumeDatabase.delete_resume(uid)
@@ -241,6 +545,41 @@ async def delete_resume(uid: str):
 
 @app.get("/resumes/", response_model=List[Resume], tags=["Resumes"])
 async def get_all_resumes():
+    """Retrieves all resumes.
+
+    Params:
+        None
+
+    Returns:
+        List[Resume]: A list of all resumes.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "skills": ["Python", "Java", "SQL"],
+                "experience": [
+                    {
+                        "start_date": "DDMMYYYY",
+                        "end_date": "DDMMYYYY",
+                        "title": "Software Engineer",
+                        "company_name": "Company",
+                        "description": "Description of the experience."
+                    }
+                ],
+                "education": [
+                    {
+                        "start_date": "DDMMYYYY",
+                        "end_date": "DDMMYYYY",
+                        "institution": "Institution",
+                        "course_name": "Course Name"
+                    }
+                ]
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving all resumes.
+    """
     try:
         log("Retrieving all resumes", "get_all_resumes")
         return ResumeDatabase.get_all_resumes()
@@ -250,6 +589,33 @@ async def get_all_resumes():
 
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
 async def create_job(file: UploadFile = File(None), job_description_text: Optional[str] = None):
+    """Creates a new job with the provided data.
+    
+    Params:
+        file (UploadFile): The job description file to upload.
+        job_description_text (str): The text content of the job description.
+        Example:
+            "Software Engineer\nCompany: XYZ\nDescription: Job Description\nMust Haves: Python, Java, SQL"
+            
+    Returns:
+        Job: The job object created.
+        Example:
+        {
+            "job_id": 1,
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline": "DDMMYYYY",
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the job.
+    """
     try:
         log("Creating a new job", "create_job")
         job = JobService.process_job_description(file, job_description_text)
@@ -268,6 +634,32 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
 
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: int):
+    """Retrieves a job with the provided ID.
+    
+    Params:
+        job_id (int): The ID of the job to retrieve.
+        Example:
+            1
+            
+    Returns:
+        Job: The job object retrieved.
+        Example:
+        {
+            "job_id": 1,
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline": "DDMMYYYY",
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the job.
+    """
     try:
         log(f"Retrieving job with ID: {job_id}", "get_job")
         return JobDatabase.get_job(job_id)
@@ -507,188 +899,4 @@ async def grade_job(request: GradeJobRequest):
     except Exception as e:
         logError(f"Error in grade_job: {str(e)}", "grade_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-if __name__ == "__main__":
-    job1 = Job(job_id=-1, 
-               title="Software Engineer", 
-               company="Google", 
-               description="About the job\
-                            Our Security team works to create and maintain the safest operating environment for Google's users and developers. Security Engineers work with network equipment and actively monitor our systems for attacks and intrusions. In this role, you will also work with software engineers to proactively identify and fix security flaws and vulnerabilities.\
-                            The Off the Shelf (OTS) Hardware Security team focuses on securing the off-the-shelf hardware/firmware used by Cloud products. We work with a wide range of other external vendors, internal teams, and industry bodies to protect devices against all hardware and firmware security threats.\
-                            OTS Hardware Security team cares deeply about protecting the hardware/firmware used by Google Cloud products so that the upper layers of the stack can consider it trustworthy.\
-                            Google Cloud accelerates every organization’s ability to digitally transform its business and industry. We deliver enterprise-grade solutions that leverage Google’s cutting-edge technology, and tools that help developers build more sustainably. Customers in more than 200 countries and territories turn to Google Cloud as their trusted partner to enable growth and solve their most critical business problems.\
-                            Responsibilities\
-                            Identify business critical hardware/firmware devices within Cloud for team review. Perform in-depth and holistic hardware and firmware security review of critical business devices (e.g., Hardware Security Modules, Servers, Switches, Solid State Drives).\
-                            Write detailed threat models and reports to support and augment reviews. Present the risk findings and risk mitigation recommendations to technical and organizational leadership across different organizations.\
-                            Inform vendors of the hardware and firmware vulnerabilities found in their devices. Partner with vendor and internal teams in order to effectively mitigate identified risks.\
-                            Partner with device vendors to advocate for necessary design changes to hardware and firmware. Design changes due to risk findings both internally and to the vendor.\
-                            Collaborate with team members to come up with new attack scenarios, mitigation, vendor collaboration strategies, and to ensure consistency in team approach and methodology.", 
-                required_skills=["Python", "Java", "C++"], 
-                application_deadline=Date(day=31, month=6, year=2024), 
-                location="Mountain View, CA", 
-                salary=120000.0, 
-                job_type="FULL", 
-                active=True)
-    JobDatabase.create_job(job1)
-
-    job2 = Job(job_id=-1,
-                title="Data Scientist",
-                company="Facebook",
-                description="About the job\
-                             Facebook's mission is to give people the power to build community and bring the world closer together. Through our family of apps and services, we're building a different kind of company that connects billions of people around the world, gives them ways to share what matters most to them, and helps bring people closer together. Whether we're creating new products or helping a small business expand its reach, people at Facebook are builders at heart. Our global teams are constantly iterating, solving problems, and working together to empower people around the world to build community and connect in meaningful ways. Together, we can help people build stronger communities — we're just getting started.\
-                             Responsibilities\
-                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
-                             Build and prototype analysis pipelines iteratively to provide insights at scale. Develop comprehensive understanding of Facebook data structures and metrics, advocating for changes where needed for both products development and business insights.\
-                             Interact cross-functionally with a wide variety of people and teams. Work closely with data engineers to build data sets that are easy to understand and drive key product and business decisions.\
-                             Minimum Qualifications\
-                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Python", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Menlo Park, CA",
-                salary=130000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job2)
-
-    job3 = Job(job_id=-1,
-                title="Product Manager",
-                company="Amazon",
-                description="About the job\
-                             Amazon is looking for a talented, smart, and enthusiastic Product Manager to help us revolutionize the way customers shop online. We are looking for a Product Manager to drive the vision, roadmap, and execution of our product. You will work closely with a high-energy team of engineers, designers, and data scientists to drive product development from conception to launch.\
-                             Responsibilities\
-                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
-                             Work with cross-functional teams to launch your product.\
-                             Minimum Qualifications\
-                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Product Management", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Seattle, WA",
-                salary=125000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job3)
-
-    job4 = Job(job_id=-1,
-                title="Software Engineer",
-                company="Microsoft",
-                description="About the job\
-                             Microsoft is on a mission to empower every person and every organization on the planet to achieve more. Our culture is centered on embracing a growth mindset, a theme of inspiring excellence, and encouraging teams and leaders to bring their best each day. In doing so, we create life-changing innovations that impact billions of lives around the world. You can help us to achieve our mission.\
-                             Responsibilities\
-                             Design and develop software for the next generation of Microsoft products.\
-                             Minimum Qualifications\
-                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
-                required_skills=["Python", "Java", "C++"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Redmond, WA",
-                salary=120000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job4)
-
-    job5 = Job(job_id=-1,
-                title="Data Analyst",
-                company="Apple",
-                description="About the job\
-                             Apple is a place where extraordinary people gather to do their best work. Together we craft products and experiences people once couldn’t have imagined — and now can’t imagine living without. If you’re excited by the idea of making a real impact, and joining a team where we pride ourselves in being one of the most diverse and inclusive companies in the world, a career with Apple might be your dream job.\
-                             Responsibilities\
-                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
-                             Minimum Qualifications\
-                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools.",
-                required_skills=["SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Cupertino, CA",
-                salary=125000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job5)
-
-    job6 = Job(job_id=-1,
-                title="Product Manager",
-                company="Google",
-                description="About the job\
-                             Google's mission is to organize the world's information and make it universally accessible and useful. Our Hardware team researches, designs, and develops new technologies and hardware to make our user's interaction with computing faster, more powerful, and seamless.\
-                             Responsibilities\
-                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
-                             Work with cross-functional teams to launch your product.\
-                             Minimum Qualifications\
-                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools.",
-                required_skills=["Product Management", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Mountain View, CA",
-                salary=130000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job6)
-
-    job7 = Job(job_id=-1,
-                title="Software Engineer",
-                company="Facebook",
-                description="About the job\
-                             Facebook's mission is to give people the power to build community and bring the world closer together. Through our family of apps and services, we're building a different kind of company that connects billions of people around the world, gives them ways to share what matters most to them, and helps bring people closer together. Whether we're creating new products or helping a small business expand its reach, people at Facebook are builders at heart. Our global teams are constantly iterating, solving problems, and working together to empower people around the world to build community and connect in meaningful ways. Together, we can help people build stronger communities — we're just getting started.\
-                             Responsibilities\
-                             Design and develop software for the next generation of Facebook products.\
-                             Minimum Qualifications\
-                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
-                required_skills=["Python", "Java", "C++"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Menlo Park, CA",
-                salary=120000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job7)
-
-    job8 = Job(job_id=-1,
-                title="Data Scientist",
-                company="Amazon",
-                description="About the job\
-                             Amazon is looking for a talented, smart, and enthusiastic Data Scientist to help us revolutionize the way customers shop online. We are looking for a Data Scientist to drive the vision, roadmap, and execution of our product. You will work closely with a high-energy team of engineers, designers, and data scientists to drive product development from conception to launch.\
-                             Responsibilities\
-                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
-                             Build and prototype analysis pipelines iteratively to provide insights at scale. Develop comprehensive understanding of Amazon data structures and metrics, advocating for changes where needed for both products development and business insights.\
-                             Interact cross-functionally with a wide variety of people and teams. Work closely with data engineers to build data sets that are easy to understand and drive key product and business decisions.\
-                             Minimum Qualifications\
-                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Python", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Seattle, WA",
-                salary=130000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job8)
-
-    job9 = Job(job_id=-1,
-                title="Product Manager",
-                company="Microsoft",
-                description="About the job\
-                             Microsoft is on a mission to empower every person and every organization on the planet to achieve more. Our culture is centered on embracing a growth mindset, a theme of inspiring excellence, and encouraging teams and leaders to bring their best each day. In doing so, we create life-changing innovations that impact billions of lives around the world. You can help us to achieve our mission.\
-                             Responsibilities\
-                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
-                             Work with cross-functional teams to launch your product.\
-                             Minimum Qualifications\
-                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Product Management", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Redmond, WA",
-                salary=125000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job9)
-
-    job10 = Job(job_id=-1,
-                title="Software Engineer",
-                company="Apple",
-                description="About the job\
-                             Apple is a place where extraordinary people gather to do their best work. Together we craft products and experiences people once couldn’t have imagined — and now can’t imagine living without. If you’re excited by the idea of making a real impact, and joining a team where we pride ourselves in being one of the most diverse and inclusive companies in the world, a career with Apple might be your dream job.\
-                             Responsibilities\
-                             Design and develop software for the next generation of Apple products.\
-                             Minimum Qualifications\
-                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
-                required_skills=["Python", "Java", "C++"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Cupertino, CA",
-                salary=120000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job10)
 
