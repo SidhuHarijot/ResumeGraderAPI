@@ -1,9 +1,8 @@
 from utility import OpenAIUtility, FileUtility
-from datamodels import Resume, Job
+from datamodels import Resume, Job, Match
 import json
 from fastapi import UploadFile
 from factories import ResumeFactory
-import json
 from database import JobDatabase, ResumeDatabase, MatchDatabase
 
 class ResumeService:
@@ -51,25 +50,12 @@ class GradingService:
         openai_utility = OpenAIUtility()
         job = JobDatabase.get_job(job_id)
         job_description = job.description
-
-        resumes = ResumeDatabase.get_all_resumes()
-
+        matches = MatchDatabase.get_matches_for_job(job_id)
         graded_matches = []
-
-        for resume in resumes:
-            resume_json = ResumeFactory.to_json(resume)
-            resume_data = json.dumps(resume_json)
-            grade = openai_utility.grade_resume(job_description, resume_data, max_grade=100)
-            match = Match(
-                match_id=None,
-                uid=resume.uid,
-                job_id=job_id,
-                status='graded',
-                status_code=grade,
-                grade=grade,
-                selected_skills=resume.skills
-            )
-            MatchDatabase.create_match(match)
+        for match in matches:
+            resume = ResumeDatabase.get_resume(match.uid)
+            resume_text = resume.get_text()
+            grade = openai_utility.grade_resume_for_job(resume_text, job_description)
+            match.grade = grade
             graded_matches.append(match)
-
         return graded_matches
