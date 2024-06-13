@@ -159,7 +159,23 @@ async def get_all_users(auth_uid: str):
         logError(f"Error in get_all_users: {str(e)}", "get_all_users")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.post("/users/update_privileges", tags=["Users"])
+
+@app.get("/users/privileges/{uid}", response_model=str, tags=["Users"])
+async def get_user_privileges(uid: str):
+    try:
+        log(f"Retrieving user privileges for UID: {uid}", "get_user_privileges")
+        if Authorize.checkAuth(uid, "ADMIN"):
+            return "ADMIN"
+        elif Authorize.checkAuth(uid, "OWNER"):
+            return "OWNER"
+        else:
+            return "USER"
+    except Exception as e:
+        logError(f"Error in get_user_privileges: {str(e)}", "get_user_privileges")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/users/privileges", tags=["Users"])
 async def update_user_privileges(request: UpdateUserPrivilegesRequest):
     try:
         log("Updating user privileges", "update_user_privileges")
