@@ -164,10 +164,10 @@ async def get_all_users(auth_uid: str):
 async def get_user_privileges(uid: str):
     try:
         log(f"Retrieving user privileges for UID: {uid}", "get_user_privileges")
-        if Authorize.checkAuth(uid, "ADMIN"):
-            return "ADMIN"
-        elif Authorize.checkAuth(uid, "OWNER"):
+        if Authorize.checkAuth(uid, "OWNER"):
             return "OWNER"
+        elif Authorize.checkAuth(uid, "ADMIN"):
+            return "ADMIN"
         else:
             return "USER"
     except Exception as e:
