@@ -461,6 +461,18 @@ class MatchDatabase:
         except Exception as e:
             logError(f"An error occurred: {e}", "MatchDatabase.get_all_matches")
             raise
+    
+    def get_matches_for_job(job_id: int) -> List[Match]:
+        try:
+            log(f"Retrieving all matches for job {job_id}", "MatchDatabase.get_matches_for_job")
+            query = "SELECT * FROM matches WHERE job_id = %s"
+            results = Database.execute_query(query, (job_id,), fetch=True)
+            matches = MatchFactory.from_db_rows(results)
+            log(f"All matches for job {job_id} retrieved successfully", "MatchDatabase.get_matches_for_job")
+            return matches
+        except Exception as e:
+            logError(f"An error occurred: {e}", "MatchDatabase.get_matches_for_job")
+            raise
 # endregion
 
 # region FeedbackDatabase

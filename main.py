@@ -68,6 +68,54 @@ async def read_root():
 
 @app.post("/users/", response_model=User, tags=["Users"])
 async def create_user(request: CreateUserRequest):
+<<<<<<< Updated upstream
+=======
+    """Creates a new user with the provided data.
+    
+    Params:
+        request (CreateUserRequest): The request object containing the user data.
+        Example:
+        {
+            "uid": "12345",
+            "first_name": "John",
+            "last_name": "Doe",
+            "dob": 
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Returns:
+        User: The user object created.
+        Example:
+        {
+            "uid": "12345",
+            "name": {
+                "first_name": "John",
+                "last_name": "Doe"
+            },
+            "dob": 
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the user.
+    """
+>>>>>>> Stashed changes
     try:
         log("Creating a new user", "create_user")
         user = User(
@@ -94,6 +142,40 @@ async def create_user(request: CreateUserRequest):
 
 @app.get("/users/{uid}", response_model=User, tags=["Users"])
 async def get_user(uid: str):
+<<<<<<< Updated upstream
+=======
+    """Retrieves a user with the provided UID.
+
+    Params:
+        uid (str): The UID of the user to retrieve.
+        Example:
+            "12345"
+
+    Returns:
+        User: The user object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "name": {
+                "first_name": "John",
+                "last_name": "Doe"
+            },
+            "dob": 
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the user.
+    """
+>>>>>>> Stashed changes
     try:
         log(f"Retrieving user with UID: {uid}", "get_user")
         return UserDatabase.get_user(uid)
@@ -103,6 +185,56 @@ async def get_user(uid: str):
 
 @app.put("/users/{uid}", response_model=User, tags=["Users"])
 async def update_user(uid: str, request: UpdateUserRequest):
+<<<<<<< Updated upstream
+=======
+    """Updates a user with the provided data.
+    
+    Params:
+        uid (str): The UID of the user to update.
+        Example:
+            "12345"
+        request (UpdateUserRequest): The request object containing the updated user data.
+        Example:
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "dob": 
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com",
+            "is_owner": false,
+            "is_admin": false
+        }
+
+    Returns:
+        User: The user object updated.
+        Example:
+        {
+            "uid": "12345",
+            "name": {
+                "first_name": "John",
+                "last_name": "Doe"
+            },
+            "dob": 
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "is_owner": false,
+            "is_admin": false,
+            "phone_number": "00-1234567890",
+            "email": "abc@email.com"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the user.
+    """
+>>>>>>> Stashed changes
     try:
         log(f"Updating user with UID: {uid}", "update_user")
         user = UserDatabase.get_user(uid)
@@ -202,6 +334,68 @@ async def update_user_privileges(request: UpdateUserPrivilegesRequest):
 
 @app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Optional[str] = None):
+<<<<<<< Updated upstream
+=======
+    """Creates a new resume with the provided data.
+    
+    Params:
+        uid (str): The UID of the user associated with the resume.
+        Example:
+            "12345"
+        file (UploadFile): The resume file to upload.
+        resume_text (str): The text content of the resume.
+        Example:
+            "John Doe\nSoftware Engineer\nSkills: Python, Java, SQL\nExperience: 2 years\nEducation: Bachelor's in Computer Science"
+
+    Returns:
+        Resume: The resume object created.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the resume.
+    """
+>>>>>>> Stashed changes
     try:
         log("Creating a new resume", "create_resume")
         resume = ResumeService.process_resume(file, resume_text)
@@ -221,6 +415,64 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def get_resume(uid: str):
+<<<<<<< Updated upstream
+=======
+    """Retrieves a resume with the provided UID.
+    
+    Params:
+        uid (str): The UID of the resume to retrieve.
+        Example:
+            "12345"
+            
+    Returns:
+        Resume: The resume object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the resume.
+    """
+>>>>>>> Stashed changes
     try:
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         return ResumeDatabase.get_resume(uid)
@@ -230,6 +482,107 @@ async def get_resume(uid: str):
 
 @app.put("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def update_resume(uid: str, resume: Resume):
+<<<<<<< Updated upstream
+=======
+    """Updates a resume with the provided data.
+    
+    Params:
+        uid (str): The UID of the resume to update.
+        Example:
+            "12345"
+        resume (Resume): The resume object containing the updated data.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Returns:
+        Resume: The resume object updated.
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the resume.
+    """
+>>>>>>> Stashed changes
     try:
         log(f"Updating resume with UID: {uid}", "update_resume")
         if not Validation.validate_resume(resume):
@@ -257,6 +610,64 @@ async def delete_resume(uid: str):
 
 @app.get("/resumes/", response_model=List[Resume], tags=["Resumes"])
 async def get_all_resumes():
+<<<<<<< Updated upstream
+=======
+    """Retrieves all resumes.
+
+    Params:
+        None
+
+    Returns:
+        List[Resume]: A list of all resumes.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "skills": ["Python", "Java", "SQL"],
+                "experience": [
+                    {
+                        "start_date": 
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                        "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                        "title": "Software Engineer",
+                        "company_name": "Company",
+                        "description": "Description of the experience."
+                    }
+                ],
+                "education": [
+                    {
+                        "start_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                        "end_date":  
+                            {
+                                "day": 1,
+                                "month": 1,
+                                "year": 2000
+                            },
+                        "institution": "Institution",
+                        "course_name": "Course Name"
+                    }
+                ]
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving all resumes.
+    """
+>>>>>>> Stashed changes
     try:
         log("Retrieving all resumes", "get_all_resumes")
         return ResumeDatabase.get_all_resumes()
@@ -266,6 +677,41 @@ async def get_all_resumes():
 
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
 async def create_job(file: UploadFile = File(None), job_description_text: Optional[str] = None):
+<<<<<<< Updated upstream
+=======
+    """Creates a new job with the provided data.
+    
+    Params:
+        file (UploadFile): The job description file to upload.
+        job_description_text (str): The text content of the job description.
+        Example:
+            "Software Engineer\nCompany: XYZ\nDescription: Job Description\nMust Haves: Python, Java, SQL"
+            
+    Returns:
+        Job: The job object created.
+        Example:
+        {
+            "job_id": 1,
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline":  
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the job.
+    """
+>>>>>>> Stashed changes
     try:
         log("Creating a new job", "create_job")
         job = JobService.process_job_description(file, job_description_text)
@@ -284,6 +730,40 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
 
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: int):
+<<<<<<< Updated upstream
+=======
+    """Retrieves a job with the provided ID.
+    
+    Params:
+        job_id (int): The ID of the job to retrieve.
+        Example:
+            1
+            
+    Returns:
+        Job: The job object retrieved.
+        Example:
+        {
+            "job_id": 1,
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline":  
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the job.
+    """
+>>>>>>> Stashed changes
     try:
         log(f"Retrieving job with ID: {job_id}", "get_job")
         return JobDatabase.get_job(job_id)
@@ -293,6 +773,50 @@ async def get_job(job_id: int):
 
 @app.put("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def update_job(job_id: int, request: UpdateJobRequest):
+    """Updates a job with the provided data.
+    
+    Params:
+        job_id (int): The ID of the job to update.
+        Example:
+            1
+        request (UpdateJobRequest): The request object containing the updated job data.
+        Example:
+        {
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline": "01-01-2000",
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Returns:
+        Job: The job object updated.
+        Example:
+        {
+            "job_id": 1,
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline":  
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the job.
+    """
     try:
         log(f"Updating job with ID: {job_id}", "update_job")
         job = JobDatabase.get_job(job_id)
@@ -330,6 +854,23 @@ async def update_job(job_id: int, request: UpdateJobRequest):
 
 @app.delete("/jobs/{job_id}", tags=["Jobs"])
 async def delete_job(job_id: int):
+    """Deletes a job with the provided ID.
+    
+    Params:
+        job_id (int): The ID of the job to delete.
+        Example:
+            1
+            
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Job deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the job.
+    """
     try:
         log(f"Deleting job with ID: {job_id}", "delete_job")
         JobDatabase.delete_job(job_id)
@@ -340,6 +881,37 @@ async def delete_job(job_id: int):
 
 @app.get("/jobs/", response_model=List[Job], tags=["Jobs"])
 async def get_all_jobs():
+    """Retrieves all jobs.
+    
+    Params:
+        None
+        
+    Returns:
+        List[Job]: A list of all jobs.
+        Example:
+        [
+            {
+                "job_id": 1,
+                "title": "Software Engineer",
+                "company": "XYZ",
+                "description": "Job Description",
+                "required_skills": ["Python", "Java", "SQL"],
+                "application_deadline":  
+                    {
+                        "day": 1,
+                        "month": 1,
+                        "year": 2000
+                    },
+                "location": "Location",
+                "salary": 100000,
+                "job_type": "FULL",
+                "active": true
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving all jobs.
+    """
     try:
         log("Retrieving all jobs", "get_all_jobs")
         return JobDatabase.get_all_jobs()
@@ -349,6 +921,31 @@ async def get_all_jobs():
 
 @app.post("/matches/", response_model=Match, tags=["Matches"])
 async def create_match(match: Match):
+    """Creates a new match with the provided data.
+    
+    Params:
+        match (Match): The match object containing the match data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Returns:
+        Match: The match object created.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the match.
+    """
     try:
         log("Creating a new match", "create_match")
         if not Validation.validate_match(match):
@@ -365,6 +962,26 @@ async def create_match(match: Match):
 
 @app.get("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def get_match(match_id: int):
+    """Retrieves a match with the provided ID.
+    
+    Params:
+        match_id (int): The ID of the match to retrieve.
+        Example:
+            1
+            
+    Returns:
+        Match: The match object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the match.
+    """
     try:
         log(f"Retrieving match with ID: {match_id}", "get_match")
         return MatchDatabase.get_match(match_id)
@@ -374,6 +991,34 @@ async def get_match(match_id: int):
 
 @app.put("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def update_match(match_id: int, match: Match):
+    """Updates a match with the provided data.
+    
+    Params:
+        match_id (int): The ID of the match to update.
+        Example:
+            1
+        match (Match): The match object containing the updated data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Returns:
+        Match: The match object updated.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the match.
+    """
     try:
         log(f"Updating match with ID: {match_id}", "update_match")
         if not Validation.validate_match(match):
@@ -391,6 +1036,23 @@ async def update_match(match_id: int, match: Match):
 
 @app.delete("/matches/{match_id}", tags=["Matches"])
 async def delete_match(match_id: int):
+    """Deletes a match with the provided ID.
+    
+    Params:
+        match_id (int): The ID of the match to delete.
+        Example:
+            1
+            
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Match deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the match.
+    """
     try:
         log(f"Deleting match with ID: {match_id}", "delete_match")
         MatchDatabase.delete_match(match_id)
@@ -401,6 +1063,30 @@ async def delete_match(match_id: int):
 
 @app.post("/matches/uid", tags=["Matches"])
 async def get_matches_by_uid(request: GetMatchesRequest):
+    """Retrieves all matches for a user with the provided UID.
+    
+    Params:
+        request (GetMatchesRequest): The request object containing the UID of the user.
+        Example:
+        {
+            "uid": "12345"
+        }
+
+    Returns:
+        List[Match]: A list of all matches for the user.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "resume_id": 1,
+                "status": "PENDING"
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the matches.
+    """
     try:
         log(f"Retrieving matches for user UID: {request.uid}", "get_matches_by_uid")
         matches = MatchDatabase.get_all_matches()
@@ -412,6 +1098,26 @@ async def get_matches_by_uid(request: GetMatchesRequest):
 
 @app.get("/matches/", response_model=List[Match], tags=["Matches"])
 async def get_all_matches():
+    """Retrieves all matches.
+    
+    Params:
+        None
+        
+    Returns:
+        List[Match]: A list of all matches.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "resume_id": 1,
+                "status": "PENDING"
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving all matches.
+    """
     try:
         log("Retrieving all matches", "get_all_matches")
         return MatchDatabase.get_all_matches()
@@ -421,6 +1127,31 @@ async def get_all_matches():
 
 @app.post("/feedback/", response_model=Feedback, tags=["Feedback"])
 async def create_feedback(feedback: Feedback):
+    """Creates a new feedback with the provided data.
+    
+    Params:
+        feedback (Feedback): The feedback object containing the feedback data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Returns:
+        Feedback: The feedback object created.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the feedback.
+    """
     try:
         log("Creating a new feedback", "create_feedback")
         if not Validation.validate_feedback(feedback):
@@ -437,6 +1168,26 @@ async def create_feedback(feedback: Feedback):
 
 @app.get("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def get_feedback(feedback_id: int):
+    """Retrieves a feedback with the provided ID.
+    
+    Params:
+        feedback_id (int): The ID of the feedback to retrieve.
+        Example:
+            1
+            
+    Returns:
+        Feedback: The feedback object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the feedback.
+    """
     try:
         log(f"Retrieving feedback with ID: {feedback_id}", "get_feedback")
         return FeedbackDatabase.get_feedback(feedback_id)
@@ -446,6 +1197,34 @@ async def get_feedback(feedback_id: int):
 
 @app.put("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def update_feedback(feedback_id: int, feedback: Feedback):
+    """Updates a feedback with the provided data.
+    
+    Params:
+        feedback_id (int): The ID of the feedback to update.
+        Example:
+            1
+        feedback (Feedback): The feedback object containing the updated data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Returns:
+        Feedback: The feedback object updated.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the feedback.
+    """
     try:
         log(f"Updating feedback with ID: {feedback_id}", "update_feedback")
         if not Validation.validate_feedback(feedback):
@@ -463,6 +1242,23 @@ async def update_feedback(feedback_id: int, feedback: Feedback):
 
 @app.delete("/feedback/{feedback_id}", tags=["Feedback"])
 async def delete_feedback(feedback_id: int):
+    """Deletes a feedback with the provided ID.
+    
+    Params:
+        feedback_id (int): The ID of the feedback to delete.
+        Example:
+            1
+            
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Feedback deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the feedback.
+    """
     try:
         log(f"Deleting feedback with ID: {feedback_id}", "delete_feedback")
         FeedbackDatabase.delete_feedback(feedback_id)
@@ -473,6 +1269,26 @@ async def delete_feedback(feedback_id: int):
 
 @app.get("/feedback/", response_model=List[Feedback], tags=["Feedback"])
 async def get_all_feedbacks():
+    """ Retrieves all feedbacks.
+    
+    Params:
+        None
+    
+    Returns:
+        List[Feedback]: A list of all feedbacks.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "rating": 5,
+                "comment": "Feedback comment."
+            }
+        ]
+    
+    Raises:
+        HTTPException: If an error occurs while retrieving all feedbacks.
+    """
     try:
         log("Retrieving all feedbacks", "get_all_feedbacks")
         return FeedbackDatabase.get_all_feedbacks()
@@ -482,6 +1298,17 @@ async def get_all_feedbacks():
 
 @app.get("/logs/download", tags=["Logs"])
 async def download_logs():
+    """Downloads the log files as a zip archive.
+    
+    Params:
+        None
+        
+    Returns:
+        FileResponse: The zip archive containing the log files.
+        
+    Raises:
+        HTTPException: If an error occurs while downloading the logs.
+    """
     log_folder = Path(Logger.logFolder)
     decompressed_folder = Path(Logger.decompressed)
 
@@ -506,6 +1333,21 @@ async def download_logs():
 
 @app.post("/logs/compress", tags=["Logs"])
 async def compress_logs():
+    """Compresses the log files into a zip archive.
+
+    Params:
+        None
+    
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Logs compressed successfully."
+        }
+    
+    Raises:
+        HTTPException: If an error occurs while compressing the logs.
+    """
     try:
         log("Compressing logs", "compress_logs")
         Logger.compressLogs()
@@ -516,10 +1358,34 @@ async def compress_logs():
 
 @app.post("/grade/job", tags=["Grading"])
 async def grade_job(request: GradeJobRequest):
+    """ Grades resumes for a job.
+    
+    Params:
+        request (GradeJobRequest): The request object containing the job ID.
+        Example:
+        {
+            "job_id": 1
+        }
+    
+    Returns:
+        List[Match]: A list of matches for the job.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "resume_id": 1,
+                "status": "PENDING"
+            }
+        ]
+    
+    Raises:
+        HTTPException: If an error occurs while grading the job.
+    """
     try:
         log("Grading job", "grade_job")
         matches = GradingService.grade_resumes_for_job(request.job_id)
-        return [MatchFactory.to_json(match) for match in matches]
+        return matches
     except Exception as e:
         logError(f"Error in grade_job: {str(e)}", "grade_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
