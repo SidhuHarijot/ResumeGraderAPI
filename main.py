@@ -68,8 +68,6 @@ async def read_root():
 
 @app.post("/users/", response_model=User, tags=["Users"])
 async def create_user(request: CreateUserRequest):
-<<<<<<< Updated upstream
-=======
     """Creates a new user with the provided data.
     
     Params:
@@ -115,7 +113,6 @@ async def create_user(request: CreateUserRequest):
     Raises:
         HTTPException: If an error occurs while creating the user.
     """
->>>>>>> Stashed changes
     try:
         log("Creating a new user", "create_user")
         user = User(
@@ -142,8 +139,6 @@ async def create_user(request: CreateUserRequest):
 
 @app.get("/users/{uid}", response_model=User, tags=["Users"])
 async def get_user(uid: str):
-<<<<<<< Updated upstream
-=======
     """Retrieves a user with the provided UID.
 
     Params:
@@ -175,7 +170,6 @@ async def get_user(uid: str):
     Raises:
         HTTPException: If an error occurs while retrieving the user.
     """
->>>>>>> Stashed changes
     try:
         log(f"Retrieving user with UID: {uid}", "get_user")
         return UserDatabase.get_user(uid)
@@ -185,8 +179,6 @@ async def get_user(uid: str):
 
 @app.put("/users/{uid}", response_model=User, tags=["Users"])
 async def update_user(uid: str, request: UpdateUserRequest):
-<<<<<<< Updated upstream
-=======
     """Updates a user with the provided data.
     
     Params:
@@ -234,7 +226,6 @@ async def update_user(uid: str, request: UpdateUserRequest):
     Raises:
         HTTPException: If an error occurs while updating the user.
     """
->>>>>>> Stashed changes
     try:
         log(f"Updating user with UID: {uid}", "update_user")
         user = UserDatabase.get_user(uid)
@@ -334,8 +325,6 @@ async def update_user_privileges(request: UpdateUserPrivilegesRequest):
 
 @app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Optional[str] = None):
-<<<<<<< Updated upstream
-=======
     """Creates a new resume with the provided data.
     
     Params:
@@ -395,7 +384,6 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
     Raises:
         HTTPException: If an error occurs while creating the resume.
     """
->>>>>>> Stashed changes
     try:
         log("Creating a new resume", "create_resume")
         resume = ResumeService.process_resume(file, resume_text)
@@ -415,8 +403,6 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def get_resume(uid: str):
-<<<<<<< Updated upstream
-=======
     """Retrieves a resume with the provided UID.
     
     Params:
@@ -472,7 +458,6 @@ async def get_resume(uid: str):
     Raises:
         HTTPException: If an error occurs while retrieving the resume.
     """
->>>>>>> Stashed changes
     try:
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         return ResumeDatabase.get_resume(uid)
@@ -482,8 +467,6 @@ async def get_resume(uid: str):
 
 @app.put("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def update_resume(uid: str, resume: Resume):
-<<<<<<< Updated upstream
-=======
     """Updates a resume with the provided data.
     
     Params:
@@ -582,7 +565,6 @@ async def update_resume(uid: str, resume: Resume):
     Raises:
         HTTPException: If an error occurs while updating the resume.
     """
->>>>>>> Stashed changes
     try:
         log(f"Updating resume with UID: {uid}", "update_resume")
         if not Validation.validate_resume(resume):
@@ -610,8 +592,6 @@ async def delete_resume(uid: str):
 
 @app.get("/resumes/", response_model=List[Resume], tags=["Resumes"])
 async def get_all_resumes():
-<<<<<<< Updated upstream
-=======
     """Retrieves all resumes.
 
     Params:
@@ -667,7 +647,6 @@ async def get_all_resumes():
     Raises:
         HTTPException: If an error occurs while retrieving all resumes.
     """
->>>>>>> Stashed changes
     try:
         log("Retrieving all resumes", "get_all_resumes")
         return ResumeDatabase.get_all_resumes()
@@ -677,8 +656,6 @@ async def get_all_resumes():
 
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
 async def create_job(file: UploadFile = File(None), job_description_text: Optional[str] = None):
-<<<<<<< Updated upstream
-=======
     """Creates a new job with the provided data.
     
     Params:
@@ -711,7 +688,6 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
     Raises:
         HTTPException: If an error occurs while creating the job.
     """
->>>>>>> Stashed changes
     try:
         log("Creating a new job", "create_job")
         job = JobService.process_job_description(file, job_description_text)
@@ -730,10 +706,8 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
 
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: int):
-<<<<<<< Updated upstream
-=======
     """Retrieves a job with the provided ID.
-    
+   / 
     Params:
         job_id (int): The ID of the job to retrieve.
         Example:
@@ -763,7 +737,6 @@ async def get_job(job_id: int):
     Raises:
         HTTPException: If an error occurs while retrieving the job.
     """
->>>>>>> Stashed changes
     try:
         log(f"Retrieving job with ID: {job_id}", "get_job")
         return JobDatabase.get_job(job_id)
