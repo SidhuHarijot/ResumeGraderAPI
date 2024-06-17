@@ -63,6 +63,7 @@ async def read_root():
         log("Accessing root endpoint", "read_root")
         return {"message": "Welcome to the API!", "author": "BugSlayerz.HarijotSingh", "description": "This is a FastAPI project backend for a job matching system.", "Contact us": "sidhuharijot@gmail.com", "version": "3.0"}
     except Exception as e:
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
         logError(f"Error in root endpoint: {error_message}", "read_root")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
