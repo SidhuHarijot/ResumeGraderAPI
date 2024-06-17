@@ -14,6 +14,7 @@ import datetime
 from factories import *
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
 app = FastAPI()
 
@@ -62,7 +63,7 @@ async def read_root():
         log("Accessing root endpoint", "read_root")
         return {"message": "Welcome to the API!", "author": "BugSlayerz.HarijotSingh", "description": "This is a FastAPI project backend for a job matching system.", "Contact us": "sidhuharijot@gmail.com", "version": "3.0"}
     except Exception as e:
-        logError(f"Error in root endpoint: {str(e)}", "read_root")
+        logError(f"Error in root endpoint: {error_message}", "read_root")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -119,8 +120,8 @@ async def create_user(request: CreateUserRequest):
             uid=request.uid,
             name=Name(first_name=request.first_name, last_name=request.last_name),
             dob=Date.from_string(request.dob),
-            is_owner=request.is_owner,
-            is_admin=request.is_admin,
+            is_owner=False,
+            is_admin=False,
             phone_number=request.phone_number,
             email=request.email
         )
@@ -131,10 +132,12 @@ async def create_user(request: CreateUserRequest):
         UserDatabase.create_user(user)
         return user
     except HTTPException as e:
-        logError(f"Validation error in create_user: {str(e)}", "create_user")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in create_user: {error_message}", "create_user")
         raise e
     except Exception as e:
-        logError(f"Error in create_user: {str(e)}", "create_user")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in create_user: {error_message}", "create_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/users/{uid}", response_model=User, tags=["Users"])
@@ -174,7 +177,8 @@ async def get_user(uid: str):
         log(f"Retrieving user with UID: {uid}", "get_user")
         return UserDatabase.get_user(uid)
     except Exception as e:
-        logError(f"Error in get_user: {str(e)}", "get_user")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_user: {error_message}", "get_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/users/{uid}", response_model=User, tags=["Users"])
@@ -251,10 +255,12 @@ async def update_user(uid: str, request: UpdateUserRequest):
         UserDatabase.update_user(user)
         return user
     except HTTPException as e:
-        logError(f"Validation error in update_user: {str(e)}", "update_user")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in update_user: {error_message}", "update_user")
         raise e
     except Exception as e:
-        logError(f"Error in update_user: {str(e)}", "update_user")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in update_user: {error_message}", "update_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/users/{uid}", tags=["Users"])
@@ -264,7 +270,8 @@ async def delete_user(uid: str):
         UserDatabase.delete_user(uid)
         return {"message": "User deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_user: {str(e)}", "delete_user")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in delete_user: {error_message}", "delete_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/users/", response_model=List[User], tags=["Users"])
@@ -276,10 +283,12 @@ async def get_all_users(auth_uid: str):
         
         return UserDatabase.get_all_users()
     except HTTPException as e:
-        logError(f"Authorization error in get_all_users: {str(e)}", "get_all_users")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Authorization error in get_all_users: {error_message}", "get_all_users")
         raise e
     except Exception as e:
-        logError(f"Error in get_all_users: {str(e)}", "get_all_users")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_all_users: {error_message}", "get_all_users")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -294,7 +303,8 @@ async def get_user_privileges(uid: str):
         else:
             return "USER"
     except Exception as e:
-        logError(f"Error in get_user_privileges: {str(e)}", "get_user_privileges")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_user_privileges: {error_message}", "get_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -317,10 +327,12 @@ async def update_user_privileges(request: UpdateUserPrivilegesRequest):
         UserDatabase.update_user(user)
         return {"message": "User privileges updated successfully."}
     except HTTPException as e:
-        logError(f"Authorization or validation error in update_user_privileges: {str(e)}", "update_user_privileges")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Authorization or validation error in update_user_privileges: {error_message}", "update_user_privileges")
         raise e
     except Exception as e:
-        logError(f"Error in update_user_privileges: {str(e)}", "update_user_privileges")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in update_user_privileges: {error_message}", "update_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -395,10 +407,12 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
         ResumeDatabase.create_resume(resume)
         return resume
     except HTTPException as e:
-        logError(f"Validation error in create_resume: {str(e)}", "create_resume")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in create_resume: {error_message}", "create_resume")
         raise e
     except Exception as e:
-        logError(f"Error in create_resume: {str(e)}", "create_resume")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in create_resume: {error_message}", "create_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -462,7 +476,8 @@ async def get_resume(uid: str):
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         return ResumeDatabase.get_resume(uid)
     except Exception as e:
-        logError(f"Error in get_resume: {str(e)}", "get_resume")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_resume: {error_message}", "get_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -574,10 +589,12 @@ async def update_resume(uid: str, resume: Resume):
         ResumeDatabase.update_resume(resume)
         return resume
     except HTTPException as e:
-        logError(f"Validation error in update_resume: {str(e)}", "update_resume")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in update_resume: {error_message}", "update_resume")
         raise e
     except Exception as e:
-        logError(f"Error in update_resume: {str(e)}", "update_resume")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in update_resume: {error_message}", "update_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/resumes/{uid}", tags=["Resumes"])
@@ -587,7 +604,8 @@ async def delete_resume(uid: str):
         ResumeDatabase.delete_resume(uid)
         return {"message": "Resume deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_resume: {str(e)}", "delete_resume")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in delete_resume: {error_message}", "delete_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/", response_model=List[Resume], tags=["Resumes"])
@@ -651,7 +669,8 @@ async def get_all_resumes():
         log("Retrieving all resumes", "get_all_resumes")
         return ResumeDatabase.get_all_resumes()
     except Exception as e:
-        logError(f"Error in get_all_resumes: {str(e)}", "get_all_resumes")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_all_resumes: {error_message}", "get_all_resumes")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
@@ -698,10 +717,12 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
         JobDatabase.create_job(job)
         return job
     except HTTPException as e:
-        logError(f"Validation error in create_job: {str(e)}", "create_job")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in create_job: {error_message}", "create_job")
         raise e
     except Exception as e:
-        logError(f"Error in create_job: {str(e)}", "create_job")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in create_job: {error_message}", "create_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
@@ -741,7 +762,8 @@ async def get_job(job_id: int):
         log(f"Retrieving job with ID: {job_id}", "get_job")
         return JobDatabase.get_job(job_id)
     except Exception as e:
-        logError(f"Error in get_job: {str(e)}", "get_job")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_job: {error_message}", "get_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
@@ -819,10 +841,12 @@ async def update_job(job_id: int, request: UpdateJobRequest):
         JobDatabase.update_job(job)
         return job
     except HTTPException as e:
-        logError(f"Validation error in update_job: {str(e)}", "update_job")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in update_job: {error_message}", "update_job")
         raise e
     except Exception as e:
-        logError(f"Error in update_job: {str(e)}", "update_job")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in update_job: {error_message}", "update_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/jobs/{job_id}", tags=["Jobs"])
@@ -849,7 +873,8 @@ async def delete_job(job_id: int):
         JobDatabase.delete_job(job_id)
         return {"message": "Job deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_job: {str(e)}", "delete_job")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in delete_job: {error_message}", "delete_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/jobs/", response_model=List[Job], tags=["Jobs"])
@@ -889,7 +914,8 @@ async def get_all_jobs():
         log("Retrieving all jobs", "get_all_jobs")
         return JobDatabase.get_all_jobs()
     except Exception as e:
-        logError(f"Error in get_all_jobs: {str(e)}", "get_all_jobs")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_all_jobs: {error_message}", "get_all_jobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/matches/", response_model=Match, tags=["Matches"])
@@ -927,10 +953,12 @@ async def create_match(match: Match):
         MatchDatabase.create_match(match)
         return match
     except HTTPException as e:
-        logError(f"Validation error in create_match: {str(e)}", "create_match")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in create_match: {error_message}", "create_match")
         raise e
     except Exception as e:
-        logError(f"Error in create_match: {str(e)}", "create_match")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in create_match: {error_message}", "create_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/matches/{match_id}", response_model=Match, tags=["Matches"])
@@ -959,7 +987,8 @@ async def get_match(match_id: int):
         log(f"Retrieving match with ID: {match_id}", "get_match")
         return MatchDatabase.get_match(match_id)
     except Exception as e:
-        logError(f"Error in get_match: {str(e)}", "get_match")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_match: {error_message}", "get_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/matches/{match_id}", response_model=Match, tags=["Matches"])
@@ -1001,10 +1030,12 @@ async def update_match(match_id: int, match: Match):
         MatchDatabase.update_match(match)
         return match
     except HTTPException as e:
-        logError(f"Validation error in update_match: {str(e)}", "update_match")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in update_match: {error_message}", "update_match")
         raise e
     except Exception as e:
-        logError(f"Error in update_match: {str(e)}", "update_match")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in update_match: {error_message}", "update_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/matches/{match_id}", tags=["Matches"])
@@ -1031,7 +1062,8 @@ async def delete_match(match_id: int):
         MatchDatabase.delete_match(match_id)
         return {"message": "Match deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_match: {str(e)}", "delete_match")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in delete_match: {error_message}", "delete_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/matches/uid", tags=["Matches"])
@@ -1066,7 +1098,8 @@ async def get_matches_by_uid(request: GetMatchesRequest):
         user_matches = [match for match in matches if match.uid == request.uid]
         return [MatchFactory.to_json(match) for match in user_matches]
     except Exception as e:
-        logError(f"Error in get_matches_by_uid: {str(e)}", "get_matches_by_uid")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_matches_by_uid: {error_message}", "get_matches_by_uid")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/matches/", response_model=List[Match], tags=["Matches"])
@@ -1095,7 +1128,8 @@ async def get_all_matches():
         log("Retrieving all matches", "get_all_matches")
         return MatchDatabase.get_all_matches()
     except Exception as e:
-        logError(f"Error in get_all_matches: {str(e)}", "get_all_matches")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_all_matches: {error_message}", "get_all_matches")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/feedback/", response_model=Feedback, tags=["Feedback"])
@@ -1133,10 +1167,12 @@ async def create_feedback(feedback: Feedback):
         FeedbackDatabase.create_feedback(feedback)
         return feedback
     except HTTPException as e:
-        logError(f"Validation error in create_feedback: {str(e)}", "create_feedback")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in create_feedback: {error_message}", "create_feedback")
         raise e
     except Exception as e:
-        logError(f"Error in create_feedback: {str(e)}", "create_feedback")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in create_feedback: {error_message}", "create_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
@@ -1165,7 +1201,8 @@ async def get_feedback(feedback_id: int):
         log(f"Retrieving feedback with ID: {feedback_id}", "get_feedback")
         return FeedbackDatabase.get_feedback(feedback_id)
     except Exception as e:
-        logError(f"Error in get_feedback: {str(e)}", "get_feedback")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_feedback: {error_message}", "get_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
@@ -1207,10 +1244,12 @@ async def update_feedback(feedback_id: int, feedback: Feedback):
         FeedbackDatabase.update_feedback(feedback)
         return feedback
     except HTTPException as e:
-        logError(f"Validation error in update_feedback: {str(e)}", "update_feedback")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Validation error in update_feedback: {error_message}", "update_feedback")
         raise e
     except Exception as e:
-        logError(f"Error in update_feedback: {str(e)}", "update_feedback")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in update_feedback: {error_message}", "update_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/feedback/{feedback_id}", tags=["Feedback"])
@@ -1237,7 +1276,8 @@ async def delete_feedback(feedback_id: int):
         FeedbackDatabase.delete_feedback(feedback_id)
         return {"message": "Feedback deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_feedback: {str(e)}", "delete_feedback")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in delete_feedback: {error_message}", "delete_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/feedback/", response_model=List[Feedback], tags=["Feedback"])
@@ -1266,7 +1306,8 @@ async def get_all_feedbacks():
         log("Retrieving all feedbacks", "get_all_feedbacks")
         return FeedbackDatabase.get_all_feedbacks()
     except Exception as e:
-        logError(f"Error in get_all_feedbacks: {str(e)}", "get_all_feedbacks")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in get_all_feedbacks: {error_message}", "get_all_feedbacks")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/logs/download", tags=["Logs"])
@@ -1296,7 +1337,8 @@ async def download_logs():
         Logger.clearDecompressedLogs()
         return FileResponse(str(zip_path), filename="logs.zip", media_type='application/zip')
     except Exception as e:
-        logError(f"Error in download_logs: {str(e)}", "download_logs")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in download_logs: {error_message}", "download_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
     finally:
         # Clean up decompressed log files
@@ -1326,7 +1368,8 @@ async def compress_logs():
         Logger.compressLogs()
         return {"message": "Logs compressed successfully."}
     except Exception as e:
-        logError(f"Error in compress_logs: {str(e)}", "compress_logs")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in compress_logs: {error_message}", "compress_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/grade/job", tags=["Grading"])
@@ -1360,190 +1403,19 @@ async def grade_job(request: GradeJobRequest):
         matches = GradingService.grade_resumes_for_job(request.job_id)
         return matches
     except Exception as e:
-        logError(f"Error in grade_job: {str(e)}", "grade_job")
+        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        logError(f"Error in grade_job: {error_message}", "grade_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 if __name__ == "__main__":
-    job1 = Job(job_id=-1, 
-               title="Software Engineer", 
-               company="Google", 
-               description="About the job\
-                            Our Security team works to create and maintain the safest operating environment for Google's users and developers. Security Engineers work with network equipment and actively monitor our systems for attacks and intrusions. In this role, you will also work with software engineers to proactively identify and fix security flaws and vulnerabilities.\
-                            The Off the Shelf (OTS) Hardware Security team focuses on securing the off-the-shelf hardware/firmware used by Cloud products. We work with a wide range of other external vendors, internal teams, and industry bodies to protect devices against all hardware and firmware security threats.\
-                            OTS Hardware Security team cares deeply about protecting the hardware/firmware used by Google Cloud products so that the upper layers of the stack can consider it trustworthy.\
-                            Google Cloud accelerates every organization’s ability to digitally transform its business and industry. We deliver enterprise-grade solutions that leverage Google’s cutting-edge technology, and tools that help developers build more sustainably. Customers in more than 200 countries and territories turn to Google Cloud as their trusted partner to enable growth and solve their most critical business problems.\
-                            Responsibilities\
-                            Identify business critical hardware/firmware devices within Cloud for team review. Perform in-depth and holistic hardware and firmware security review of critical business devices (e.g., Hardware Security Modules, Servers, Switches, Solid State Drives).\
-                            Write detailed threat models and reports to support and augment reviews. Present the risk findings and risk mitigation recommendations to technical and organizational leadership across different organizations.\
-                            Inform vendors of the hardware and firmware vulnerabilities found in their devices. Partner with vendor and internal teams in order to effectively mitigate identified risks.\
-                            Partner with device vendors to advocate for necessary design changes to hardware and firmware. Design changes due to risk findings both internally and to the vendor.\
-                            Collaborate with team members to come up with new attack scenarios, mitigation, vendor collaboration strategies, and to ensure consistency in team approach and methodology.", 
-                required_skills=["Python", "Java", "C++"], 
-                application_deadline=Date(day=31, month=6, year=2024), 
-                location="Mountain View, CA", 
-                salary=120000.0, 
-                job_type="FULL", 
-                active=True)
-    JobDatabase.create_job(job1)
-
-    job2 = Job(job_id=-1,
-                title="Data Scientist",
-                company="Facebook",
-                description="About the job\
-                             Facebook's mission is to give people the power to build community and bring the world closer together. Through our family of apps and services, we're building a different kind of company that connects billions of people around the world, gives them ways to share what matters most to them, and helps bring people closer together. Whether we're creating new products or helping a small business expand its reach, people at Facebook are builders at heart. Our global teams are constantly iterating, solving problems, and working together to empower people around the world to build community and connect in meaningful ways. Together, we can help people build stronger communities — we're just getting started.\
-                             Responsibilities\
-                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
-                             Build and prototype analysis pipelines iteratively to provide insights at scale. Develop comprehensive understanding of Facebook data structures and metrics, advocating for changes where needed for both products development and business insights.\
-                             Interact cross-functionally with a wide variety of people and teams. Work closely with data engineers to build data sets that are easy to understand and drive key product and business decisions.\
-                             Minimum Qualifications\
-                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Python", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Menlo Park, CA",
-                salary=130000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job2)
-
-    job3 = Job(job_id=-1,
-                title="Product Manager",
-                company="Amazon",
-                description="About the job\
-                             Amazon is looking for a talented, smart, and enthusiastic Product Manager to help us revolutionize the way customers shop online. We are looking for a Product Manager to drive the vision, roadmap, and execution of our product. You will work closely with a high-energy team of engineers, designers, and data scientists to drive product development from conception to launch.\
-                             Responsibilities\
-                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
-                             Work with cross-functional teams to launch your product.\
-                             Minimum Qualifications\
-                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Product Management", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Seattle, WA",
-                salary=125000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job3)
-
-    job4 = Job(job_id=-1,
-                title="Software Engineer",
-                company="Microsoft",
-                description="About the job\
-                             Microsoft is on a mission to empower every person and every organization on the planet to achieve more. Our culture is centered on embracing a growth mindset, a theme of inspiring excellence, and encouraging teams and leaders to bring their best each day. In doing so, we create life-changing innovations that impact billions of lives around the world. You can help us to achieve our mission.\
-                             Responsibilities\
-                             Design and develop software for the next generation of Microsoft products.\
-                             Minimum Qualifications\
-                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
-                required_skills=["Python", "Java", "C++"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Redmond, WA",
-                salary=120000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job4)
-
-    job5 = Job(job_id=-1,
-                title="Data Analyst",
-                company="Apple",
-                description="About the job\
-                             Apple is a place where extraordinary people gather to do their best work. Together we craft products and experiences people once couldn’t have imagined — and now can’t imagine living without. If you’re excited by the idea of making a real impact, and joining a team where we pride ourselves in being one of the most diverse and inclusive companies in the world, a career with Apple might be your dream job.\
-                             Responsibilities\
-                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
-                             Minimum Qualifications\
-                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools.",
-                required_skills=["SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Cupertino, CA",
-                salary=125000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job5)
-
-    job6 = Job(job_id=-1,
-                title="Product Manager",
-                company="Google",
-                description="About the job\
-                             Google's mission is to organize the world's information and make it universally accessible and useful. Our Hardware team researches, designs, and develops new technologies and hardware to make our user's interaction with computing faster, more powerful, and seamless.\
-                             Responsibilities\
-                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
-                             Work with cross-functional teams to launch your product.\
-                             Minimum Qualifications\
-                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools.",
-                required_skills=["Product Management", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Mountain View, CA",
-                salary=130000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job6)
-
-    job7 = Job(job_id=-1,
-                title="Software Engineer",
-                company="Facebook",
-                description="About the job\
-                             Facebook's mission is to give people the power to build community and bring the world closer together. Through our family of apps and services, we're building a different kind of company that connects billions of people around the world, gives them ways to share what matters most to them, and helps bring people closer together. Whether we're creating new products or helping a small business expand its reach, people at Facebook are builders at heart. Our global teams are constantly iterating, solving problems, and working together to empower people around the world to build community and connect in meaningful ways. Together, we can help people build stronger communities — we're just getting started.\
-                             Responsibilities\
-                             Design and develop software for the next generation of Facebook products.\
-                             Minimum Qualifications\
-                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
-                required_skills=["Python", "Java", "C++"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Menlo Park, CA",
-                salary=120000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job7)
-
-    job8 = Job(job_id=-1,
-                title="Data Scientist",
-                company="Amazon",
-                description="About the job\
-                             Amazon is looking for a talented, smart, and enthusiastic Data Scientist to help us revolutionize the way customers shop online. We are looking for a Data Scientist to drive the vision, roadmap, and execution of our product. You will work closely with a high-energy team of engineers, designers, and data scientists to drive product development from conception to launch.\
-                             Responsibilities\
-                             Work with large, complex data sets. Solve difficult, non-routine analysis problems, applying advanced analytical methods as needed. Conduct end-to-end analysis that includes data gathering and requirements specification, processing, analysis, ongoing deliverables, and presentations.\
-                             Build and prototype analysis pipelines iteratively to provide insights at scale. Develop comprehensive understanding of Amazon data structures and metrics, advocating for changes where needed for both products development and business insights.\
-                             Interact cross-functionally with a wide variety of people and teams. Work closely with data engineers to build data sets that are easy to understand and drive key product and business decisions.\
-                             Minimum Qualifications\
-                             4+ years of experience in data science or analytics. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Python", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Seattle, WA",
-                salary=130000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job8)
-
-    job9 = Job(job_id=-1,
-                title="Product Manager",
-                company="Microsoft",
-                description="About the job\
-                             Microsoft is on a mission to empower every person and every organization on the planet to achieve more. Our culture is centered on embracing a growth mindset, a theme of inspiring excellence, and encouraging teams and leaders to bring their best each day. In doing so, we create life-changing innovations that impact billions of lives around the world. You can help us to achieve our mission.\
-                             Responsibilities\
-                             Drive product development with a team of world-class engineers, designers, and data scientists. Define and analyze metrics that inform the success of products.\
-                             Work with cross-functional teams to launch your product.\
-                             Minimum Qualifications\
-                             4+ years of experience in product management. Experience in SQL or other programming languages. Experience in statistical analysis. Experience in data visualization techniques and tools",
-                required_skills=["Product Management", "SQL", "Data Visualization"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Redmond, WA",
-                salary=125000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job9)
-
-    job10 = Job(job_id=-1,
-                title="Software Engineer",
-                company="Apple",
-                description="About the job\
-                             Apple is a place where extraordinary people gather to do their best work. Together we craft products and experiences people once couldn’t have imagined — and now can’t imagine living without. If you’re excited by the idea of making a real impact, and joining a team where we pride ourselves in being one of the most diverse and inclusive companies in the world, a career with Apple might be your dream job.\
-                             Responsibilities\
-                             Design and develop software for the next generation of Apple products.\
-                             Minimum Qualifications\
-                             4+ years of experience in software engineering. Experience in Python, Java, and C++.",
-                required_skills=["Python", "Java", "C++"],
-                application_deadline=Date(day=31, month=6, year=2024),
-                location="Cupertino, CA",
-                salary=120000.0,
-                job_type="FULL",
-                active=True)
-    JobDatabase.create_job(job10)
-
+    user = User(
+        uid="uid",
+        name=Name(first_name="Chia-Hsun", last_name="Hsieh"),
+        is_admin=False,
+        is_owner=False,
+        phone_number="00-0000000000",
+        dob="14062024",
+        email="testing30@gmail.com"
+    )
+    create_user(CreateUserRequest)
