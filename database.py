@@ -215,7 +215,7 @@ class UserDatabase:
                 UPDATE users SET name = %s, dob = %s, is_owner = %s, is_admin = %s, phone_number = %s, email = %s
                 WHERE uid = %s
             """
-            params = UserFactory.to_db_row(user) + (user.uid,)
+            params = UserFactory.to_db_row(user, False) + (user.uid,)
             Database.execute_query(query, params)
             log(f"User {user.uid} updated successfully", "UserDatabase.update_user")
         except Exception as e:
@@ -361,7 +361,7 @@ class JobDatabase:
                 UPDATE jobdescriptions SET title = %s, company = %s, description = %s, required_skills = %s, application_deadline = %s, location = %s, salary = %s, job_type = %s, active = %s
                 WHERE job_id = %s
             """
-            params = JobFactory.to_db_row(job) + (job.job_id,)
+            params = JobFactory.to_db_row(job, False) + (job.job_id,)
             Database.execute_query(query, params)
             log(f"Job {job.title} at {job.company} updated successfully", "JobDatabase.update_job")
         except Exception as e:
@@ -403,7 +403,7 @@ class MatchDatabase:
                 INSERT INTO matches (uid, job_id, status, status_code, grade, selected_skills)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """
-            params = MatchFactory.to_db_row(match)
+            params = MatchFactory.to_db_row(match, False)
             Database.execute_query(query, params)
             log(f"Match {match.match_id} created successfully", "MatchDatabase.create_match")
         except Exception as e:
@@ -519,7 +519,7 @@ class FeedbackDatabase:
                 UPDATE feedback SET match_id = %s, feedback_text = %s
                 WHERE feedback_id = %s
             """
-            params = FeedbackFactory.to_db_row(feedback) + (feedback.feedback_id,)
+            params = FeedbackFactory.to_db_row(feedback, False) + (feedback.feedback_id,)
             Database.execute_query(query, params)
             log(f"Feedback {feedback.feedback_id} updated successfully", "FeedbackDatabase.update_feedback")
         except Exception as e:

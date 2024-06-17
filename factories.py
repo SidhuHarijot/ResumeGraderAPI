@@ -34,12 +34,21 @@ class UserFactory:
             
 
     @staticmethod
-    def to_db_row(user: User):
+    def to_db_row(user: User, with_uid=True):
         try:
             log(f"Converting User object to db row: {str(user.name)}", "UserFactory.to_db_row")
             dob_str = str(user.dob)
+            if with_uid:
+                return (
+                    user.uid,
+                    str(user.name),
+                    dob_str,
+                    user.is_owner,
+                    user.is_admin,
+                    user.phone_number,
+                    user.email
+                )
             return (
-                user.uid,
                 str(user.name),
                 dob_str,
                 user.is_owner,
@@ -132,11 +141,11 @@ class JobFactory:
             raise
 
     @staticmethod
-    def to_db_row(job: Job):
+    def to_db_row(job: Job, with_id=True):
         try:
             log(f"Converting Job object to db row: {job.title} at {job.company}", "to_db_row")
             deadline_str = str(job.application_deadline)
-            if job.job_id == -1:
+            if job.job_id == -1 or not with_id:
                 return (
                     job.title,
                     job.company,
@@ -247,9 +256,19 @@ class MatchFactory:
             raise
 
     @staticmethod
-    def to_db_row(match: Match):
+    def to_db_row(match: Match, with_id=True):
         try:
             log(f"Converting Match object to db row: {match.match_id}", "to_db_row")
+
+            if not with_id:
+                return (
+                    match.uid,
+                    match.job_id,
+                    match.status,
+                    match.status_code,
+                    match.grade,
+                    match.selected_skills
+                )
             return (
                 match.match_id,
                 match.uid,
@@ -336,9 +355,14 @@ class FeedbackFactory:
             raise
 
     @staticmethod
-    def to_db_row(feedback: Feedback):
+    def to_db_row(feedback: Feedback, with_id=True):
         try:
             log(f"Converting Feedback object to db row: {feedback.feedback_id}", "to_db_row")
+            if not with_id:
+                return (
+                    feedback.match_id,
+                    feedback.feedback_text
+                )
             return (
                 feedback.feedback_id,
                 feedback.match_id,
