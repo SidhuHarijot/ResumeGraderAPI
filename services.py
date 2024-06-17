@@ -2,12 +2,25 @@ from utility import OpenAIUtility, FileUtility
 from datamodels import Resume, Job, Match
 import json
 from fastapi import UploadFile
-from factories import ResumeFactory
+from factories import ResumeFactory, JobFactory
 from database import JobDatabase, ResumeDatabase, MatchDatabase
+from serverLogger import Logger
+import traceback
+
+
+def log(msg, func):
+    Logger.logService(msg, func)
+
+
+def logError(msg, exception, func):
+    msg = f"{msg}. Exception: {traceback.format_exception(None, exception, exception.__traceback__)[0]}"
+    Logger.logService(msg, func, "ERROR")
+
 
 class ResumeService:
     @staticmethod
     def process_resume(file: UploadFile = None, resume_text: str = None) -> Resume:
+        log("Processing resume", "ResumeService.process_resume")
         if file:
             FileUtility.initialize_temp_dir()
             temp_file_path = FileUtility.save_temp_file(file)
@@ -15,12 +28,14 @@ class ResumeService:
 
         openai_util = OpenAIUtility()
         resume_json = openai_util.extract_resume_json(resume_text)
-        resume_data = resume_json
-        return ResumeFactory.from_json(resume_data)
+        resume_data = ResumeFactory.from_json(resume_json)
+        log(f"Resume processed: {resume_data.uid}", "ResumeService.process_resume")
+        return resume_data
     
 class JobService:
     @staticmethod
     def process_job_description(file: UploadFile = None, job_description_text: str = None) -> Job:
+        log("Processing job description", "JobService.process_job_description")
         if file:
             FileUtility.initialize_temp_dir()
             temp_file_path = FileUtility.save_temp_file(file)
@@ -28,25 +43,15 @@ class JobService:
 
         openai_util = OpenAIUtility()
         job_json = openai_util.extract_job_description_json(job_description_text)
-        job_data = json.loads(job_json)
-
-        return Job(
-            job_id=-1,
-            title=job_data["Title"],
-            company=job_data["Employer"],
-            description=job_data["description"],
-            required_skills=job_data["Must Haves"],
-            application_deadline=job_data["application_deadline"],
-            location=job_data["location"],
-            salary=job_data["salary"],
-            job_type=job_data["job_type"],
-            active=job_data["active"]
-        )
+        job_data = JobFactory.from_json(job_json)
+        log(f"Job description processed: {job_data.job_id}", "JobService.process_job_description")
+        return job_data
 
 
 class GradingService:
     @staticmethod
     def grade_resumes_for_job(job_id: int):
+        log(f"Grading resumes for job: {job_id}", "GradingService.grade_resumes_for_job")
         openai_utility = OpenAIUtility()
         job = JobDatabase.get_job(job_id)
         job_description = job.description
@@ -54,8 +59,10 @@ class GradingService:
         graded_matches = []
         for match in matches:
             resume = ResumeDatabase.get_resume(match.uid)
-            resume_text = resume.get_text()
-            grade = openai_utility.grade_resume_for_job(resume_text, job_description)
+            resume_text = str(resume)
+            grade = openai_utility.grade_resume(resume_text, job_description, max_grade=100.0)
             match.grade = grade
+            match.status = "GRADED"
             graded_matches.append(match)
+        log(f"Resumes graded for job: {job_id}", "GradingService.grade_resumes_for_job")
         return graded_matches

@@ -259,6 +259,7 @@ class MatchFactory:
     def to_db_row(match: Match, with_id=True):
         try:
             log(f"Converting Match object to db row: {match.match_id}", "to_db_row")
+
             if not with_id:
                 return (
                     match.uid,
