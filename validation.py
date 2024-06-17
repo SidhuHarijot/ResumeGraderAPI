@@ -1,8 +1,8 @@
 import email_validator
 from datamodels import User, Resume, Job, Match, Feedback
 from authorize import Authorize
-from database import UserDatabase
 from serverLogger import Logger
+import traceback
 
 
 def log(msg, func):

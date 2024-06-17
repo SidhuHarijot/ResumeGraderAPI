@@ -53,7 +53,8 @@ def log(message, func):
     Logger.logMain(message, func, "INFO")
 
 
-def logError(message, func):
+def logError(message, e: Exception, func):
+    message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
     Logger.logMain(message, func, "ERROR")
 
 
@@ -63,8 +64,7 @@ async def read_root():
         log("Accessing root endpoint", "read_root")
         return {"message": "Welcome to the API!", "author": "BugSlayerz.HarijotSingh", "description": "This is a FastAPI project backend for a job matching system.", "Contact us": "sidhuharijot@gmail.com", "version": "3.0"}
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in root endpoint: {error_message}", "read_root")
+        logError(f"Error in root endpoint: ", e, "read_root")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -133,12 +133,12 @@ async def create_user(request: CreateUserRequest):
         UserDatabase.create_user(user)
         return user
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in create_user: {error_message}", "create_user")
+        
+        logError(f"Validation error in create_user: ", e, "create_user")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in create_user: {error_message}", "create_user")
+        
+        logError(f"Error in create_user: ", e, "create_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/users/{uid}", response_model=User, tags=["Users"])
@@ -178,8 +178,8 @@ async def get_user(uid: str):
         log(f"Retrieving user with UID: {uid}", "get_user")
         return UserDatabase.get_user(uid)
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_user: {error_message}", "get_user")
+        
+        logError(f"Error in get_user: ", e, "get_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/users/{uid}", response_model=User, tags=["Users"])
@@ -256,12 +256,12 @@ async def update_user(uid: str, request: UpdateUserRequest):
         UserDatabase.update_user(user)
         return user
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in update_user: {error_message}", "update_user")
+        
+        logError(f"Validation error in update_user: ", e, "update_user")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in update_user: {error_message}", "update_user")
+        
+        logError(f"Error in update_user: ", e, "update_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/users/{uid}", tags=["Users"])
@@ -271,8 +271,8 @@ async def delete_user(uid: str):
         UserDatabase.delete_user(uid)
         return {"message": "User deleted successfully."}
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in delete_user: {error_message}", "delete_user")
+        
+        logError(f"Error in delete_user: ", e, "delete_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/users/", response_model=List[User], tags=["Users"])
@@ -284,12 +284,12 @@ async def get_all_users(auth_uid: str):
         
         return UserDatabase.get_all_users()
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Authorization error in get_all_users: {error_message}", "get_all_users")
+        
+        logError(f"Authorization error in get_all_users: ", e, "get_all_users")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_all_users: {error_message}", "get_all_users")
+        
+        logError(f"Error in get_all_users: ", e, "get_all_users")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -304,8 +304,8 @@ async def get_user_privileges(uid: str):
         else:
             return "USER"
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_user_privileges: {error_message}", "get_user_privileges")
+        
+        logError(f"Error in get_user_privileges: ", e, "get_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -328,12 +328,12 @@ async def update_user_privileges(request: UpdateUserPrivilegesRequest):
         UserDatabase.update_user(user)
         return {"message": "User privileges updated successfully."}
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Authorization or validation error in update_user_privileges: {error_message}", "update_user_privileges")
+        
+        logError(f"Authorization or validation error in update_user_privileges: ", e, "update_user_privileges")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in update_user_privileges: {error_message}", "update_user_privileges")
+        
+        logError(f"Error in update_user_privileges: ", e, "update_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -408,12 +408,12 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
         ResumeDatabase.create_resume(resume)
         return resume
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in create_resume: {error_message}", "create_resume")
+        
+        logError(f"Validation error in create_resume: ", e, "create_resume")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in create_resume: {error_message}", "create_resume")
+        
+        logError(f"Error in create_resume: ", e, "create_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -477,8 +477,8 @@ async def get_resume(uid: str):
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         return ResumeDatabase.get_resume(uid)
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_resume: {error_message}", "get_resume")
+        
+        logError(f"Error in get_resume: ", e, "get_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -590,12 +590,12 @@ async def update_resume(uid: str, resume: Resume):
         ResumeDatabase.update_resume(resume)
         return resume
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in update_resume: {error_message}", "update_resume")
+        
+        logError(f"Validation error in update_resume: ", e, "update_resume")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in update_resume: {error_message}", "update_resume")
+        
+        logError(f"Error in update_resume: ", e, "update_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/resumes/{uid}", tags=["Resumes"])
@@ -605,8 +605,8 @@ async def delete_resume(uid: str):
         ResumeDatabase.delete_resume(uid)
         return {"message": "Resume deleted successfully."}
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in delete_resume: {error_message}", "delete_resume")
+        
+        logError(f"Error in delete_resume: ", e, "delete_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/", response_model=List[Resume], tags=["Resumes"])
@@ -670,8 +670,8 @@ async def get_all_resumes():
         log("Retrieving all resumes", "get_all_resumes")
         return ResumeDatabase.get_all_resumes()
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_all_resumes: {error_message}", "get_all_resumes")
+        
+        logError(f"Error in get_all_resumes: ", e, "get_all_resumes")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
@@ -718,12 +718,12 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
         JobDatabase.create_job(job)
         return job
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in create_job: {error_message}", "create_job")
+        
+        logError(f"Validation error in create_job: ", e, "create_job")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in create_job: {error_message}", "create_job")
+        
+        logError(f"Error in create_job: ", e, "create_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
@@ -763,8 +763,8 @@ async def get_job(job_id: int):
         log(f"Retrieving job with ID: {job_id}", "get_job")
         return JobDatabase.get_job(job_id)
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_job: {error_message}", "get_job")
+        
+        logError(f"Error in get_job: ", e, "get_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
@@ -842,12 +842,12 @@ async def update_job(job_id: int, request: UpdateJobRequest):
         JobDatabase.update_job(job)
         return job
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in update_job: {error_message}", "update_job")
+        
+        logError(f"Validation error in update_job: ", e, "update_job")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in update_job: {error_message}", "update_job")
+        
+        logError(f"Error in update_job: ", e, "update_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/jobs/{job_id}", tags=["Jobs"])
@@ -874,8 +874,8 @@ async def delete_job(job_id: int):
         JobDatabase.delete_job(job_id)
         return {"message": "Job deleted successfully."}
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in delete_job: {error_message}", "delete_job")
+        
+        logError(f"Error in delete_job: ", e, "delete_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/jobs/", response_model=List[Job], tags=["Jobs"])
@@ -915,8 +915,8 @@ async def get_all_jobs():
         log("Retrieving all jobs", "get_all_jobs")
         return JobDatabase.get_all_jobs()
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_all_jobs: {error_message}", "get_all_jobs")
+        
+        logError(f"Error in get_all_jobs: ", e, "get_all_jobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/matches/", response_model=Match, tags=["Matches"])
@@ -954,12 +954,12 @@ async def create_match(match: Match):
         MatchDatabase.create_match(match)
         return match
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in create_match: {error_message}", "create_match")
+        
+        logError(f"Validation error in create_match: ", e, "create_match")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in create_match: {error_message}", "create_match")
+        
+        logError(f"Error in create_match: ", e, "create_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/matches/{match_id}", response_model=Match, tags=["Matches"])
@@ -988,8 +988,8 @@ async def get_match(match_id: int):
         log(f"Retrieving match with ID: {match_id}", "get_match")
         return MatchDatabase.get_match(match_id)
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_match: {error_message}", "get_match")
+        
+        logError(f"Error in get_match: ", e, "get_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/matches/{match_id}", response_model=Match, tags=["Matches"])
@@ -1031,12 +1031,12 @@ async def update_match(match_id: int, match: Match):
         MatchDatabase.update_match(match)
         return match
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in update_match: {error_message}", "update_match")
+        
+        logError(f"Validation error in update_match: ", e, "update_match")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in update_match: {error_message}", "update_match")
+        
+        logError(f"Error in update_match: ", e, "update_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/matches/{match_id}", tags=["Matches"])
@@ -1063,8 +1063,8 @@ async def delete_match(match_id: int):
         MatchDatabase.delete_match(match_id)
         return {"message": "Match deleted successfully."}
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in delete_match: {error_message}", "delete_match")
+        
+        logError(f"Error in delete_match: ", e, "delete_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/matches/uid", tags=["Matches"])
@@ -1099,8 +1099,8 @@ async def get_matches_by_uid(request: GetMatchesRequest):
         user_matches = [match for match in matches if match.uid == request.uid]
         return [MatchFactory.to_json(match) for match in user_matches]
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_matches_by_uid: {error_message}", "get_matches_by_uid")
+        
+        logError(f"Error in get_matches_by_uid: ", e, "get_matches_by_uid")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/matches/", response_model=List[Match], tags=["Matches"])
@@ -1129,8 +1129,8 @@ async def get_all_matches():
         log("Retrieving all matches", "get_all_matches")
         return MatchDatabase.get_all_matches()
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_all_matches: {error_message}", "get_all_matches")
+        
+        logError(f"Error in get_all_matches: ", e, "get_all_matches")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/feedback/", response_model=Feedback, tags=["Feedback"])
@@ -1168,12 +1168,12 @@ async def create_feedback(feedback: Feedback):
         FeedbackDatabase.create_feedback(feedback)
         return feedback
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in create_feedback: {error_message}", "create_feedback")
+        
+        logError(f"Validation error in create_feedback: ", e, "create_feedback")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in create_feedback: {error_message}", "create_feedback")
+        
+        logError(f"Error in create_feedback: ", e, "create_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
@@ -1202,8 +1202,8 @@ async def get_feedback(feedback_id: int):
         log(f"Retrieving feedback with ID: {feedback_id}", "get_feedback")
         return FeedbackDatabase.get_feedback(feedback_id)
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_feedback: {error_message}", "get_feedback")
+        
+        logError(f"Error in get_feedback: ", e, "get_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
@@ -1245,12 +1245,12 @@ async def update_feedback(feedback_id: int, feedback: Feedback):
         FeedbackDatabase.update_feedback(feedback)
         return feedback
     except HTTPException as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Validation error in update_feedback: {error_message}", "update_feedback")
+        
+        logError(f"Validation error in update_feedback: ", e, "update_feedback")
         raise e
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in update_feedback: {error_message}", "update_feedback")
+        
+        logError(f"Error in update_feedback: ", e, "update_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/feedback/{feedback_id}", tags=["Feedback"])
@@ -1277,8 +1277,8 @@ async def delete_feedback(feedback_id: int):
         FeedbackDatabase.delete_feedback(feedback_id)
         return {"message": "Feedback deleted successfully."}
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in delete_feedback: {error_message}", "delete_feedback")
+        
+        logError(f"Error in delete_feedback: ", e, "delete_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/feedback/", response_model=List[Feedback], tags=["Feedback"])
@@ -1307,8 +1307,8 @@ async def get_all_feedbacks():
         log("Retrieving all feedbacks", "get_all_feedbacks")
         return FeedbackDatabase.get_all_feedbacks()
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in get_all_feedbacks: {error_message}", "get_all_feedbacks")
+        
+        logError(f"Error in get_all_feedbacks: ", e, "get_all_feedbacks")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/logs/download", tags=["Logs"])
@@ -1338,8 +1338,8 @@ async def download_logs():
         Logger.clearDecompressedLogs()
         return FileResponse(str(zip_path), filename="logs.zip", media_type='application/zip')
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in download_logs: {error_message}", "download_logs")
+        
+        logError(f"Error in download_logs: ", e, "download_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
     finally:
         # Clean up decompressed log files
@@ -1369,8 +1369,8 @@ async def compress_logs():
         Logger.compressLogs()
         return {"message": "Logs compressed successfully."}
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in compress_logs: {error_message}", "compress_logs")
+        
+        logError(f"Error in compress_logs: ", e, "compress_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/grade/job", tags=["Grading"])
@@ -1404,8 +1404,8 @@ async def grade_job(request: GradeJobRequest):
         matches = GradingService.grade_resumes_for_job(request.job_id)
         return matches
     except Exception as e:
-        error_message = ''.join(traceback.format_exception(None, e, e.__traceback__))
-        logError(f"Error in grade_job: {error_message}", "grade_job")
+        
+        logError(f"Error in grade_job: ", e, "grade_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
