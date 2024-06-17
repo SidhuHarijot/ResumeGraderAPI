@@ -195,12 +195,7 @@ async def update_user(uid: str, request: UpdateUserRequest):
         {
             "first_name": "John",
             "last_name": "Doe",
-            "dob": 
-                {
-                    "day": 1,
-                    "month": 1,
-                    "year": 2000
-                },
+            "dob": "01022000",
             "phone_number": "00-1234567890",
             "email": "abc@email.com",
             "is_owner": false,
