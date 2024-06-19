@@ -1325,6 +1325,7 @@ async def download_logs():
     try:
         log("Downloading logs", "download_logs")
         # Ensure logs are decompressed
+        Logger.compressLogs()
         Logger.decompressLogs()
 
         # Create a zip of the logs
