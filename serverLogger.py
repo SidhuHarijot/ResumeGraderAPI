@@ -6,6 +6,7 @@ class Logger:
     logFolder = "Logs/"
     compressed = "Logs/Compressed/"
     decompressed = "Logs/Decompressed/"
+    notLogs = ["Compressed", "Decompressed", "logs.zip"]
 
     @staticmethod
     def initialize():
@@ -59,16 +60,20 @@ class Logger:
 
     @classmethod
     def compressLogs(self):
+        self.log("Logger", "Compressing Logs", "Logger.compressLogs", "Info")
         for file in os.listdir(self.logFolder):
-            if file != ("logs" + datetime.datetime.strftime(datetime.date.today(), "%d-%m-%y") + ".txt"):
+            self.log("Logger", f"Compressing file: {file}", "Logger.compressLogs", "Info")
+            if file == ("logs" + datetime.datetime.strftime(datetime.date.today(), "%d-%m-%Y") + ".txt"):
                 continue
-            if file == "Compressed" or file == "Decompressed":
+            if file in self.notLogs:
                 continue
             with open(self.logFolder + file, "rb+") as logFile:
                 compressed = zlib.compress(logFile.read())
                 with open(self.compressed + file, "wb+") as compressedFile:
                     compressedFile.write(compressed)
+                self.log("Logger", "Logging complete", "Logger.compressLogs", "INFO")
             os.remove(self.logFolder + file)
+            self.log("Logger", "File removed", "Logger.compressLogs", "INFO")
                 
     @classmethod
     def decompressLog(self, date):
@@ -79,17 +84,17 @@ class Logger:
     
     @classmethod
     def decompressLogs(self):
-        self.log("Main", "Decompressing Logs", "decompressLogs", "INFO")
+        self.log("Logger", "Decompressing Logs", "decompressLogs", "INFO")
         for file in os.listdir(self.compressed):
             with open(self.compressed + file, "rb") as compressedFile:
                 decompressed = zlib.decompress(compressedFile.read())
                 with open(self.decompressed + file, "wb+") as logFile:
                     logFile.write(decompressed)
-        self.log("Main", "Decompressed Logs", "decompressLogs", "INFO")
+        self.log("Logger", "Decompressed Logs", "decompressLogs", "INFO")
         with open(self.logFolder + "logs" + datetime.datetime.strftime(datetime.date.today(), "%d-%m-%Y") + ".txt", "r") as logFile:
             with open(self.decompressed + "logs" + datetime.datetime.strftime(datetime.date.today(), "%d-%m-%Y") + ".txt", "w+") as decompressedFile:
                 decompressedFile.write(logFile.read())
-        self.log("Main", "Copied Today's Logs", "decompressLogs", "INFO")
+        self.log("Logger", "Copied Today's Logs", "decompressLogs", "INFO")
     
     @classmethod
     def clearDecompressedLogs(self):
