@@ -24,7 +24,7 @@ def logError(msg, exception, func):
 load_dotenv()
 
 class OpenAIUtility:
-    @staticmethod
+    @classmethod
     def initialize(self):
         log("Initializing OpenAI Utility", "OpenAIUtility.__init__")
         if not os.environ["OPENAI_API_KEY"]:
@@ -33,7 +33,7 @@ class OpenAIUtility:
         log("OpenAI Utility initialized", "OpenAIUtility.__init__")
     
 
-    @staticmethod
+    @classmethod
     def getResponse(self, systemMessage, userMessage, responseType, min_val=-1, max_val=-1):
         gpt_response_type = "text"
         if responseType == "dict":
@@ -62,7 +62,7 @@ class OpenAIUtility:
                 return response
     
 
-    @staticmethod
+    @classmethod
     def extractNumericResponse(self, response, min_val, max_val):
 
         def extractNumbers(response, min_val, max_val):
@@ -89,7 +89,7 @@ class OpenAIUtility:
             logError("Error extracting int response", e, "OpenAIUtility.extractIntResponse")
             return -1
 
-    @staticmethod
+    @classmethod
     def grade_resume(self, job_description: str, resume_data: str, max_grade: int):
         log(f"Grading resume for job description: {job_description}", "OpenAIUtility.grade_resume")
         system_message = f"Grade resumes for this job description: \"{job_description}\" Maximum grade is {max_grade}. " + \
@@ -100,7 +100,7 @@ class OpenAIUtility:
         log(f"Resume graded: ", "OpenAIUtility.grade_resume")
         return response
     
-    @staticmethod
+    @classmethod
     def extract_resume_json(self, resume_text: str):
         system_message = """
         Convert the given resume data into a structured JSON format. Adhere strictly to this format:
@@ -120,7 +120,7 @@ class OpenAIUtility:
         log("Resume JSON extracted", "OpenAIUtility.extract_resume_json")
         return response
     
-    @staticmethod
+    @classmethod
     def extract_job_description_json(self, job_description_text: str):
         system_message = """
         Convert the given job description data into a structured JSON format. Adhere strictly to this format:
