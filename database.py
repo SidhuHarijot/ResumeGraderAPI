@@ -6,13 +6,16 @@ from serverLogger import Logger
 from typing import List
 from datamodels import *
 from factories import *
+import traceback
 # endregion
 
 # region logging
 def log(message, func):
     Logger.logDatabase(message, func)
 
-def logError(message, func):
+def logError(e: Exception, func):
+    error_message = "".join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__))
+    message = f"An error occurred: {error_message}"
     Logger.logDatabase(message, func, "ERROR")
 # endregion
 
@@ -31,12 +34,12 @@ class Database:
                 database="resume_grader",
                 user="bugslayerz",
                 password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
-                host="dpg-coi9t65jm4es739kjul0-a"  # Use your internal URL here
+                host="dpg-coi9t65jm4es739kjul0-a"
             )
             if Database.connection_pool:
                 log("Connection to internal URL successful", "Database.initialize")
         except (Exception, psycopg2.DatabaseError) as internal_error:
-            logError(f"Failed to connect using internal URL: {internal_error}", "Database.initialize")
+            logError(internal_error, "Database.initialize")
             
             try:
                 # Fallback to the external URL if internal fails
@@ -45,12 +48,12 @@ class Database:
                     database="resume_grader",
                     user="bugslayerz",
                     password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
-                    host="dpg-coi9t65jm4es739kjul0-a.oregon-postgres.render.com"  # External URL
+                    host="dpg-coi9t65jm4es739kjul0-a.oregon-postgres.render.com"
                 )
                 if Database.connection_pool:
                     log("Connection to external URL successful", "Database.initialize")
             except (Exception, psycopg2.DatabaseError) as external_error:
-                logError(f"Failed to connect using external URL: {external_error}", "Database.initialize")
+                logError(external_error, "Database.initialize")
 
     @staticmethod
     def get_connection():
@@ -73,7 +76,7 @@ class Database:
                     return result
                 con.commit()
         except psycopg2.Error as e:
-            logError(f"An error occurred: {e}", "execute_query")
+            logError(e, "execute_query")
             if con:
                 con.rollback()
             raise
@@ -165,7 +168,7 @@ class Database:
                 Database.execute_query(index_schema)
             log("Tables and INDEXES created successfully", "Database.create_tables")
         except psycopg2.Error as e:
-            logError(f"An error occurred: {e}", "Database.create_tables")
+            logError(e, "Database.create_tables")
             raise
 # endregion
 
@@ -185,7 +188,7 @@ class UserDatabase:
             Database.execute_query(query, params)
             log(f"User {user.uid} created successfully", "UserDatabase.create_user")
         except Exception as e:
-            logError(f"An error occurred: {e}", "UserDatabase.create_user")
+            logError(e, "UserDatabase.create_user")
             raise
 
     @staticmethod
@@ -201,7 +204,7 @@ class UserDatabase:
             else:
                 raise ValueError(f"User {uid} not found")
         except Exception as e:
-            logError(f"An error occurred: {e}", "UserDatabase.get_user")
+            logError(e, "UserDatabase.get_user")
             raise
 
     @staticmethod
@@ -212,11 +215,11 @@ class UserDatabase:
                 UPDATE users SET name = %s, dob = %s, is_owner = %s, is_admin = %s, phone_number = %s, email = %s
                 WHERE uid = %s
             """
-            params = UserFactory.to_db_row(user) + (user.uid,)
+            params = UserFactory.to_db_row(user, False) + (user.uid,)
             Database.execute_query(query, params)
             log(f"User {user.uid} updated successfully", "UserDatabase.update_user")
         except Exception as e:
-            logError(f"An error occurred: {e}", "UserDatabase.update_user")
+            logError(e, "UserDatabase.update_user")
             raise
 
     @staticmethod
@@ -227,7 +230,7 @@ class UserDatabase:
             Database.execute_query(query, (uid,))
             log(f"User {uid} deleted successfully", "UserDatabase.delete_user")
         except Exception as e:
-            logError(f"An error occurred: {e}", "UserDatabase.delete_user")
+            logError(e, "UserDatabase.delete_user")
             raise
 
     @staticmethod
@@ -240,7 +243,7 @@ class UserDatabase:
             log("All users retrieved successfully", "UserDatabase.get_all_users")
             return users
         except Exception as e:
-            logError(f"An error occurred: {e}", "UserDatabase.get_all_users")
+            logError(e, "UserDatabase.get_all_users")
             raise
 # endregion
 
@@ -258,7 +261,7 @@ class ResumeDatabase:
             Database.execute_query(query, params)
             log(f"Resume for user {resume.uid} created successfully", "ResumeDatabase.create_resume")
         except Exception as e:
-            logError(f"An error occurred: {e}", "ResumeDatabase.create_resume")
+            logError(e, "ResumeDatabase.create_resume")
             raise
 
     @staticmethod
@@ -274,7 +277,7 @@ class ResumeDatabase:
             else:
                 raise ValueError(f"Resume for user {uid} not found")
         except Exception as e:
-            logError(f"An error occurred: {e}", "ResumeDatabase.get_resume")
+            logError(e, "ResumeDatabase.get_resume")
             raise
 
     @staticmethod
@@ -289,7 +292,7 @@ class ResumeDatabase:
             Database.execute_query(query, params)
             log(f"Resume for user {resume.uid} updated successfully", "ResumeDatabase.update_resume")
         except Exception as e:
-            logError(f"An error occurred: {e}", "ResumeDatabase.update_resume")
+            logError(e, "ResumeDatabase.update_resume")
             raise
 
     @staticmethod
@@ -300,7 +303,7 @@ class ResumeDatabase:
             Database.execute_query(query, (uid,))
             log(f"Resume for user {uid} deleted successfully", "ResumeDatabase.delete_resume")
         except Exception as e:
-            logError(f"An error occurred: {e}", "ResumeDatabase.delete_resume")
+            logError(e, "ResumeDatabase.delete_resume")
             raise
 
     @staticmethod
@@ -313,7 +316,7 @@ class ResumeDatabase:
             log("All resumes retrieved successfully", "ResumeDatabase.get_all_resumes")
             return resumes
         except Exception as e:
-            logError(f"An error occurred: {e}", "ResumeDatabase.get_all_resumes")
+            logError(e, "ResumeDatabase.get_all_resumes")
             raise
 # endregion
 
@@ -331,7 +334,7 @@ class JobDatabase:
             Database.execute_query(query, params)
             log(f"Job {job.title} at {job.company} created successfully", "JobDatabase.create_job")
         except Exception as e:
-            logError(f"An error occurred: {e}", "JobDatabase.create_job")
+            logError(e, "JobDatabase.create_job")
             raise
 
     @staticmethod
@@ -347,7 +350,7 @@ class JobDatabase:
             else:
                 raise ValueError(f"Job {job_id} not found")
         except Exception as e:
-            logError(f"An error occurred: {e}", "JobDatabase.get_job")
+            logError(e, "JobDatabase.get_job")
             raise
 
     @staticmethod
@@ -358,11 +361,11 @@ class JobDatabase:
                 UPDATE jobdescriptions SET title = %s, company = %s, description = %s, required_skills = %s, application_deadline = %s, location = %s, salary = %s, job_type = %s, active = %s
                 WHERE job_id = %s
             """
-            params = JobFactory.to_db_row(job) + (job.job_id,)
+            params = JobFactory.to_db_row(job, False) + (job.job_id,)
             Database.execute_query(query, params)
             log(f"Job {job.title} at {job.company} updated successfully", "JobDatabase.update_job")
         except Exception as e:
-            logError(f"An error occurred: {e}", "JobDatabase.update_job")
+            logError(e, "JobDatabase.update_job")
             raise
 
     @staticmethod
@@ -373,7 +376,7 @@ class JobDatabase:
             Database.execute_query(query, (job_id,))
             log(f"Job {job_id} deleted successfully", "JobDatabase.delete_job")
         except Exception as e:
-            logError(f"An error occurred: {e}", "JobDatabase.delete_job")
+            logError(e, "JobDatabase.delete_job")
             raise
 
     @staticmethod
@@ -386,7 +389,7 @@ class JobDatabase:
             log("All jobs retrieved successfully", "JobDatabase.get_all_jobs")
             return jobs
         except Exception as e:
-            logError(f"An error occurred: {e}", "JobDatabase.get_all_jobs")
+            logError(e, "JobDatabase.get_all_jobs")
             raise
 # endregion
 
@@ -400,11 +403,11 @@ class MatchDatabase:
                 INSERT INTO matches (uid, job_id, status, status_code, grade, selected_skills)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """
-            params = MatchFactory.to_db_row(match)
+            params = MatchFactory.to_db_row(match, False)
             Database.execute_query(query, params)
             log(f"Match {match.match_id} created successfully", "MatchDatabase.create_match")
         except Exception as e:
-            logError(f"An error occurred: {e}", "MatchDatabase.create_match")
+            logError(e, "MatchDatabase.create_match")
             raise
 
     @staticmethod
@@ -420,7 +423,7 @@ class MatchDatabase:
             else:
                 raise ValueError(f"Match {match_id} not found")
         except Exception as e:
-            logError(f"An error occurred: {e}", "MatchDatabase.get_match")
+            logError(e, "MatchDatabase.get_match")
             raise
 
     @staticmethod
@@ -435,7 +438,7 @@ class MatchDatabase:
             Database.execute_query(query, params)
             log(f"Match {match.match_id} updated successfully", "MatchDatabase.update_match")
         except Exception as e:
-            logError(f"An error occurred: {e}", "MatchDatabase.update_match")
+            logError(e, "MatchDatabase.update_match")
             raise
 
     @staticmethod
@@ -446,7 +449,7 @@ class MatchDatabase:
             Database.execute_query(query, (match_id,))
             log(f"Match {match_id} deleted successfully", "MatchDatabase.delete_match")
         except Exception as e:
-            logError(f"An error occurred: {e}", "MatchDatabase.delete_match")
+            logError(e, "MatchDatabase.delete_match")
             raise
 
     @staticmethod
@@ -459,7 +462,19 @@ class MatchDatabase:
             log("All matches retrieved successfully", "MatchDatabase.get_all_matches")
             return matches
         except Exception as e:
-            logError(f"An error occurred: {e}", "MatchDatabase.get_all_matches")
+            logError(e, "MatchDatabase.get_all_matches")
+            raise
+    
+    def get_matches_for_job(job_id: int) -> List[Match]:
+        try:
+            log(f"Retrieving all matches for job {job_id}", "MatchDatabase.get_matches_for_job")
+            query = "SELECT * FROM matches WHERE job_id = %s"
+            results = Database.execute_query(query, (job_id,), fetch=True)
+            matches = MatchFactory.from_db_rows(results)
+            log(f"All matches for job {job_id} retrieved successfully", "MatchDatabase.get_matches_for_job")
+            return matches
+        except Exception as e:
+            logError(e, "MatchDatabase.get_matches_for_job")
             raise
 # endregion
 
@@ -477,7 +492,7 @@ class FeedbackDatabase:
             Database.execute_query(query, params)
             log(f"Feedback {feedback.feedback_id} created successfully", "FeedbackDatabase.create_feedback")
         except Exception as e:
-            logError(f"An error occurred: {e}", "FeedbackDatabase.create_feedback")
+            logError(e, "FeedbackDatabase.create_feedback")
             raise
 
     @staticmethod
@@ -493,7 +508,7 @@ class FeedbackDatabase:
             else:
                 raise ValueError(f"Feedback {feedback_id} not found")
         except Exception as e:
-            logError(f"An error occurred: {e}", "FeedbackDatabase.get_feedback")
+            logError(e, "FeedbackDatabase.get_feedback")
             raise
 
     @staticmethod
@@ -504,11 +519,11 @@ class FeedbackDatabase:
                 UPDATE feedback SET match_id = %s, feedback_text = %s
                 WHERE feedback_id = %s
             """
-            params = FeedbackFactory.to_db_row(feedback) + (feedback.feedback_id,)
+            params = FeedbackFactory.to_db_row(feedback, False) + (feedback.feedback_id,)
             Database.execute_query(query, params)
             log(f"Feedback {feedback.feedback_id} updated successfully", "FeedbackDatabase.update_feedback")
         except Exception as e:
-            logError(f"An error occurred: {e}", "FeedbackDatabase.update_feedback")
+            logError(e, "FeedbackDatabase.update_feedback")
             raise
 
     @staticmethod
@@ -519,7 +534,7 @@ class FeedbackDatabase:
             Database.execute_query(query, (feedback_id,))
             log(f"Feedback {feedback_id} deleted successfully", "FeedbackDatabase.delete_feedback")
         except Exception as e:
-            logError(f"An error occurred: {e}", "FeedbackDatabase.delete_feedback")
+            logError(e, "FeedbackDatabase.delete_feedback")
             raise
 
     @staticmethod
@@ -532,7 +547,7 @@ class FeedbackDatabase:
             log("All feedbacks retrieved successfully", "FeedbackDatabase.get_all_feedbacks")
             return feedbacks
         except Exception as e:
-            logError(f"An error occurred: {e}", "FeedbackDatabase.get_all_feedbacks")
+            logError(e, "FeedbackDatabase.get_all_feedbacks")
             raise
 # endregion
 

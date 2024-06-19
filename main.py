@@ -14,6 +14,7 @@ import datetime
 from factories import *
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
 app = FastAPI()
 
@@ -46,13 +47,16 @@ handler = Mangum(app)
 Logger.initialize()
 # Initialize database connection
 Database.initialize()
+# Initialize OpenAI utility
+OpenAIUtility.initialize()
 
 
 def log(message, func):
     Logger.logMain(message, func, "INFO")
 
 
-def logError(message, func):
+def logError(message, e: Exception, func):
+    message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
     Logger.logMain(message, func, "ERROR")
 
 
@@ -81,7 +85,7 @@ async def read_root():
         log("Accessing root endpoint", "read_root")
         return {"message": "Welcome to the API!", "author": "BugSlayerz.HarijotSingh", "description": "This is a FastAPI project backend for a job matching system.", "Contact us": "sidhuharijot@gmail.com", "version": "3.0"}
     except Exception as e:
-        logError(f"Error in root endpoint: {str(e)}", "read_root")
+        logError(f"Error in root endpoint: ", e, "read_root")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -128,8 +132,8 @@ async def create_user(request: CreateUserRequest):
             uid=request.uid,
             name=Name(first_name=request.first_name, last_name=request.last_name),
             dob=Date.from_string(request.dob),
-            is_owner=request.is_owner,
-            is_admin=request.is_admin,
+            is_owner=False,
+            is_admin=False,
             phone_number=request.phone_number,
             email=request.email
         )
@@ -140,10 +144,12 @@ async def create_user(request: CreateUserRequest):
         UserDatabase.create_user(user)
         return user
     except HTTPException as e:
-        logError(f"Validation error in create_user: {str(e)}", "create_user")
+        
+        logError(f"Validation error in create_user: ", e, "create_user")
         raise e
     except Exception as e:
-        logError(f"Error in create_user: {str(e)}", "create_user")
+        
+        logError(f"Error in create_user: ", e, "create_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/users/{uid}", response_model=User, tags=["Users"])
@@ -178,7 +184,8 @@ async def get_user(uid: str):
         log(f"Retrieving user with UID: {uid}", "get_user")
         return UserDatabase.get_user(uid)
     except Exception as e:
-        logError(f"Error in get_user: {str(e)}", "get_user")
+        
+        logError(f"Error in get_user: ", e, "get_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/users/{uid}", response_model=User, tags=["Users"])
@@ -245,10 +252,12 @@ async def update_user(uid: str, request: UpdateUserRequest):
         UserDatabase.update_user(user)
         return user
     except HTTPException as e:
-        logError(f"Validation error in update_user: {str(e)}", "update_user")
+        
+        logError(f"Validation error in update_user: ", e, "update_user")
         raise e
     except Exception as e:
-        logError(f"Error in update_user: {str(e)}", "update_user")
+        
+        logError(f"Error in update_user: ", e, "update_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/users/{uid}", tags=["Users"])
@@ -275,7 +284,8 @@ async def delete_user(uid: str):
         UserDatabase.delete_user(uid)
         return {"message": "User deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_user: {str(e)}", "delete_user")
+        
+        logError(f"Error in delete_user: ", e, "delete_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/users/", response_model=List[User], tags=["Users"])
@@ -287,13 +297,32 @@ async def get_all_users(auth_uid: str):
         
         return UserDatabase.get_all_users()
     except HTTPException as e:
-        logError(f"Authorization error in get_all_users: {str(e)}", "get_all_users")
+        
+        logError(f"Authorization error in get_all_users: ", e, "get_all_users")
         raise e
     except Exception as e:
-        logError(f"Error in get_all_users: {str(e)}", "get_all_users")
+        
+        logError(f"Error in get_all_users: ", e, "get_all_users")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.post("/users/update_privileges", tags=["Users"])
+
+@app.get("/users/privileges/{uid}", response_model=str, tags=["Users"])
+async def get_user_privileges(uid: str):
+    try:
+        log(f"Retrieving user privileges for UID: {uid}", "get_user_privileges")
+        if Authorize.checkAuth(uid, "OWNER"):
+            return "OWNER"
+        elif Authorize.checkAuth(uid, "ADMIN"):
+            return "ADMIN"
+        else:
+            return "USER"
+    except Exception as e:
+        
+        logError(f"Error in get_user_privileges: ", e, "get_user_privileges")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/users/privileges", tags=["Users"])
 async def update_user_privileges(request: UpdateUserPrivilegesRequest):
     """Updates the privileges of a user with the provided data.
     
@@ -333,10 +362,12 @@ async def update_user_privileges(request: UpdateUserPrivilegesRequest):
         UserDatabase.update_user(user)
         return {"message": "User privileges updated successfully."}
     except HTTPException as e:
-        logError(f"Authorization or validation error in update_user_privileges: {str(e)}", "update_user_privileges")
+        
+        logError(f"Authorization or validation error in update_user_privileges: ", e, "update_user_privileges")
         raise e
     except Exception as e:
-        logError(f"Error in update_user_privileges: {str(e)}", "update_user_privileges")
+        
+        logError(f"Error in update_user_privileges: ", e, "update_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -391,10 +422,12 @@ async def create_resume(uid: str, file: UploadFile = File(None), resume_text: Op
         ResumeDatabase.create_resume(resume)
         return resume
     except HTTPException as e:
-        logError(f"Validation error in create_resume: {str(e)}", "create_resume")
+        
+        logError(f"Validation error in create_resume: ", e, "create_resume")
         raise e
     except Exception as e:
-        logError(f"Error in create_resume: {str(e)}", "create_resume")
+        
+        logError(f"Error in create_resume: ", e, "create_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -438,7 +471,8 @@ async def get_resume(uid: str):
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         return ResumeDatabase.get_resume(uid)
     except Exception as e:
-        logError(f"Error in get_resume: {str(e)}", "get_resume")
+        
+        logError(f"Error in get_resume: ", e, "get_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -510,10 +544,12 @@ async def update_resume(uid: str, resume: Resume):
         ResumeDatabase.update_resume(resume)
         return resume
     except HTTPException as e:
-        logError(f"Validation error in update_resume: {str(e)}", "update_resume")
+        
+        logError(f"Validation error in update_resume: ", e, "update_resume")
         raise e
     except Exception as e:
-        logError(f"Error in update_resume: {str(e)}", "update_resume")
+        
+        logError(f"Error in update_resume: ", e, "update_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/resumes/{uid}", tags=["Resumes"])
@@ -540,7 +576,8 @@ async def delete_resume(uid: str):
         ResumeDatabase.delete_resume(uid)
         return {"message": "Resume deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_resume: {str(e)}", "delete_resume")
+        
+        logError(f"Error in delete_resume: ", e, "delete_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/", response_model=List[Resume], tags=["Resumes"])
@@ -584,7 +621,8 @@ async def get_all_resumes():
         log("Retrieving all resumes", "get_all_resumes")
         return ResumeDatabase.get_all_resumes()
     except Exception as e:
-        logError(f"Error in get_all_resumes: {str(e)}", "get_all_resumes")
+        
+        logError(f"Error in get_all_resumes: ", e, "get_all_resumes")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
@@ -626,10 +664,12 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
         JobDatabase.create_job(job)
         return job
     except HTTPException as e:
-        logError(f"Validation error in create_job: {str(e)}", "create_job")
+        
+        logError(f"Validation error in create_job: ", e, "create_job")
         raise e
     except Exception as e:
-        logError(f"Error in create_job: {str(e)}", "create_job")
+        
+        logError(f"Error in create_job: ", e, "create_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
@@ -664,11 +704,56 @@ async def get_job(job_id: int):
         log(f"Retrieving job with ID: {job_id}", "get_job")
         return JobDatabase.get_job(job_id)
     except Exception as e:
-        logError(f"Error in get_job: {str(e)}", "get_job")
+        
+        logError(f"Error in get_job: ", e, "get_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def update_job(job_id: int, request: UpdateJobRequest):
+    """Updates a job with the provided data.
+    
+    Params:
+        job_id (int): The ID of the job to update.
+        Example:
+            1
+        request (UpdateJobRequest): The request object containing the updated job data.
+        Example:
+        {
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline": "01-01-2000",
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Returns:
+        Job: The job object updated.
+        Example:
+        {
+            "job_id": 1,
+            "title": "Software Engineer",
+            "company": "XYZ",
+            "description": "Job Description",
+            "required_skills": ["Python", "Java", "SQL"],
+            "application_deadline":  
+                {
+                    "day": 1,
+                    "month": 1,
+                    "year": 2000
+                },
+            "location": "Location",
+            "salary": 100000,
+            "job_type": "FULL",
+            "active": true
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the job.
+    """
     try:
         log(f"Updating job with ID: {job_id}", "update_job")
         job = JobDatabase.get_job(job_id)
@@ -698,33 +783,110 @@ async def update_job(job_id: int, request: UpdateJobRequest):
         JobDatabase.update_job(job)
         return job
     except HTTPException as e:
-        logError(f"Validation error in update_job: {str(e)}", "update_job")
+        
+        logError(f"Validation error in update_job: ", e, "update_job")
         raise e
     except Exception as e:
-        logError(f"Error in update_job: {str(e)}", "update_job")
+        
+        logError(f"Error in update_job: ", e, "update_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/jobs/{job_id}", tags=["Jobs"])
 async def delete_job(job_id: int):
+    """Deletes a job with the provided ID.
+    
+    Params:
+        job_id (int): The ID of the job to delete.
+        Example:
+            1
+            
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Job deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the job.
+    """
     try:
         log(f"Deleting job with ID: {job_id}", "delete_job")
         JobDatabase.delete_job(job_id)
         return {"message": "Job deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_job: {str(e)}", "delete_job")
+        
+        logError(f"Error in delete_job: ", e, "delete_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/jobs/", response_model=List[Job], tags=["Jobs"])
 async def get_all_jobs():
+    """Retrieves all jobs.
+    
+    Params:
+        None
+        
+    Returns:
+        List[Job]: A list of all jobs.
+        Example:
+        [
+            {
+                "job_id": 1,
+                "title": "Software Engineer",
+                "company": "XYZ",
+                "description": "Job Description",
+                "required_skills": ["Python", "Java", "SQL"],
+                "application_deadline":  
+                    {
+                        "day": 1,
+                        "month": 1,
+                        "year": 2000
+                    },
+                "location": "Location",
+                "salary": 100000,
+                "job_type": "FULL",
+                "active": true
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving all jobs.
+    """
     try:
         log("Retrieving all jobs", "get_all_jobs")
         return JobDatabase.get_all_jobs()
     except Exception as e:
-        logError(f"Error in get_all_jobs: {str(e)}", "get_all_jobs")
+        
+        logError(f"Error in get_all_jobs: ", e, "get_all_jobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/matches/", response_model=Match, tags=["Matches"])
 async def create_match(match: Match):
+    """Creates a new match with the provided data.
+    
+    Params:
+        match (Match): The match object containing the match data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Returns:
+        Match: The match object created.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the match.
+    """
     try:
         log("Creating a new match", "create_match")
         if not Validation.validate_match(match):
@@ -733,23 +895,74 @@ async def create_match(match: Match):
         MatchDatabase.create_match(match)
         return match
     except HTTPException as e:
-        logError(f"Validation error in create_match: {str(e)}", "create_match")
+        
+        logError(f"Validation error in create_match: ", e, "create_match")
         raise e
     except Exception as e:
-        logError(f"Error in create_match: {str(e)}", "create_match")
+        
+        logError(f"Error in create_match: ", e, "create_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def get_match(match_id: int):
+    """Retrieves a match with the provided ID.
+    
+    Params:
+        match_id (int): The ID of the match to retrieve.
+        Example:
+            1
+            
+    Returns:
+        Match: The match object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the match.
+    """
     try:
         log(f"Retrieving match with ID: {match_id}", "get_match")
         return MatchDatabase.get_match(match_id)
     except Exception as e:
-        logError(f"Error in get_match: {str(e)}", "get_match")
+        
+        logError(f"Error in get_match: ", e, "get_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def update_match(match_id: int, match: Match):
+    """Updates a match with the provided data.
+    
+    Params:
+        match_id (int): The ID of the match to update.
+        Example:
+            1
+        match (Match): The match object containing the updated data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Returns:
+        Match: The match object updated.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "resume_id": 1,
+            "status": "PENDING"
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the match.
+    """
     try:
         log(f"Updating match with ID: {match_id}", "update_match")
         if not Validation.validate_match(match):
@@ -759,44 +972,135 @@ async def update_match(match_id: int, match: Match):
         MatchDatabase.update_match(match)
         return match
     except HTTPException as e:
-        logError(f"Validation error in update_match: {str(e)}", "update_match")
+        
+        logError(f"Validation error in update_match: ", e, "update_match")
         raise e
     except Exception as e:
-        logError(f"Error in update_match: {str(e)}", "update_match")
+        
+        logError(f"Error in update_match: ", e, "update_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/matches/{match_id}", tags=["Matches"])
 async def delete_match(match_id: int):
+    """Deletes a match with the provided ID.
+    
+    Params:
+        match_id (int): The ID of the match to delete.
+        Example:
+            1
+            
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Match deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the match.
+    """
     try:
         log(f"Deleting match with ID: {match_id}", "delete_match")
         MatchDatabase.delete_match(match_id)
         return {"message": "Match deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_match: {str(e)}", "delete_match")
+        
+        logError(f"Error in delete_match: ", e, "delete_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/matches/uid", tags=["Matches"])
 async def get_matches_by_uid(request: GetMatchesRequest):
+    """Retrieves all matches for a user with the provided UID.
+    
+    Params:
+        request (GetMatchesRequest): The request object containing the UID of the user.
+        Example:
+        {
+            "uid": "12345"
+        }
+
+    Returns:
+        List[Match]: A list of all matches for the user.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "resume_id": 1,
+                "status": "PENDING"
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the matches.
+    """
     try:
         log(f"Retrieving matches for user UID: {request.uid}", "get_matches_by_uid")
         matches = MatchDatabase.get_all_matches()
         user_matches = [match for match in matches if match.uid == request.uid]
         return [MatchFactory.to_json(match) for match in user_matches]
     except Exception as e:
-        logError(f"Error in get_matches_by_uid: {str(e)}", "get_matches_by_uid")
+        
+        logError(f"Error in get_matches_by_uid: ", e, "get_matches_by_uid")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/matches/", response_model=List[Match], tags=["Matches"])
 async def get_all_matches():
+    """Retrieves all matches.
+    
+    Params:
+        None
+        
+    Returns:
+        List[Match]: A list of all matches.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "resume_id": 1,
+                "status": "PENDING"
+            }
+        ]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving all matches.
+    """
     try:
         log("Retrieving all matches", "get_all_matches")
         return MatchDatabase.get_all_matches()
     except Exception as e:
-        logError(f"Error in get_all_matches: {str(e)}", "get_all_matches")
+        
+        logError(f"Error in get_all_matches: ", e, "get_all_matches")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/feedback/", response_model=Feedback, tags=["Feedback"])
 async def create_feedback(feedback: Feedback):
+    """Creates a new feedback with the provided data.
+    
+    Params:
+        feedback (Feedback): The feedback object containing the feedback data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Returns:
+        Feedback: The feedback object created.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while creating the feedback.
+    """
     try:
         log("Creating a new feedback", "create_feedback")
         if not Validation.validate_feedback(feedback):
@@ -805,23 +1109,74 @@ async def create_feedback(feedback: Feedback):
         FeedbackDatabase.create_feedback(feedback)
         return feedback
     except HTTPException as e:
-        logError(f"Validation error in create_feedback: {str(e)}", "create_feedback")
+        
+        logError(f"Validation error in create_feedback: ", e, "create_feedback")
         raise e
     except Exception as e:
-        logError(f"Error in create_feedback: {str(e)}", "create_feedback")
+        
+        logError(f"Error in create_feedback: ", e, "create_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def get_feedback(feedback_id: int):
+    """Retrieves a feedback with the provided ID.
+    
+    Params:
+        feedback_id (int): The ID of the feedback to retrieve.
+        Example:
+            1
+            
+    Returns:
+        Feedback: The feedback object retrieved.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the feedback.
+    """
     try:
         log(f"Retrieving feedback with ID: {feedback_id}", "get_feedback")
         return FeedbackDatabase.get_feedback(feedback_id)
     except Exception as e:
-        logError(f"Error in get_feedback: {str(e)}", "get_feedback")
+        
+        logError(f"Error in get_feedback: ", e, "get_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def update_feedback(feedback_id: int, feedback: Feedback):
+    """Updates a feedback with the provided data.
+    
+    Params:
+        feedback_id (int): The ID of the feedback to update.
+        Example:
+            1
+        feedback (Feedback): The feedback object containing the updated data.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Returns:
+        Feedback: The feedback object updated.
+        Example:
+        {
+            "uid": "12345",
+            "job_id": 1,
+            "rating": 5,
+            "comment": "Feedback comment."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while updating the feedback.
+    """
     try:
         log(f"Updating feedback with ID: {feedback_id}", "update_feedback")
         if not Validation.validate_feedback(feedback):
@@ -831,39 +1186,92 @@ async def update_feedback(feedback_id: int, feedback: Feedback):
         FeedbackDatabase.update_feedback(feedback)
         return feedback
     except HTTPException as e:
-        logError(f"Validation error in update_feedback: {str(e)}", "update_feedback")
+        
+        logError(f"Validation error in update_feedback: ", e, "update_feedback")
         raise e
     except Exception as e:
-        logError(f"Error in update_feedback: {str(e)}", "update_feedback")
+        
+        logError(f"Error in update_feedback: ", e, "update_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/feedback/{feedback_id}", tags=["Feedback"])
 async def delete_feedback(feedback_id: int):
+    """Deletes a feedback with the provided ID.
+    
+    Params:
+        feedback_id (int): The ID of the feedback to delete.
+        Example:
+            1
+            
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Feedback deleted successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while deleting the feedback.
+    """
     try:
         log(f"Deleting feedback with ID: {feedback_id}", "delete_feedback")
         FeedbackDatabase.delete_feedback(feedback_id)
         return {"message": "Feedback deleted successfully."}
     except Exception as e:
-        logError(f"Error in delete_feedback: {str(e)}", "delete_feedback")
+        
+        logError(f"Error in delete_feedback: ", e, "delete_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/feedback/", response_model=List[Feedback], tags=["Feedback"])
 async def get_all_feedbacks():
+    """ Retrieves all feedbacks.
+    
+    Params:
+        None
+    
+    Returns:
+        List[Feedback]: A list of all feedbacks.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "rating": 5,
+                "comment": "Feedback comment."
+            }
+        ]
+    
+    Raises:
+        HTTPException: If an error occurs while retrieving all feedbacks.
+    """
     try:
         log("Retrieving all feedbacks", "get_all_feedbacks")
         return FeedbackDatabase.get_all_feedbacks()
     except Exception as e:
-        logError(f"Error in get_all_feedbacks: {str(e)}", "get_all_feedbacks")
+        
+        logError(f"Error in get_all_feedbacks: ", e, "get_all_feedbacks")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/logs/download", tags=["Logs"])
 async def download_logs():
+    """Downloads the log files as a zip archive.
+    
+    Params:
+        None
+        
+    Returns:
+        FileResponse: The zip archive containing the log files.
+        
+    Raises:
+        HTTPException: If an error occurs while downloading the logs.
+    """
     log_folder = Path(Logger.logFolder)
     decompressed_folder = Path(Logger.decompressed)
 
     try:
         log("Downloading logs", "download_logs")
         # Ensure logs are decompressed
+        Logger.compressLogs()
         Logger.decompressLogs()
 
         # Create a zip of the logs
@@ -872,7 +1280,8 @@ async def download_logs():
         Logger.clearDecompressedLogs()
         return FileResponse(str(zip_path), filename="logs.zip", media_type='application/zip')
     except Exception as e:
-        logError(f"Error in download_logs: {str(e)}", "download_logs")
+        
+        logError(f"Error in download_logs: ", e, "download_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
     finally:
         # Clean up decompressed log files
@@ -882,21 +1291,74 @@ async def download_logs():
 
 @app.post("/logs/compress", tags=["Logs"])
 async def compress_logs():
+    """Compresses the log files into a zip archive.
+
+    Params:
+        None
+    
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Logs compressed successfully."
+        }
+    
+    Raises:
+        HTTPException: If an error occurs while compressing the logs.
+    """
     try:
         log("Compressing logs", "compress_logs")
         Logger.compressLogs()
         return {"message": "Logs compressed successfully."}
     except Exception as e:
-        logError(f"Error in compress_logs: {str(e)}", "compress_logs")
+        
+        logError(f"Error in compress_logs: ", e, "compress_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.post("/grade/job", tags=["Grading"])
 async def grade_job(request: GradeJobRequest):
+    """ Grades resumes for a job.
+    
+    Params:
+        request (GradeJobRequest): The request object containing the job ID.
+        Example:
+        {
+            "job_id": 1
+        }
+    
+    Returns:
+        List[Match]: A list of matches for the job.
+        Example:
+        [
+            {
+                "uid": "12345",
+                "job_id": 1,
+                "resume_id": 1,
+                "status": "PENDING"
+            }
+        ]
+    
+    Raises:
+        HTTPException: If an error occurs while grading the job.
+    """
     try:
         log("Grading job", "grade_job")
         matches = GradingService.grade_resumes_for_job(request.job_id)
-        return [MatchFactory.to_json(match) for match in matches]
+        return matches
     except Exception as e:
-        logError(f"Error in grade_job: {str(e)}", "grade_job")
+        
+        logError(f"Error in grade_job: ", e, "grade_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+
+if __name__ == "__main__":
+    user = User(
+        uid="uid",
+        name=Name(first_name="Chia-Hsun", last_name="Hsieh"),
+        is_admin=False,
+        is_owner=False,
+        phone_number="00-0000000000",
+        dob="14062024",
+        email="testing30@gmail.com"
+    )
+    create_user(CreateUserRequest)

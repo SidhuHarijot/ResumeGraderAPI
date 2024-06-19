@@ -96,6 +96,9 @@ class Resume(BaseModel):
     experience: List[Experience] = Field(..., description="List of experiences.")
     education: List[Education] = Field(..., description="List of education records.")
 
+    def __str__(self) -> str:
+        return f"User: {self.uid}. Skills: {', '.join(self.skills)}. Experiences: {', '.join([str(exp) for exp in self.experience])}. Education: {', '.join([str(edu) for edu in self.education])}."
+
 class Job(BaseModel):
     job_id: int = Field(..., description="Unique identifier for the job.")
     title: str = Field(..., description="Title of the job.")
@@ -107,6 +110,9 @@ class Job(BaseModel):
     salary: float = Field(..., description="Salary for the job.")
     job_type: str = Field(..., description="Type of the job. Options: FULL, PART, CONT, UNKN")
     active: bool = Field(..., description="Status of the job, whether it is active or not.")
+
+    def __str__(self) -> str:
+        return f"{self.title} at {self.company} in {self.location}. Salary: {self.salary}. Job type: {self.job_type}. Deadline: {str(self.application_deadline)}. Description: {self.description}. Required skills: {', '.join(self.required_skills)}. "
 
 class Match(BaseModel):
     match_id: int = Field(..., description="Unique identifier for the match.")
