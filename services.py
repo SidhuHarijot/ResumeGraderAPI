@@ -1,6 +1,5 @@
 from utility import OpenAIUtility, FileUtility
 from datamodels import Resume, Job, Match
-import json
 from fastapi import UploadFile
 from factories import ResumeFactory, JobFactory
 from database import JobDatabase, ResumeDatabase, MatchDatabase
@@ -26,8 +25,7 @@ class ResumeService:
             temp_file_path = FileUtility.save_temp_file(file)
             resume_text = FileUtility.extract_text(temp_file_path)
 
-        openai_util = OpenAIUtility()
-        resume_json = openai_util.extract_resume_json(resume_text)
+        resume_json = OpenAIUtility.extract_resume_json(resume_text)
         resume_data = ResumeFactory.from_json(resume_json)
         log(f"Resume processed: {resume_data.uid}", "ResumeService.process_resume")
         return resume_data
@@ -41,8 +39,7 @@ class JobService:
             temp_file_path = FileUtility.save_temp_file(file)
             job_description_text = FileUtility.extract_text(temp_file_path)
 
-        openai_util = OpenAIUtility()
-        job_json = openai_util.extract_job_description_json(job_description_text)
+        job_json = OpenAIUtility.extract_job_description_json(job_description_text)
         job_data = JobFactory.from_json(job_json)
         log(f"Job description processed: {job_data.job_id}", "JobService.process_job_description")
         return job_data
@@ -52,7 +49,6 @@ class GradingService:
     @staticmethod
     def grade_resumes_for_job(job_id: int):
         log(f"Grading resumes for job: {job_id}", "GradingService.grade_resumes_for_job")
-        openai_utility = OpenAIUtility()
         job = JobDatabase.get_job(job_id)
         job_description = job.description
         matches = MatchDatabase.get_matches_for_job(job_id)
@@ -60,7 +56,7 @@ class GradingService:
         for match in matches:
             resume = ResumeDatabase.get_resume(match.uid)
             resume_text = str(resume)
-            grade = openai_utility.grade_resume(resume_text, job_description, max_grade=100.0)
+            grade = OpenAIUtility.grade_resume(resume_text, job_description, max_grade=100.0)
             match.grade = grade
             match.status = "GRADED"
             graded_matches.append(match)

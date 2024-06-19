@@ -47,6 +47,8 @@ handler = Mangum(app)
 Logger.initialize()
 # Initialize database connection
 Database.initialize()
+# Initialize OpenAI utility
+OpenAIUtility.initialize()
 
 
 def log(message, func):
