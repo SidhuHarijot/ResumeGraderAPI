@@ -1,17 +1,17 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse
 from typing import List, Optional
-from datamodels import *
-from database import *
-from validation import Validation
-from authorize import Authorize
-from serverLogger import Logger
+from Models.datamodels import *
+from Database.database import *
+from Processing.validation import Validation
+from Processing.authorize import Authorize
+from ServerLogging.serverLogger import Logger
 from pathlib import Path
 import shutil
-from requestmodels import *
-from services import *
+from Models.requestmodels import *
+from Services.services import *
 import datetime
-from factories import *
+from Factories.factories import *
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
 import traceback

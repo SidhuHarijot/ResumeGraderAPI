@@ -1,4 +1,4 @@
-import database
+import Database.database as database
 
 
 db = database.Database()
