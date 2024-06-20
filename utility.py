@@ -35,9 +35,9 @@ class OpenAIUtility:
 
     @classmethod
     def getResponse(self, systemMessage, userMessage, responseType, min_val=-1, max_val=-1):
-        gpt_response_type = "text"
+        gpt_response_type = {"type": "text"}
         if responseType == "dict":
-            gpt_response_type = "json_object"
+            gpt_response_type = {"type": "json_object"}
         response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
