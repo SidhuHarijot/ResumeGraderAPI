@@ -16,8 +16,6 @@ class Authorize:
                 return False
             is_admin = user[4]
             is_owner = user[5]
-        if level=="ADMIN" and is_admin:
-            return True
-        if level=="OWNER" and is_owner:
+        if level=="ADMIN" and is_admin or level=="OWNER" and is_owner or level=="ADMIN" and is_owner:
             return True
         return False
