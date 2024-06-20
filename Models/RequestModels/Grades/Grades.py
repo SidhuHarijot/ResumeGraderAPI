@@ -7,4 +7,3 @@ class update:
     uid: Optional[str] = Field(None, description="Unique identifier for the user.")
     status: Optional[str] = Field(None, description="Status of the match.")
     status_code: Optional[int] = Field(None, description="Status code of the match.")
-
