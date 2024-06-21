@@ -1,6 +1,7 @@
 import openai
 import os
 from utility import log, logError
+import json
 
 
 class OpenAIUtility:
@@ -79,6 +80,22 @@ class OpenAIUtility:
         response = self.getResponse(system_message, resume_data, "int", -2, max_grade)
         log(f"Resume graded: ", "OpenAIUtility.grade_resume")
         return response
+    
+    @classmethod
+    def grade_resume(self, job_description: str, resume_data: dict, max_grade: int):
+        log(f"Grading resume for job description: {job_description}", "OpenAIUtility.grade_resume")
+        system_message = f"Grade resumes for this job description: \"{job_description}\" Maximum grade is {max_grade}. " + \
+                         "Return -2 if resume is irrelevant to the job description. " + \
+                         "Return -1 if job description is not understandable or if the resume data has nothing or is not understandable or enough to make a good judgement. " + \
+                         "If the max grade is 1, then 0 means the resume is not good enough and 1 means the resume is good enough. Be harsh with your evaluations." + \
+                         "Output expected is json object with key 'grade' and value a dict with resume number and grade for each resume." + \
+                         "example output: {'grade': {'1': '0', '2': '-1', '3': '1', '4': '1', '5': '-2'}} for 5 resumes with max grade 1."
+        response = self.getResponse(system_message, "".join([resume + "\nResumeEnd\n" for resume in resume_data]), "json")
+        grade_list = []
+        for key, value in response["grade"].items():
+            grade_list.append(self.extractNumericResponse(value, -2, max_grade))
+        log(f"Resumes graded: ", "OpenAIUtility.grade_resume")
+        return grade_list
     
     @classmethod
     def extract_resume_json(self, resume_text: str):

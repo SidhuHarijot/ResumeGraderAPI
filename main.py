@@ -16,6 +16,8 @@ from Factories.factories import *
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
 import traceback
+import os
+import sys
 # endregion
 
 # region Initialize
@@ -58,6 +60,16 @@ def log(message, func):
 def logError(message, e: Exception, func):
     message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
     Logger.logMain(message, func, "ERROR")
+
+
+# Add directory to python path
+def add_current_directory_to_path():
+    current_directory = os.getcwd()
+    if current_directory not in sys.path:
+        sys.path.append(current_directory)
+        log(f"Added {current_directory} to PYTHONPATH", "main.add_current_directory_to_path")
+    else:
+        log(f"{current_directory} is already in PYTHONPATH", "main.add_current_directory_to_path")
 # endregion
 
 # region Root

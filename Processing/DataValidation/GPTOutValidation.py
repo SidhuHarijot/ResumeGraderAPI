@@ -1,5 +1,5 @@
 import json
-from Processing.DataValidation.Validation import log, logError
+from .Validation import logError
 
 class JobDescriptionValidation:
     @staticmethod
@@ -30,7 +30,7 @@ class JobDescriptionValidation:
                 return job
             return None
         except Exception as e:
-            logError(f"Error validating job description: {job}. \n", e, "validate")
+            logError(f"Error validating job description: {job}. \n", e, "JobDescriptionValidation.validate")
             return None
     
     @staticmethod
@@ -58,7 +58,7 @@ class JobDescriptionValidation:
                 return job
             return None
         except Exception as e:
-            logError(f"Error cleaning job description: {job}. \n", e, "clean_output")
+            logError(f"Error cleaning job description: {job}. \n", e, "JobDescriptionValidation.clean_output")
             return None
 
 
@@ -82,7 +82,7 @@ class ResumeDataValidation:
                     return None
                 return resume
         except Exception as e:
-            logError(f"Error validating resume data: {resume}. \n", e, "validate")
+            logError(f"Error validating resume data: {resume}. \n", e, "ResumeDataValidation.validate")
             return None
     
     @staticmethod
@@ -102,6 +102,83 @@ class ResumeDataValidation:
                 return resume
             return None
         except Exception as e:
-            logError(f"Error cleaning resume data: {resume}. \n", e, "clean_output")
+            logError(f"Error cleaning resume data: {resume}. \n", e, "ResumeDataValidation.clean_output")
             return None
 
+
+class GradeValidation:
+    @classmethod
+    def validate(cls, grade, max_grade, total_resumes=None):
+        try:
+            if isinstance(grade, int):
+                if grade < -2 or grade > int(max_grade):
+                    return None
+                return grade
+            elif isinstance(grade, float):
+                if grade < -2 or grade > float(max_grade):
+                    return None
+                return grade
+            elif isinstance(grade, list) and all(isinstance(g, int) for g in grade):
+                if total_resumes is not None and len(grade) != total_resumes:
+                    return None
+                if not all(cls.validate(g, max_grade) is not None for g in grade):
+                    return None
+                return grade
+            elif isinstance(grade, list) and all(isinstance(g, float) for g in grade):
+                if total_resumes is not None and len(grade) != total_resumes:
+                    return None
+                if not all(cls.validate(g, max_grade) is not None for g in grade):
+                    return None
+                return grade
+            else:
+                return None
+        except Exception as e:
+            logError(f"Error validating grade: {grade}. \n", e, "GradeValidation.validate")
+            return None
+
+    @classmethod
+    def clean_output(cls, grade, max_grade, total_resumes=None, response=None):
+        try:
+            if isinstance(grade, int):
+                if cls.validate(grade, max_grade) == None:
+                    return -1
+                return grade
+            elif isinstance(grade, float):
+                if not cls.validate(grade, max_grade):
+                    return -1.0
+                return grade
+            elif isinstance(grade, list) and all(isinstance(g, int) for g in grade):
+                for i in range(len(grade)):
+                    print("validating grade", grade[i], max_grade)
+                    if not cls.validate(grade[i], max_grade):
+                        print("invalid grade", grade[i])
+                        grade[i] = -1
+                        print("invalid grade", grade[i])
+                if total_resumes is not None and len(grade) != total_resumes:
+                    if response is not None:
+                        positions_list = [i for i in range(total_resumes)]
+                        missing_spots = list(set(positions_list) - set(response.keys()))
+                        for spot in missing_spots:
+                            grade.insert(spot, -1)
+                return grade
+            elif isinstance(grade, list) and all(isinstance(g, float) for g in grade):
+                for i in range(len(grade)):
+                    if not cls.validate(grade[i], max_grade):
+                        grade[i] = -1.0
+                if total_resumes is not None and len(grade) != total_resumes:
+                    if response is not None:
+                        positions_list = [i for i in range(total_resumes)]
+                        missing_spots = list(set(positions_list) - set(response.keys()))
+                        for spot in missing_spots:
+                            grade.insert(spot, -1.0)
+                return grade
+            else:
+                return None
+        except Exception as e:
+            logError(f"Error cleaning grade: {grade}. \n", e, "GradeValidation.clean_output")
+            return -1 if isinstance(grade, int) else -1.0 if isinstance(grade, float) else [-1]
+
+
+
+if __name__ == "__main__":
+    print(GradeValidation.clean_output([1, 2, 3, 4, 5], 5, 8, {0: 1, 2: 3, 6: 7, 7: 8, 4: 5}))
