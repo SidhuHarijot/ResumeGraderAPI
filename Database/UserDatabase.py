@@ -38,18 +38,18 @@ class UserDatabase:
             raise
     
     @staticmethod
-    def find_user(params: dict) -> User:
+    def find_users(params: dict) -> List[User]:
         try:
             log(f"Finding user with params {params}", "UserDatabase.find_user")
             query = "SELECT * FROM users WHERE "
             query += " AND ".join([f"{key} = %s" for key in params.keys()])
             result = Database.execute_query(query, tuple(params.values()), fetch=True)
             if result:
-                user = UserFactory.from_db_row(result[0])
-                log(f"User found successfully", "UserDatabase.find_user")
-                return user
+                users = UserFactory.from_db_rows(result)
+                log(f"{len(result)} users found.", "UserDatabase.find_user")
+                return users
             else:
-                raise ValueError(f"User not found")
+                raise ValueError(f"No user found")
         except Exception as e:
             logError(e, "UserDatabase.find_user")
             raise
