@@ -1,5 +1,5 @@
 from typing import List
-from Models.datamodels import *
+from Models.DataModels.GetModels import *
 from Factories.ResumeFactory import *
 from database import *
 

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List
-from Experience import Experience
-from Education import Education
+from .Experience import Experience
+from .Education import Education
 
 class Resume(BaseModel):
     uid: str = Field(..., description="User ID associated with the resume.")

@@ -1,9 +1,9 @@
-from Models.DataModels import Date
+from Models.DataModels.GetModels import Date
 
 
 class DateValidation:
     @staticmethod
-    def check_date(date, min_date=None, max_date=None):
+    def validate_date(date, min_date=None, max_date=None):
         if isinstance(date, str):
             try:
                 date = Date.from_string(date)

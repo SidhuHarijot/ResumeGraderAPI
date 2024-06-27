@@ -2,22 +2,23 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse
 from typing import List, Optional
-from Models.datamodels import *
+from Models.DataModels.GetModels import *
 from Database.database import *
-from Processing.validation import Validation
+from Processing.DataValidation.Validation import Validation
 from Processing.authorize import Authorize
 from ServerLogging.serverLogger import Logger
 from pathlib import Path
 import shutil
-from Models.requestmodels import *
+from Models.RequestModels import *
 from Services.services import *
 import datetime
-from Factories.factories import *
+from Processing.Factories.GetFactories import *
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
 import traceback
 import os
 import sys
+from Utilities.OpenAIUtility import OpenAIUtility
 # endregion
 
 # region Initialize

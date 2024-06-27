@@ -1,7 +1,7 @@
 from typing import List
-from Models.datamodels import *
-from Factories.UserFactory import *
-from database import *
+from Models.DataModels.GetModels import *
+from Processing.Factories.UserFactory import *
+from .database import *
 
 
 class UserDatabase:
@@ -35,6 +35,23 @@ class UserDatabase:
                 raise ValueError(f"User {uid} not found")
         except Exception as e:
             logError(e, "UserDatabase.get_user")
+            raise
+    
+    @staticmethod
+    def find_user(params: dict) -> User:
+        try:
+            log(f"Finding user with params {params}", "UserDatabase.find_user")
+            query = "SELECT * FROM users WHERE "
+            query += " AND ".join([f"{key} = %s" for key in params.keys()])
+            result = Database.execute_query(query, tuple(params.values()), fetch=True)
+            if result:
+                user = UserFactory.from_db_row(result[0])
+                log(f"User found successfully", "UserDatabase.find_user")
+                return user
+            else:
+                raise ValueError(f"User not found")
+        except Exception as e:
+            logError(e, "UserDatabase.find_user")
             raise
 
     @staticmethod
@@ -74,4 +91,17 @@ class UserDatabase:
             return users
         except Exception as e:
             logError(e, "UserDatabase.get_all_users")
+            raise
+    
+    @staticmethod
+    def get_all_data():
+        try:
+            log("Retrieving all data", "UserDatabase.get_all_data")
+            query = "SELECT * FROM users"
+            results = Database.execute_query(query, fetch=True)
+            users = UserFactory.from_db_rows(results)
+            log("All data retrieved successfully", "UserDatabase.get_all_data")
+            return users
+        except Exception as e:
+            logError(e, "UserDatabase.get_all_data")
             raise

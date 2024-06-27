@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from Date import Date
+from .Date import Date
 
 class Education(BaseModel):
     start_date: Date = Field(..., description="Start date of the education.")

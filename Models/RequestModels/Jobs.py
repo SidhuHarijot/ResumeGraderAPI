@@ -27,7 +27,7 @@ class Update(BaseModel):
     job_type: Optional[str] = Field(None, description="Type of the job. Options: FULL, PART, CONT, UNKN")
     active: Optional[bool] = Field(None, description="Status of the job, whether it is active or not.")
 
-class get(BaseModel):
+class Get(BaseModel):
     job_id: Optional[int] = Field(None, description="Unique identifier for the job.")
     active: Optional[bool] = Field(None, description="Status of the job, whether it is active or not.")
     skills: Optional[List[str]] = Field(None, description="List of skills to filter by.")

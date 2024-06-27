@@ -2,6 +2,7 @@ import openai
 import os
 from utility import log, logError
 import json
+from Processing.DataValidation.GPTOutValidation import JobDescriptionValidation as JDV, ResumeDataValidation as RDV, GradeValidation as GV 
 
 
 class OpenAIUtility:
@@ -17,7 +18,7 @@ class OpenAIUtility:
     @classmethod
     def getResponse(self, systemMessage, userMessage, responseType, min_val=-1, max_val=-1):
         gpt_response_type = {"type": "text"}
-        if responseType == "dict":
+        if responseType == "dict" or responseType == "json_str":
             gpt_response_type = {"type": "json_object"}
         response = openai.ChatCompletion.create(
             model="gpt-4o",
@@ -29,7 +30,29 @@ class OpenAIUtility:
         )
         response = response.choices[0].message["content"]
         if isinstance(response, dict):
-            return response
+            if responseType == "dict":
+                return response
+            elif responseType == "json_str":
+                return json.loads(response)
+            elif responseType == "str":
+                str_response = ""
+                for key, value in response:
+                    str_response += f"{key}: {value}\n"
+                return str_response
+            elif responseType == "int":
+                probable_response = -1
+                for key, value in response:
+                    probable_response = int(self.extractNumericResponse(value, min_val, max_val))
+                    if probable_response == -1:
+                        break
+                return probable_response
+            elif responseType == "float":
+                probable_response = -1.0
+                for key, value in response:
+                    probable_response = self.extractNumericResponse(value, min_val, max_val)
+                    if probable_response == -1.0:
+                        break
+                return probable_response
         if isinstance(response, str):
             if responseType == "dict":
                 return json.loads(response)
@@ -65,10 +88,10 @@ class OpenAIUtility:
                 return extractNumbers(response, min_val, max_val)[0]
             except Exception as e:
                 logError("Error extracting int response", e, "OpenAIUtility.extractIntResponse")
-                return -1
+                return -1.0
         except Exception as e:
             logError("Error extracting int response", e, "OpenAIUtility.extractIntResponse")
-            return -1
+            return -1.0
 
     @classmethod
     def grade_resume(self, job_description: str, resume_data: str, max_grade: int):
@@ -78,11 +101,18 @@ class OpenAIUtility:
                          "Return -1 if job description is not understandable or if the resume data has nothing or is not understandable or enough to make a good judgement. " + \
                          "If the max grade is 1, then 0 means the resume is not good enough and 1 means the resume is good enough. Be harsh with your evaluations."
         response = self.getResponse(system_message, resume_data, "int", -2, max_grade)
+        validated_response = GV.validate(response, max_grade)
+        if not validated_response:
+            logError(f"""Grade had a invalid response, defaulting to -1\n
+                            INFORMATION:\n
+                            JOB-DES: {job_description}
+                            RESPONSE: {response}""", "OpenAIUtility.grade_resume")
+            return -1
         log(f"Resume graded: ", "OpenAIUtility.grade_resume")
         return response
     
     @classmethod
-    def grade_resume(self, job_description: str, resume_data: dict, max_grade: int):
+    def grade_resumes(self, job_description: str, resume_data: dict, max_grade: int):
         log(f"Grading resume for job description: {job_description}", "OpenAIUtility.grade_resume")
         system_message = f"Grade resumes for this job description: \"{job_description}\" Maximum grade is {max_grade}. " + \
                          "Return -2 if resume is irrelevant to the job description. " + \
@@ -90,12 +120,18 @@ class OpenAIUtility:
                          "If the max grade is 1, then 0 means the resume is not good enough and 1 means the resume is good enough. Be harsh with your evaluations." + \
                          "Output expected is json object with key 'grade' and value a dict with resume number and grade for each resume." + \
                          "example output: {'grade': {'1': '0', '2': '-1', '3': '1', '4': '1', '5': '-2'}} for 5 resumes with max grade 1."
-        response = self.getResponse(system_message, "".join([resume + "\nResumeEnd\n" for resume in resume_data]), "json")
+        response = self.getResponse(system_message, "".join([resume + "\nResumeEnd\n" for resume in resume_data]), "dict", -2, max_grade)
         grade_list = []
         for key, value in response["grade"].items():
             grade_list.append(self.extractNumericResponse(value, -2, max_grade))
+        clean_grade_list = GV.clean_output(grade_list, max_grade, len(resume_data), response)
+        if grade_list != clean_grade_list:
+            logError(f"""Grade had a invalid response, defaulting to -1\n
+                            INFORMATION:\n
+                            JOB-DES: {job_description}
+                            RESPONSE: {response}""", "OpenAIUtility.grade_resume")
         log(f"Resumes graded: ", "OpenAIUtility.grade_resume")
-        return grade_list
+        return clean_grade_list
     
     @classmethod
     def extract_resume_json(self, resume_text: str):
@@ -114,8 +150,13 @@ class OpenAIUtility:
         """
         log("Extracting resume JSON", "OpenAIUtility.extract_resume_json")
         response = self.getResponse(system_message, resume_text, "dict")
+        cleaned_response = RDV.clean_output(response)
+        if response != cleaned_response:
+            logError(f"""Resume had a invalid response, defaulting to -1\n
+                            INFORMATION:\n
+                            RESPONSE: {response}""", "OpenAIUtility.extract_resume_json")
         log("Resume JSON extracted", "OpenAIUtility.extract_resume_json")
-        return response
+        return cleaned_response
     
     @classmethod
     def extract_job_description_json(self, job_description_text: str):
@@ -132,5 +173,10 @@ class OpenAIUtility:
         """
         log("Extracting job description JSON", "OpenAIUtility.extract_job_description_json")
         response = self.getResponse(system_message, job_description_text, "dict")
+        cleaned_response = JDV.clean_output(response)
+        if response != cleaned_response:
+            logError(f"""Job description had a invalid response, defaulting to -1\n
+                            INFORMATION:\n
+                            RESPONSE: {response}""", "OpenAIUtility.extract_job_description_json")
         log("Job description JSON extracted", "OpenAIUtility.extract_job_description_json")
         return response

@@ -1,6 +1,6 @@
 from typing import List
-from Models.datamodels import *
-from Factories.FeedbackFactory import *
+from Models.DataModels.GetModels import *
+from Processing.Factories.FeedbackFactory import *
 from database import *
 
 
@@ -73,4 +73,17 @@ class FeedbackDatabase:
             return feedbacks
         except Exception as e:
             logError(e, "FeedbackDatabase.get_all_feedbacks")
+            raise
+
+    @staticmethod
+    def get_all_data():
+        try:
+            log("Retrieving all feedback data", "FeedbackDatabase.get_all_data")
+            query = "SELECT * FROM feedback"
+            results = Database.execute_query(query, fetch=True)
+            feedbacks = FeedbackFactory.from_db_rows(results)
+            log("All feedback data retrieved successfully", "FeedbackDatabase.get_all_data")
+            return feedbacks
+        except Exception as e:
+            logError(e, "FeedbackDatabase.get_all_data")
             raise

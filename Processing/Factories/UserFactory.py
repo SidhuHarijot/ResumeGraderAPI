@@ -1,7 +1,7 @@
 from typing import List
 import json
-from Models.datamodels import *
-from factories import log, logError
+from Models.DataModels.GetModels import *
+from .factories import log, logError
 
 
 class UserFactory:

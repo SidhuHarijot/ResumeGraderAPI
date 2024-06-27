@@ -1,8 +1,8 @@
 from Utilities.utility import OpenAIUtility, FileUtility
-from Models.datamodels import Resume, Job, Match
+from Models.DataModels.GetModels import Resume, Job, Match
 import json
 from fastapi import UploadFile
-from Factories.factories import ResumeFactory, JobFactory
+from Processing.Factories import ResumeFactory, JobFactory
 from Database.database import JobDatabase, ResumeDatabase, MatchDatabase
 from ServerLogging.serverLogger import Logger
 import traceback

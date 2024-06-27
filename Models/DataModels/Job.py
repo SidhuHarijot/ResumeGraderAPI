@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List
-from Date import Date
+from .Date import Date
 
 class Job(BaseModel):
     job_id: int = Field(..., description="Unique identifier for the job.")

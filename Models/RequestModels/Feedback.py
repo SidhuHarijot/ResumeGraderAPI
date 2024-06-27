@@ -12,7 +12,7 @@ class Update(BaseModel):
     feedback_text: str = Field(..., description="Text of the feedback.")
 
 
-class get(BaseModel):
+class Get(BaseModel):
     feedback_id: Optional[int] = Field(None, description="Unique identifier for the feedback.")
     match_id: Optional[int] = Field(None, description="Unique identifier for the match.")
     feedback_text: Optional[str] = Field(None, description="Text of the feedback.")

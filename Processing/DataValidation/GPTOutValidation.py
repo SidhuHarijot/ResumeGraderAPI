@@ -56,7 +56,16 @@ class JobDescriptionValidation:
                 if not isinstance(job['active'], bool):
                     job['active'] = True
                 return job
-            return None
+            return {
+                'title': "",
+                'company': "",
+                'description': "",
+                'required_skills': [],
+                'location': "",
+                'salary': 0.0,
+                'job_type': "",
+                'active': True
+            }
         except Exception as e:
             logError(f"Error cleaning job description: {job}. \n", e, "JobDescriptionValidation.clean_output")
             return None
@@ -100,7 +109,12 @@ class ResumeDataValidation:
                 if not all(isinstance(education, dict) for education in resume['education']):
                     resume['education'] = [education for education in resume['education'] if isinstance(education, dict)]
                 return resume
-            return None
+            return {
+                'uid': " ",
+                'skills': [],
+                'experience': [],
+                'education': []
+            }
         except Exception as e:
             logError(f"Error cleaning resume data: {resume}. \n", e, "ResumeDataValidation.clean_output")
             return None
@@ -177,8 +191,3 @@ class GradeValidation:
         except Exception as e:
             logError(f"Error cleaning grade: {grade}. \n", e, "GradeValidation.clean_output")
             return -1 if isinstance(grade, int) else -1.0 if isinstance(grade, float) else [-1]
-
-
-
-if __name__ == "__main__":
-    print(GradeValidation.clean_output([1, 2, 3, 4, 5], 5, 8, {0: 1, 2: 3, 6: 7, 7: 8, 4: 5}))

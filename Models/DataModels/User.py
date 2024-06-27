@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
-from Name import Name
-from Date import Date
+from .Name import Name
+from .Date import Date
 
 
 class User(BaseModel):

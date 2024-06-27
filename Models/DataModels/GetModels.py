@@ -1,12 +1,12 @@
-from Date import Date
-from Job import Job
-from User import User
-from Education import Education
-from Experience import Experience
-from Resume import Resume
-from Match import Match
-from Name import Name
-from Feedback import Feedback
+from .Date import Date
+from .Job import Job
+from .User import User
+from .Education import Education
+from .Experience import Experience
+from .Resume import Resume
+from .Match import Match
+from .Name import Name
+from .Feedback import Feedback
 
 
 class Name(Name):
