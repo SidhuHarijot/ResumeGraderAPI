@@ -454,8 +454,8 @@ class ExperienceFactory:
             try:
                 data = json.loads(data)
                 return Experience(
-                    start_date=Date.from_string(data['start_date']),
-                    end_date=Date.from_string(data['end_date']),
+                    start_date=Date.create_from_input(data['start_date']),
+                    end_date=Date.create_from_input(data['end_date']),
                     title=data['title'],
                     company_name=data['company_name'],
                     description=data['description']

@@ -38,13 +38,24 @@ class Date(BaseModel):
         return f"{self.day:02d}{self.month:02d}{self.year:04d}"
     
     @classmethod
-    def from_string(cls, date_str: str):
+    def from_string(cls, date_str):
         if len(date_str) != 8:
             raise ValueError("Date string must be in DDMMYYYY format")
         day = int(date_str[:2])
         month = int(date_str[2:4])
         year = int(date_str[4:])
         return cls(day=day, month=month, year=year)
+    
+    @classmethod
+    def from_json(cls, date_json):
+        return cls(day=date_json['day'], month=date_json['month'], year=date_json['year'])
+    
+    @classmethod
+    def create_from_input(cls, value):
+        if isinstance(value, str):
+            return cls.from_string(value)
+        if isinstance(value, dict):
+            return cls.from_json(value)
 
 class Name(BaseModel):
     first_name: str = Field(..., description="First name of the user.")
