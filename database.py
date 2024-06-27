@@ -14,7 +14,7 @@ def log(message, func):
     Logger.logDatabase(message, func)
 
 def logError(e: Exception, func):
-    error_message = "".join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__))
+    error_message = f"\n{traceback.format_exception(None, e, e.__traceback__)}"
     message = f"An error occurred: {error_message}"
     Logger.logDatabase(message, func, "ERROR")
 # endregion
@@ -288,7 +288,7 @@ class ResumeDatabase:
                 UPDATE resumes SET skills = %s, experience = %s, education = %s
                 WHERE uid = %s
             """
-            params = ResumeFactory.to_db_row(resume) + (resume.uid,)
+            params = ResumeFactory.to_db_row(resume, False) + (resume.uid,)
             Database.execute_query(query, params)
             log(f"Resume for user {resume.uid} updated successfully", "ResumeDatabase.update_resume")
         except Exception as e:

@@ -555,12 +555,17 @@ class ResumeFactory:
             raise
 
     @staticmethod
-    def to_db_row(resume: Resume):
+    def to_db_row(resume: Resume, with_id=True):
         try:
             log(f"Converting Resume object to db row: {resume.uid}", "to_db_row")
-
+            if with_id:
+                return (
+                    resume.uid,
+                    resume.skills,
+                    json.dumps(ExperienceFactory.bulk_to_json(resume.experience)),
+                    json.dumps(EducationFactory.bulk_to_json(resume.education))
+                )
             return (
-                resume.uid,
                 resume.skills,
                 json.dumps(ExperienceFactory.bulk_to_json(resume.experience)),
                 json.dumps(EducationFactory.bulk_to_json(resume.education))
