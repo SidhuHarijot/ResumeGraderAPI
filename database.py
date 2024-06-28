@@ -102,8 +102,7 @@ class Database:
                 """,
                 "resumes": """
                     CREATE TABLE resumes (
-                        resume_id SERIAL PRIMARY KEY,
-                        uid VARCHAR(50) NOT NULL,
+                        uid VARCHAR(50) PRIMARY KEY,
                         skills TEXT[],
                         experience JSONB,
                         education JSONB,
