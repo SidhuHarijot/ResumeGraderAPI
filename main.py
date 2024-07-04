@@ -45,6 +45,7 @@ app.add_middleware(
 
 handler = Mangum(app)
 
+
 # Initialize logger
 Logger.initialize()
 # Initialize database connection
