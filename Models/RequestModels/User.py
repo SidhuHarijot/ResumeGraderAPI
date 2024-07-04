@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from Models.DataModels.User import User
+from Models.DataModels.Name import Name
+from Models.DataModels.Date import Date
 
 class Create(BaseModel):
     uid: str = Field(..., description="Unique identifier for the user.")
@@ -9,6 +12,15 @@ class Create(BaseModel):
     phone_number: str = Field(..., description="Phone number of the user. Format: XX-XXXXXXXXXX")
     email: str = Field(..., description="Email of the user.")
 
+    def to_user(self):
+        return User(uid=self.uid, 
+                    name=Name(first_name=self.first_name, last_name=self.last_name),
+                    dob=Date.create(self.dob),
+                    is_owner=False,
+                    is_admin=False,
+                    phone_number=self.phone_number,
+                    email=self.email)
+
 
 class Update(BaseModel):
     first_name: Optional[str] = Field(None, description="First name of the user.")
@@ -17,3 +29,15 @@ class Update(BaseModel):
     phone_number: Optional[str] = Field(None, description="Phone number of the user. Format: XX-XXXXXXXXXX")
     email: Optional[str] = Field(None, description="Email of the user.")
 
+    def to_user(self, current: User):
+        if self.first_name:
+            current.name.first_name = self.first_name
+        if self.last_name:
+            current.name.last_name = self.last_name
+        if self.dob:
+            current.dob = Date.create(self.dob)
+        if self.phone_number:
+            current.phone_number = self.phone_number
+        if self.email:
+            current.email = self.email
+        return current

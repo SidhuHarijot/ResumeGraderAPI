@@ -40,6 +40,23 @@ class Date(BaseModel):
         year = int(date_str[4:])
         return cls(day=day, month=month, year=year)
     
+    @classmethod
+    def from_json(cls, data: dict):
+        if data['dob']:
+            if isinstance(data["dob"], str):
+                return cls.from_string(data["dob"])
+            return cls(day=data['dob']['day'], month=data['dob']['month'], year=data['dob']['year'])
+        elif data['day'] and data['month'] and data['year']:
+            return cls(day=data['day'], month=data['month'], year=data['year'])
+        else:
+            raise ValueError("Date data is not valid")
+    
+    @classmethod
+    def create(cls, data):
+        if isinstance(data, dict):
+            return cls.from_json(data)
+        return cls.from_string(data)
+    
     def __eq__(self, value: object) -> bool:
         return self.day == value.day and self.month == value.month and self.year == value.year
     

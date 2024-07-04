@@ -9,7 +9,7 @@ from Processing.authorize import Authorize
 from ServerLogging.serverLogger import Logger
 from pathlib import Path
 import shutil
-from Models.RequestModels import *
+from Models.RequestModels.GetModels import RequestModels as rm
 from Services.services import *
 import datetime
 from Processing.Factories.GetFactories import *
@@ -19,6 +19,7 @@ import traceback
 import os
 import sys
 from Utilities.OpenAIUtility import OpenAIUtility
+from Services.UserService import UserService
 # endregion
 
 # region Initialize
@@ -97,6 +98,46 @@ async def read_root():
     """
     try:
         log("Accessing root endpoint", "read_root")
+        html_data = """
+        <html>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 50px;
+                }
+                h1 {
+                    color: #333;
+                }
+                p {
+                    color: #666;
+                }
+                a {
+                    color: #007bff;
+                    text-decoration: none;
+                }
+                a:hover {
+                    text-decoration: underline;
+                }
+            </style>
+            <head>
+                <title>Job Matching System API</title>
+            </head>
+            <body>
+                <h1>Welcome to the API!</h1>
+                <p>This is a FastAPI project backend for a job matching system.</p>
+                <p>Author: BugSlayerz.HarijotSingh</p>
+                <p>Technologies used: FastAPI, PostgreSQL, Firebase, Python</p>
+                <p>Contact us:
+                    <a href="mailto:sidhuharijot@gmail.com"><strong>Email</strong></a>
+                </p>
+                <p>Version: 4.0</p>
+                <p>Documentation:
+                    <a href="resumegraderapi.com/docs"><strong>Swagger UI</strong></a>
+                </p>
+
+            </body>
+        </html>
+        """
         return {"message": "Welcome to the API!", "author": "BugSlayerz.HarijotSingh", "description": "This is a FastAPI project backend for a job matching system.", "Contact us": "sidhuharijot@gmail.com", "version": "3.0"}
     except Exception as e:
         logError(f"Error in root endpoint: ", e, "read_root")
@@ -105,7 +146,7 @@ async def read_root():
 
 # region Users
 @app.post("/users/", response_model=User, tags=["Users"])
-async def create_user(request: CreateUserRequest):
+async def create_user(request: rm.User.Create):
     """Creates a new user with the provided data.
     
     Params:\n
@@ -146,22 +187,19 @@ async def create_user(request: CreateUserRequest):
         HTTPException: If an error occurs while creating the user.
     """
     try:
-        log("Creating a new user", "create_user")
         user = User(
             uid=request.uid,
             name=Name(first_name=request.first_name, last_name=request.last_name),
-            dob=Date.from_string(request.dob),
+            dob=Date.create(request.dob),
             is_owner=False,
             is_admin=False,
             phone_number=request.phone_number,
             email=request.email
         )
         
-        if not Validation.validate_user(user):
-            raise HTTPException(status_code=400, detail="Invalid user data.")
-        
-        UserDatabase.create_user(user)
-        return user
+        userService = UserService(user)
+        userService.create()
+        return userService.user
     except HTTPException as e:
         logError(f"Validation error in create_user: ", e, "create_user")
         raise e
@@ -202,14 +240,14 @@ async def get_user(uid: str):
         HTTPException: If an error occurs while retrieving the user.
     """
     try:
-        log(f"Retrieving user with UID: {uid}", "get_user")
-        return UserDatabase.get_user(uid)
+        UserService.create_from_db(uid)
+        return UserService.user
     except Exception as e:
         logError(f"Error in get_user: ", e, "get_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/users/{uid}", response_model=User, tags=["Users"])
-async def update_user(uid: str, request: UpdateUserRequest):
+async def update_user(uid: str, request: rm.User.Update):
     """Updates a user with the provided data.
     
     Params:\n
@@ -260,7 +298,7 @@ async def update_user(uid: str, request: UpdateUserRequest):
         if request.last_name:
             user.name.last_name = request.last_name
         if request.dob:
-            user.dob = Date.from_string(request.dob)
+            user.dob = Date.create(request.dob)
         if request.phone_number:
             user.phone_number = request.phone_number
         if request.email:
@@ -865,7 +903,7 @@ async def update_job(job_id: int, request: UpdateJobRequest):
         if request.required_skills:
             job.required_skills = request.required_skills
         if request.application_deadline:
-            job.application_deadline = Date.from_string(request.application_deadline)
+            job.application_deadline = Date.create(request.application_deadline)
         if request.location:
             job.location = request.location
         if request.salary is not None:

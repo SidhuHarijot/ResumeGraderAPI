@@ -92,16 +92,3 @@ class UserDatabase:
         except Exception as e:
             logError(e, "UserDatabase.get_all_users")
             raise
-    
-    @staticmethod
-    def get_all_data():
-        try:
-            log("Retrieving all data", "UserDatabase.get_all_data")
-            query = "SELECT * FROM users"
-            results = Database.execute_query(query, fetch=True)
-            users = UserFactory.from_db_rows(results)
-            log("All data retrieved successfully", "UserDatabase.get_all_data")
-            return users
-        except Exception as e:
-            logError(e, "UserDatabase.get_all_data")
-            raise

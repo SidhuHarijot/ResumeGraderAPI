@@ -29,8 +29,8 @@ class EducationFactory:
                 data = json.loads(data)
                 course_name = data['course_name']
             return Education(
-                start_date=Date.from_string(data['start_date']),
-                end_date=Date.from_string(data['end_date']),
+                start_date=Date.create(data['start_date']),
+                end_date=Date.create(data['end_date']),
                 institution=data['institution'],
                 course_name=course_name
             )

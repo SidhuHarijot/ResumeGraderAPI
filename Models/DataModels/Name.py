@@ -35,3 +35,21 @@ class Name(BaseModel):
         last_name = name_str[name_str.index('(', 2) + 1: -2]
         return cls(first_name=first_name, last_name=last_name)
 
+    @classmethod
+    def from_json(cls, data: dict):
+        if data['name']:
+            if isinstance(data["name"], str):
+                return cls.from_string(data["name"])
+            return cls(first_name=data['name']['first_name'], last_name=data['name']['last_name'])
+        elif data['first_name'] and data['last_name']:
+            return cls(first_name=data['first_name'], last_name=data['last_name'])
+        else:
+            raise ValueError("Name data is not valid")
+        
+
+    @classmethod
+    def create(cls, data):
+        if isinstance(data, dict):
+            return cls.from_json(data)
+        return cls.from_string(data)
+

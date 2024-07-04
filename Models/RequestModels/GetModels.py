@@ -5,55 +5,55 @@ from .Resumes import Create as ResumeCreate, Update as ResumeUpdate
 from .Matches import Create as MatchCreate, Get as MatchGet, Update as MatchUpdate
 from .Jobs import Create as JobCreate, Update as JobUpdate, Get as JobGet
 
+class RequestModels:
+    class User:
+        class Create(UserCreate):
+            pass
 
-class User:
-    class Create(UserCreate):
-        pass
+        class Update(UserUpdate):
+            pass
 
-    class Update(UserUpdate):
-        pass
+        class Privileges:
+            class Update(UserPrivilegesUpdate):
+                pass
 
-    class Privileges:
-        class Update(UserPrivilegesUpdate):
+
+    class Resumes:
+        class Create(ResumeCreate):
+            pass
+
+        class Update(ResumeUpdate):
             pass
 
 
-class Resumes:
-    class Create(ResumeCreate):
-        pass
+    class Matches:
+        class Create(MatchCreate):
+            pass
 
-    class Update(ResumeUpdate):
-        pass
+        class Get(MatchGet):
+            pass
 
-
-class Matches:
-    class Create(MatchCreate):
-        pass
-
-    class Get(MatchGet):
-        pass
-
-    class Update(MatchUpdate):
-        pass
+        class Update(MatchUpdate):
+            pass
 
 
-class Jobs:
-    class Create(JobCreate):
-        pass
+    class Jobs:
+        class Create(JobCreate):
+            pass
 
-    class Update(JobUpdate):
-        pass
+        class Update(JobUpdate):
+            pass
 
-    class Get(JobGet):
-        pass
+        class Get(JobGet):
+            pass
 
 
-class Feedback:
-    class Create(FeedbackCreate):
-        pass
+    class Feedback:
+        class Create(FeedbackCreate):
+            pass
 
-    class Update(FeedbackUpdate):
-        pass
+        class Update(FeedbackUpdate):
+            pass
 
-    class Get(FeedbackGet):
-        pass
+        class Get(FeedbackGet):
+            pass

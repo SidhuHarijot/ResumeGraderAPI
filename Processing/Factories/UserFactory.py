@@ -11,8 +11,8 @@ class UserFactory:
             log(f"Creating User object from row: {row[1]}", "UserFactory.from_db_row")
             return User(
                 uid=row[0],
-                name=Name.from_string(row[1]),
-                dob=Date.from_string(row[2]),
+                name=Name.create(row[1]),
+                dob=Date.create(row[2]),
                 is_owner=row[3],
                 is_admin=row[4],
                 phone_number=row[5],
@@ -55,14 +55,14 @@ class UserFactory:
         try:
             log(f"Creating User object from JSON: {data['name']}", "UserFactory.from_json")
             try:
-                name = Name.from_string(data['name'])
+                name = Name.create(data['name'])
             except TypeError:
                 data = json.loads(data)
-                name = Name.from_string(data['name'])
+                name = Name.create(data['name'])
             return User(
                 uid=data['uid'],
                 name=name,
-                dob=Date.from_string(data['dob']),
+                dob=Date.create(data['dob']),
                 is_owner=data.get('is_owner', False),
                 is_admin=data.get('is_admin', False),
                 phone_number=data['phone_number'],

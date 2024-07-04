@@ -25,8 +25,8 @@ class ExperienceFactory:
         try:
             log(f"Creating Experience object from JSON: {data['title']}", "from_json")
             return Experience(
-                start_date=Date.from_string(data['start_date']),
-                end_date=Date.from_string(data['end_date']),
+                start_date=Date.create(data['start_date']),
+                end_date=Date.create(data['end_date']),
                 title=data['title'],
                 company_name=data['company_name'],
                 description=data['description']
@@ -36,8 +36,8 @@ class ExperienceFactory:
             try:
                 data = json.loads(data)
                 return Experience(
-                    start_date=Date.from_string(data['start_date']),
-                    end_date=Date.from_string(data['end_date']),
+                    start_date=Date.create(data['start_date']),
+                    end_date=Date.create(data['end_date']),
                     title=data['title'],
                     company_name=data['company_name'],
                     description=data['description']
