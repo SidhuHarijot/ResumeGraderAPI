@@ -327,11 +327,12 @@ class JobDatabase:
             log(f"Creating job {job.title} at {job.company}", "JobDatabase.create_job")
             query = """
                 INSERT INTO jobdescriptions (title, company, description, required_skills, application_deadline, location, salary, job_type, active)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING job_id, title, company, description, required_skills, application_deadline, location, salary, job_type, active
             """
             params = JobFactory.to_db_row(job)
-            Database.execute_query(query, params)
+            result = Database.execute_query(query, params, fetch=True)
             log(f"Job {job.title} at {job.company} created successfully", "JobDatabase.create_job")
+            return JobFactory.from_db_row(result[0])
         except Exception as e:
             logError(e, "JobDatabase.create_job")
             raise

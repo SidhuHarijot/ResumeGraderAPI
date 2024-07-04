@@ -318,11 +318,11 @@ async def get_user_privileges(uid: str):
     try:
         log(f"Retrieving user privileges for UID: {uid}", "get_user_privileges")
         if Authorize.checkAuth(uid, "OWNER"):
-            return "OWNER"
+            return "owner"
         elif Authorize.checkAuth(uid, "ADMIN"):
-            return "ADMIN"
+            return "admin"
         else:
-            return "USER"
+            return "user"
     except Exception as e:
         logError(f"Error in get_user_privileges: ", e, "get_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -708,7 +708,7 @@ async def get_all_resumes():
 
 # region Jobs
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
-async def create_job(file: UploadFile = File(None), job_description_text: Optional[str] = None):
+async def create_job():
     """Creates a new job with the provided data.
     
     Params:\n
@@ -742,12 +742,18 @@ async def create_job(file: UploadFile = File(None), job_description_text: Option
     """
     try:
         log("Creating a new job", "create_job")
-        job = JobService.process_job_description(file, job_description_text)
-        
-        if not Validation.validate_job(job):
-            raise HTTPException(status_code=400, detail="Invalid job data.")
-        
-        JobDatabase.create_job(job)
+        job = Job(job_id=-1,
+                  title="",
+                  company="",
+                  description="",
+                  required_skills=[],
+                  application_deadline=Date(day=1, month=1, year=2024),
+                  location="",
+                  salary=0.00,
+                  job_type="UNKN",
+                  active=True
+                  )
+        job = JobDatabase.create_job(job)
         return job
     except HTTPException as e:
         logError(f"Validation error in create_job: ", e, "create_job")

@@ -176,7 +176,7 @@ class JobFactory:
     @staticmethod
     def from_json(data: dict) -> Job:
         try:
-            log(f"Creating Job object from JSON: {data['title']} at {data['company']}", "from_json")
+            log(f"Creating Job object from JSON: {data['title']} at {data['employer']}", "from_json")
             try:
                 job_id = data['job_id']
             except TypeError:

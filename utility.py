@@ -125,16 +125,24 @@ class OpenAIUtility:
         system_message = """
         Convert the given job description data into a structured JSON format. Adhere strictly to this format:
         {
-            "Title": "Job Title",
+            "title": "Job Title",
             "description": "Job Description",
             "employer": "Employer Name",
             "Must Haves": ["Requirement 1", "Requirement 2"]
         }
         Ensure that the job description is concise and clearly describes the role, responsibilities, and requirements for the position.
         For must-have requirements, list them only if given in the job description. Must haves are the responsibilities or requirements that are mandatory for the job.
+        If there is no data you need to still return the field with empty data for example:
+        {
+            "title": "",
+            "description": "",
+            "employer": "",
+            "Must Haves": []
+        }
         """
         log("Extracting job description JSON", "OpenAIUtility.extract_job_description_json")
         response = self.getResponse(system_message, job_description_text, "dict")
+
         log("Job description JSON extracted", "OpenAIUtility.extract_job_description_json")
         return response
 
