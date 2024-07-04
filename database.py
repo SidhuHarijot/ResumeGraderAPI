@@ -44,7 +44,7 @@ class Database:
             try:
                 # Fallback to the external URL if internal fails
                 Database.connection_pool = psycopg2.pool.SimpleConnectionPool(
-                    1, 10,
+                    1, 90,
                     database="resume_grader",
                     user="bugslayerz",
                     password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
