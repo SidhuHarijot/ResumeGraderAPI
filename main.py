@@ -81,14 +81,12 @@ def add_current_directory_to_path():
 # region doc customization
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/docs", include_in_schema=False)
+@app.get("/darkDocs", include_in_schema=False)
 async def custom_swagger_ui_html():
     return get_swagger_ui_html(
         openapi_url=app.openapi_url,
-        title=app.title + " - Swagger UI",
-        swagger_js_url="/static/swagger-ui-bundle.js",
-        swagger_css_url="/static/custom-swagger.css",
-        swagger_favicon_url="/static/favicon.ico",
+        title=f"{app.title} - Swagger UI",
+        swagger_css_url="/static/swagger_ui_dark.min.css"
     )
 # endregion
 
