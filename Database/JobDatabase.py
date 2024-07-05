@@ -11,11 +11,12 @@ class JobDatabase:
             log(f"Creating job {job.title} at {job.company}", "JobDatabase.create_job")
             query = """
                 INSERT INTO jobdescriptions (title, company, description, required_skills, application_deadline, location, salary, job_type, active)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING job_id
             """
-            params = JobFactory.to_db_row(job)
-            Database.execute_query(query, params)
+            params = JobFactory.to_db_row(job, with_id=False)
+            job_id = Database.execute_query(query, params, fetch=True)[0][0]
             log(f"Job {job.title} at {job.company} created successfully", "JobDatabase.create_job")
+            return job_id
         except Exception as e:
             logError(e, "JobDatabase.create_job")
             raise
@@ -73,4 +74,21 @@ class JobDatabase:
             return jobs
         except Exception as e:
             logError(e, "JobDatabase.get_all_jobs")
+            raise
+    
+    @staticmethod
+    def find_jobs(params: dict) -> List[Job]:
+        try:
+            log(f"Finding job with params {params}", "JobDatabase.find_job")
+            query = "SELECT * FROM jobdescriptions WHERE "
+            query += " AND ".join([f"{key} = %s" for key in params.keys()])
+            result = Database.execute_query(query, tuple(params.values()), fetch=True)
+            if result:
+                jobs = JobFactory.from_db_rows(result)
+                log(f"{len(result)} jobs found.", "JobDatabase.find_job")
+                return jobs
+            else:
+                raise ValueError(f"No job found")
+        except Exception as e:
+            logError(e, "JobDatabase.find_job")
             raise

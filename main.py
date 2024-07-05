@@ -1,5 +1,5 @@
 # region imports
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -784,7 +784,8 @@ async def create_job(request: rm.Jobs.Create) -> Job:
             "salary": 100000,
             "job_type": "FULL",
             "active": true,
-            "file": "job_description.pdf"
+            "file": "job_description.pdf",
+            "auth_uid": "12345"
         }
 
     Returns:
@@ -812,13 +813,11 @@ async def create_job(request: rm.Jobs.Create) -> Job:
     """
     try:
         log("Creating a new job", "create_job")
-        job = JobService.process_job_description(request.file, request.description)
-        
-        if not Validation.validate_job(job):
-            raise HTTPException(status_code=400, detail="Invalid job data.")
-        
-        JobDatabase.create_job(job)
-        return job
+        jobS = JobService.create_from_request(request)
+        return jobS.job
+    except PermissionError as e:
+        logError(f"Authorization error in create_job: ", e, "create_job")
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
     except HTTPException as e:
         logError(f"Validation error in create_job: ", e, "create_job")
         raise e
@@ -863,13 +862,13 @@ async def get_job(job_id: int) -> Job:
     """
     try:
         log(f"Retrieving job with ID: {job_id}", "get_job")
-        return JobDatabase.get_job(job_id)
+        return JobService.get_from_db(job_id).job
     except Exception as e:
         logError(f"Error in get_job: ", e, "get_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.put("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
-async def update_job(job_id: int, request: rm.Jobs.Update) -> Job:
+@app.put("/jobs/", response_model=Job, tags=["Jobs"])
+async def update_job(request: rm.Jobs.Update) -> Job:
     """Updates a job with the provided data.
     
     :param job_id: The ID of the job to update.
@@ -880,10 +879,9 @@ async def update_job(job_id: int, request: rm.Jobs.Update) -> Job:
     :rtype: Job
     
     Example:
-        job_id:
-        1
         request:
         {
+            "job_id": 1,
             "title": "Software Engineer",
             "company": "XYZ",
             "description": "Job Description",
@@ -892,7 +890,8 @@ async def update_job(job_id: int, request: rm.Jobs.Update) -> Job:
             "location": "Location",
             "salary": 100000,
             "job_type": "FULL",
-            "active": true
+            "active": true,
+            "auth_uid": "12345"
         }
 
     Returns:
@@ -919,33 +918,16 @@ async def update_job(job_id: int, request: rm.Jobs.Update) -> Job:
         HTTPException: If an error occurs while updating the job.
     """
     try:
-        log(f"Updating job with ID: {job_id}", "update_job")
-        job = JobDatabase.get_job(job_id)
-        
-        if request.title:
-            job.title = request.title
-        if request.company:
-            job.company = request.company
-        if request.description:
-            job.description = request.description
-        if request.required_skills:
-            job.required_skills = request.required_skills
-        if request.application_deadline:
-            job.application_deadline = Date.create(request.application_deadline)
-        if request.location:
-            job.location = request.location
-        if request.salary is not None:
-            job.salary = request.salary
-        if request.job_type:
-            job.job_type = request.job_type
-        if request.active is not None:
-            job.active = request.active
-        
-        if not Validation.validate_job(job):
-            raise HTTPException(status_code=400, detail="Invalid job data.")
-        
-        JobDatabase.update_job(job)
-        return job
+        log(f"Updating job with ID: {request.job_id}", "update_job")
+        jobS = JobService.get_from_db(request.job_id)
+        jobS.update(request)
+        return jobS.job
+    except PermissionError as e:
+        logError(f"Authorization error in update_job: ", e, "update_job")
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except ValueError as e:
+        logError(f"Job not found: {request.job_id}", e, "update_job")
+        raise HTTPException(status_code=404, detail="Job not found.")
     except HTTPException as e:
         logError(f"Validation error in update_job: ", e, "update_job")
         raise e
@@ -984,10 +966,19 @@ async def delete_job(job_id: int) -> dict:
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/jobs/", response_model=List[Job], tags=["Jobs"])
-async def get_all_jobs() -> List[Job]:
+async def get_all_jobs(active: Optional[bool]=Query(None, description="Get all active jobs"),
+                    skills: Optional[List[str]]=Query(None, description="Get jobs for specific skills")) -> List[Job]:
     """Retrieves all jobs.
     
     :rtype: List[Job]
+
+    Params:
+        active: Get all active jobs.
+        skills: Get jobs for specific skills.
+
+        example:
+        active: true
+        skills: ["Python", "Java", "SQL"]
 
     Returns:
         List[Job]: A list of all jobs.
@@ -1016,7 +1007,11 @@ async def get_all_jobs() -> List[Job]:
     """
     try:
         log("Retrieving all jobs", "get_all_jobs")
-        return JobDatabase.get_all_jobs()
+        request = rm.Jobs.Get(active=active, skills=skills)
+        return JobService.get_multiple_jobs_from_db(request)
+    except ValueError:
+        logError(f"No jobs found", "get_all_jobs")
+        raise HTTPException(status_code=404, detail="No jobs found.")
     except Exception as e:
         logError(f"Error in get_all_jobs: ", e, "get_all_jobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")

@@ -31,20 +31,7 @@ class JobFactory:
         try:
             log(f"Converting Job object to db row: {job.title} at {job.company}", "to_db_row")
             deadline_str = str(job.application_deadline)
-            if job.job_id == -1 or not with_id:
-                return (
-                    job.title,
-                    job.company,
-                    job.description,
-                    job.required_skills,
-                    deadline_str,
-                    job.location,
-                    job.salary,
-                    job.job_type,
-                    job.active
-                )
-            return (
-                job.job_id,
+            params = (
                 job.title,
                 job.company,
                 job.description,
@@ -55,6 +42,9 @@ class JobFactory:
                 job.job_type,
                 job.active
             )
+            if not with_id or job.job_id == -1:
+                return params
+            return (job.job_id,) + params
         except Exception as e:
             logError(f"Error converting Job object to db row: {job} at {job}. \n", e, "to_db_row")
             raise
