@@ -1,4 +1,5 @@
 import Database.database as database
+from functools import wraps
 
 
 db = database.Database()
@@ -19,3 +20,22 @@ class Authorize:
         if (level=="ADMIN" and is_admin) or (level=="OWNER" and is_owner) or (level=="ADMIN" and is_owner):
             return True
         return False
+
+
+
+def authorizeOwner(func):
+    def wrapper(*args, **kwargs):
+        auth_uid = args[0]
+        if Authorize.checkAuth(auth_uid.auth_uid, "OWNER"):
+            return func(*args, **kwargs)
+        raise PermissionError("You do not have permission to access this resource.")
+    return wrapper
+
+
+def authorizeAdmin(func):
+    def wrapper(*args, **kwargs):
+        request = args[0]
+        if Authorize.checkAuth(request.auth_uid, "ADMIN"):
+            return func(*args, **kwargs)
+        raise PermissionError("You do not have permission to access this resource.")
+    return wrapper

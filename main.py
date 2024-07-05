@@ -21,7 +21,8 @@ import traceback
 import os
 import sys
 from Utilities.OpenAIUtility import OpenAIUtility
-from Services.UserService import UserService
+from Services.getServices import *
+
 # endregion
 
 
@@ -143,6 +144,8 @@ async def read_root() -> HTMLResponse:
                 <p>Version: 4.0</p>
                 <p>Documentation:
                     <a href="/docs"><strong>Swagger UI</strong></a>
+                    <a href="/redoc"><strong>ReDoc</strong></a>
+                    <a href="/darkDocs"><strong>Dark Swagger UI</strong></a>
                 </p>
             </body>
         </html>
@@ -382,7 +385,7 @@ async def get_all_users(auth_uid: str) -> List[User]:
         if not (Authorize.checkAuth(auth_uid, "ADMIN") or Authorize.checkAuth(auth_uid, "OWNER")):
             raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
         
-        return UserDatabase.get_all_users()
+        return UserService.get_all()
     except HTTPException as e:
         logError(f"Authorization error in get_all_users: ", e, "get_all_users")
         raise e
@@ -454,20 +457,11 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
     """
     try:
         log("Updating user privileges", "update_user_privileges")
-        if not (Authorize.checkAuth(request.auth_uid, "ADMIN") or Authorize.checkAuth(request.auth_uid, "OWNER")):
-            raise HTTPException(status_code=403, detail="You are not authorized to perform this action.")
-        
-        user = UserDatabase.get_user(request.target_uid)
-        if request.is_admin is not None:
-            user.is_admin = request.is_admin
-        if request.is_owner is not None:
-            user.is_owner = request.is_owner
-
-        if not Validation.validate_user(user):
-            raise HTTPException(status_code=400, detail="Invalid user data.")
-        
-        UserDatabase.update_user(user)
+        AuthService.update_privileges(request)
         return {"message": "User privileges updated successfully."}
+    except PermissionError as e:
+        logError(f"Authorization error in update_user_privileges: ", e, "update_user_privileges")
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
     except HTTPException as e:
         logError(f"Authorization or validation error in update_user_privileges: ", e, "update_user_privileges")
         raise e

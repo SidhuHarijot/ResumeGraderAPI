@@ -38,6 +38,7 @@ class UserService:
     def get_from_db(uid: str):
         return UserService(UserDatabase.get_user(uid))
     
+    
     @staticmethod
     def find(params: dict):
         return UserDatabase.find_users(params)
