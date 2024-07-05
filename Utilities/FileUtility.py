@@ -1,5 +1,5 @@
 from pathlib import Path
-from utility import log, logError
+from .utility import log, logError
 import shutil
 import PyPDF2
 import docx2txt

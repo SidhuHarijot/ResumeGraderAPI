@@ -1,7 +1,7 @@
 from typing import List
 from Models.DataModels.GetModels import *
-from Factories.MatchFactory import *
-from database import *
+from Processing.Factories.MatchFactory import *
+from .database import *
 
 class MatchDatabase:
     @staticmethod

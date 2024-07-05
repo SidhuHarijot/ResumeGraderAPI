@@ -1,7 +1,7 @@
 from typing import List
 from Models.DataModels.GetModels import *
 from Processing.Factories.FeedbackFactory import *
-from database import *
+from .database import Database
 
 
 class FeedbackDatabase:

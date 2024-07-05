@@ -1,7 +1,7 @@
 from typing import List
 from Models.DataModels.GetModels import *
-from Factories.ResumeFactory import *
-from database import *
+from Processing.Factories.ResumeFactory import *
+from .database import *
 
 class ResumeDatabase:
     @staticmethod

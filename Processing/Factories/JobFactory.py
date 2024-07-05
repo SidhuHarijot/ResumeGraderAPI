@@ -1,7 +1,7 @@
 from typing import List
 import json
 from Models.DataModels.GetModels import Job, Date
-from factories import *
+from .factories import *
 from typing import Dict
 
 

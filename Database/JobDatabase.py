@@ -1,7 +1,7 @@
 from typing import List
 from Models.DataModels.GetModels import *
-from Factories.JobFactory import *
-from database import *
+from Processing.Factories.JobFactory import *
+from .database import *
 
 
 class JobDatabase:

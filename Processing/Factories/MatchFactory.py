@@ -1,7 +1,7 @@
 from typing import List
 import json
 from Models.DataModels.GetModels import *
-from factories import *
+from .factories import *
 
 
 class MatchFactory:

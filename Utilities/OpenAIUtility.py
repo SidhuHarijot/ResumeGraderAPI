@@ -1,6 +1,6 @@
 import openai
 import os
-from utility import log, logError
+from .utility import log, logError
 import json
 from Processing.DataValidation.GPTOutValidation import JobDescriptionValidation as JDV, ResumeDataValidation as RDV, GradeValidation as GV 
 

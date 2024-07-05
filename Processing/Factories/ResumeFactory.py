@@ -1,9 +1,9 @@
 from typing import List
 import json
 from Models.DataModels.GetModels import *
-from factories import *
-from ExperienceFactory import ExperienceFactory
-from EducationFactory import EducationFactory
+from .ExperienceFactory import ExperienceFactory
+from .EducationFactory import EducationFactory
+from .factories import log, logError
 
 
 class ResumeFactory:

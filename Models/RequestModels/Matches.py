@@ -7,6 +7,7 @@ class Create(BaseModel):
 
 
 class Get(BaseModel):
+    match_id : Optional[int] = Field(None, description="Unique identifier for the match.")
     uid: Optional[str] = Field(None, description="Unique identifier for the user.")
     job_id: Optional[int] = Field(None, description="Unique identifier for the job.")
     status: Optional[str] = Field(None, description="Status of the match.")
