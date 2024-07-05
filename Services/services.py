@@ -17,33 +17,7 @@ def logError(msg, exception, func):
     Logger.logService(msg, func, "ERROR")
 
 
-class ResumeService:
-    @staticmethod
-    def process_resume(file: UploadFile = None, resume_text: str = None) -> Resume:
-        log("Processing resume", "ResumeService.process_resume")
-        if file:
-            FileUtility.initialize_temp_dir()
-            temp_file_path = FileUtility.save_temp_file(file)
-            resume_text = FileUtility.extract_text(temp_file_path)
 
-        resume_json = OpenAIUtility.extract_resume_json(resume_text)
-        resume_data = ResumeFactory.from_json(resume_json)
-        log(f"Resume processed: {resume_data.uid}", "ResumeService.process_resume")
-        return resume_data
-    
-class JobService:
-    @staticmethod
-    def process_job_description(file: UploadFile = None, job_description_text: str = None) -> Job:
-        log("Processing job description", "JobService.process_job_description")
-        if file:
-            FileUtility.initialize_temp_dir()
-            temp_file_path = FileUtility.save_temp_file(file)
-            job_description_text = FileUtility.extract_text(temp_file_path)
-
-        job_json = OpenAIUtility.extract_job_description_json(job_description_text)
-        job_data = JobFactory.from_json(job_json)
-        log(f"Job description processed: {job_data.job_id}", "JobService.process_job_description")
-        return job_data
 
 
 class GradingService:

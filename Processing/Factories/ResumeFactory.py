@@ -12,26 +12,24 @@ class ResumeFactory:
         try:
             log(f"Creating Resume object from row: {row[1]}", "from_db_row")
             return Resume(
-                uid=row[1],
-                skills=row[2],
-                experience=ExperienceFactory.build_from_json(row[3]),
-                education=EducationFactory.build_from_json(row[4])
+                uid=row[0],
+                skills=row[1],
+                experience=ExperienceFactory.build_from_json(row[2]),
+                education=EducationFactory.build_from_json(row[3])
             )
         except Exception as e:
             logError(f"Error creating Resume object from row: {row}. \n", e, "from_db_row")
             raise
 
     @staticmethod
-    def to_db_row(resume: Resume):
+    def to_db_row(resume: Resume, with_uid=True) -> tuple:
         try:
             log(f"Converting Resume object to db row: {resume.uid}", "to_db_row")
-
-            return (
-                resume.uid,
-                resume.skills,
-                json.dumps(ExperienceFactory.bulk_to_json(resume.experience)),
-                json.dumps(EducationFactory.bulk_to_json(resume.education))
-            )
+            params = (resume.skills, json.dumps(ExperienceFactory.bulk_to_json(resume.experience)),
+                      json.dumps(EducationFactory.bulk_to_json(resume.education)))
+            if with_uid:
+                return (resume.uid,) + params
+            return params
         except Exception as e:
             logError(f"Error converting Resume object to db row: {resume}. \n", e, "to_db_row")
             raise

@@ -43,7 +43,7 @@ class ResumeDatabase:
                 UPDATE resumes SET skills = %s, experience = %s, education = %s
                 WHERE uid = %s
             """
-            params = ResumeFactory.to_db_row(resume) + (resume.uid,)
+            params = ResumeFactory.to_db_row(resume, False) + (resume.uid,)
             Database.execute_query(query, params)
             log(f"Resume for user {resume.uid} updated successfully", "ResumeDatabase.update_resume")
         except Exception as e:

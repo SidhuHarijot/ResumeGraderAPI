@@ -68,6 +68,14 @@ def logError(message, e: Exception, func):
     message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
     Logger.logMain(message, func, "ERROR")
 
+# add logs to middleware
+@app.middleware("http")
+async def add_logs(request, call_next):
+    log(f"Request to {request.url.path}", "main.add_logs")
+    response = await call_next(request)
+    log(f"Response from {request.url.path}", "main.add_logs")
+    return response
+
 
 # Add directory to python path
 def add_current_directory_to_path():
@@ -471,8 +479,8 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
 # endregion
 
 # region Resumes
-@app.post("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
-async def create_resume(uid: str, request: rm.Resumes.Create) -> Resume:
+@app.post("/resumes/", response_model=Resume, tags=["Resumes"])
+async def create_resume(request: rm.Resumes.Create) -> Resume:
     """Creates a new resume with the provided data.
     
     :param uid: The UID of the user associated with the resume.
@@ -483,8 +491,6 @@ async def create_resume(uid: str, request: rm.Resumes.Create) -> Resume:
     :rtype: Resume
     
     Example:
-        uid:
-        "12345"
         request:
         {
             "uid": "12345",
@@ -556,14 +562,9 @@ async def create_resume(uid: str, request: rm.Resumes.Create) -> Resume:
     """
     try:
         log("Creating a new resume", "create_resume")
-        resume = ResumeService.process_resume(request.file, request.resume_text)
-        
-        if not Validation.validate_resume(resume):
-            raise HTTPException(status_code=400, detail="Invalid resume data.")
-        
-        resume.uid = uid
-        ResumeDatabase.create_resume(resume)
-        return resume
+        resumeS = ResumeService.create_from_request(request)
+        resumeS.save_to_db()
+        return resumeS.resume
     except HTTPException as e:
         logError(f"Validation error in create_resume: ", e, "create_resume")
         raise e
@@ -630,12 +631,15 @@ async def get_resume(uid: str) -> Resume:
     try:
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         return ResumeDatabase.get_resume(uid)
+    except ValueError as e:
+        logError(f"Resume not found: {uid}", e, "get_resume")
+        raise HTTPException(status_code=404, detail="Resume not found.")
     except Exception as e:
         logError(f"Error in get_resume: ", e, "get_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.put("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
-async def update_resume(uid: str, request: rm.Resumes.Update) -> Resume:
+@app.put("/resumes/", response_model=Resume, tags=["Resumes"])
+async def update_resume(request: rm.Resumes.Update) -> Resume:
     """Updates a resume with the provided data.
     
     :param uid: The UID of the resume to update.
@@ -650,6 +654,7 @@ async def update_resume(uid: str, request: rm.Resumes.Update) -> Resume:
         "12345"
         request:
         {
+            "uid": "12345",
             "skills": ["Python", "Java", "SQL"],
             "experience": [
                 {
@@ -715,21 +720,10 @@ async def update_resume(uid: str, request: rm.Resumes.Update) -> Resume:
         HTTPException: If an error occurs while updating the resume.
     """
     try:
-        log(f"Updating resume with UID: {uid}", "update_resume")
-        resume = ResumeDatabase.get_resume(uid)
-        
-        if request.skills:
-            resume.skills = request.skills
-        if request.experience:
-            resume.experience = request.experience
-        if request.education:
-            resume.education = request.education
-        
-        if not Validation.validate_resume(resume):
-            raise HTTPException(status_code=400, detail="Invalid resume data.")
-        
-        ResumeDatabase.update_resume(resume)
-        return resume
+        log(f"Updating resume with UID: {request.uid}", "update_resume")
+        resumeS = ResumeService.create_from_db(request.uid)
+        resumeS.update(request)
+        return resumeS.resume
     except HTTPException as e:
         logError(f"Validation error in update_resume: ", e, "update_resume")
         raise e
@@ -738,7 +732,7 @@ async def update_resume(uid: str, request: rm.Resumes.Update) -> Resume:
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.delete("/resumes/{uid}", tags=["Resumes"])
-async def delete_resume(uid: str) -> dict:
+async def delete_resume(uid: str):
     """Deletes a resume with the provided UID.
 
     :param uid: The UID of the resume to delete.
@@ -761,69 +755,10 @@ async def delete_resume(uid: str) -> dict:
     """
     try:
         log(f"Deleting resume with UID: {uid}", "delete_resume")
-        ResumeDatabase.delete_resume(uid)
+        ResumeService.delete_from_db(uid)
         return {"message": "Resume deleted successfully."}
     except Exception as e:
         logError(f"Error in delete_resume: ", e, "delete_resume")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-@app.get("/resumes/", response_model=List[Resume], tags=["Resumes"])
-async def get_all_resumes() -> List[Resume]:
-    """Retrieves all resumes.
-
-    :rtype: List[Resume]
-
-    Returns:
-        List[Resume]: A list of all resumes.
-        Example:
-        [
-            {
-                "uid": "12345",
-                "skills": ["Python", "Java", "SQL"],
-                "experience": [
-                    {
-                        "start_date": {
-                            "day": 1,
-                            "month": 1,
-                            "year": 2000
-                        },
-                        "end_date": {
-                            "day": 1,
-                            "month": 1,
-                            "year": 2001
-                        },
-                        "title": "Software Engineer",
-                        "company_name": "Company",
-                        "description": "Description of the experience."
-                    }
-                ],
-                "education": [
-                    {
-                        "start_date": {
-                            "day": 1,
-                            "month": 1,
-                            "year": 2000
-                        },
-                        "end_date": {
-                            "day": 1,
-                            "month": 1,
-                            "year": 2001
-                        },
-                        "institution": "Institution",
-                        "course_name": "Course Name"
-                    }
-                ]
-            }
-        ]
-
-    Raises:
-        HTTPException: If an error occurs while retrieving all resumes.
-    """
-    try:
-        log("Retrieving all resumes", "get_all_resumes")
-        return ResumeDatabase.get_all_resumes()
-    except Exception as e:
-        logError(f"Error in get_all_resumes: ", e, "get_all_resumes")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 # endregion
 
@@ -1577,3 +1512,28 @@ async def grade_job(job_id: int) -> List[Match]:
         raise HTTPException(status_code=500, detail="Internal Server Error")
 # endregion
 
+
+# region DebugPrints:
+@app.get("/print/users/{auth_id}", tags=["Debug"], include_in_schema=False)
+def printUsers(auth_id: str):
+    try:
+        log(f"Printing all users for UID: {auth_id}", "printUsers")
+        request = rm.User.Privileges.Update(target_uid="", auth_uid=auth_id)
+        return HTMLResponse(UserService.print_all(request))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except Exception as e:
+        logError(f"Error in printUsers: ", e, "printUsers")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.get("/print/resumes/{auth_id}", tags=["Debug"], include_in_schema=False)
+def printResumes(auth_id: str):
+    try:
+        log(f"Printing all resumes for UID: {auth_id}", "printResumes")
+        request = rm.User.Privileges.Update(target_uid="", auth_uid=auth_id)
+        return HTMLResponse(ResumeService.print_all(request))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except Exception as e:
+        logError(f"Error in printResumes: ", e, "printResumes")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
