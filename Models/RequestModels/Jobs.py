@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from fastapi import UploadFile
+from fastapi import UploadFile, Query, File
 from typing import List, Optional
 from Models.DataModels.Job import Job
 from Models.DataModels.Date import Date
@@ -15,7 +15,6 @@ class Create(BaseModel):
     salary: Optional[float] = Field(default=0.0, description="Salary for the job.")
     job_type: Optional[str] = Field(default="UNKN", description="Type of the job. Options: FULL, PART, CONT, UNKN")
     active: Optional[bool] = Field(default=True, description="Status of the job, whether it is active or not.")
-    file: Optional[UploadFile] = Field(default=None, description="File to upload with the job.")
     auth_uid: str = Field(..., description="Unique identifier for the user.")
 
     def to_job(self):
@@ -34,6 +33,7 @@ class Create(BaseModel):
 
 class Update(BaseModel):
     job_id: int = Field(None, description="Unique identifier for the job.")
+    auth_uid: str = Field(..., description="Unique identifier for the user.")
     title: Optional[str] = Field(None, description="Title of the job.")
     company: Optional[str] = Field(None, description="Company name.")
     description: Optional[str] = Field(None, description="Description of the job.")
@@ -42,10 +42,10 @@ class Update(BaseModel):
     location: Optional[str] = Field(None, description="Location of the job.")
     salary: Optional[float] = Field(None, description="Salary for the job.")
     job_type: Optional[str] = Field(None, description="Type of the job. Options: FULL, PART, CONT, UNKN")
+    file: UploadFile = Field(File(None), description="File containing the job description.")
     active: Optional[bool] = Field(None, description="Status of the job, whether it is active or not.")
-    auth_uid: str = Field(..., description="Unique identifier for the user.")
 
-    def to_job(self, current):
+    def to_job(self, current: Job):
         if self.title:
             current.title = self.title
         if self.company:

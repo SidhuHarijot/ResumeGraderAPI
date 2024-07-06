@@ -765,7 +765,7 @@ async def delete_resume(uid: str):
 
 # region Jobs
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
-async def create_job(request: rm.Jobs.Create) -> Job:
+async def create_job(request: rm.Jobs.Create=Depends(), file: UploadFile=File(None)) -> Job:
     """Creates a new job with the provided data.
     
     :param request: The request object containing the job data.
@@ -814,7 +814,7 @@ async def create_job(request: rm.Jobs.Create) -> Job:
     """
     try:
         log("Creating a new job", "create_job")
-        jobS = JobService.create_from_request(request)
+        jobS = JobService.create_from_request(request, file)
         return jobS.job
     except PermissionError as e:
         logError(f"Authorization error in create_job: ", e, "create_job")

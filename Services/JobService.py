@@ -38,9 +38,9 @@ class JobService:
     
     @staticmethod
     @authorizeAdmin
-    def create_from_request(request: rm.Jobs.Create):
-        if request.file:
-            job = JobService.process_job_description(request.file)
+    def create_from_request(request: rm.Jobs.Create, file: UploadFile = None):
+        if file:
+            job = JobService.process_job_description(file)
         else:
             job = JobService(request.to_job())
         job.save_to_db()

@@ -67,7 +67,7 @@ class JobDatabase:
     def get_all_jobs() -> List[Job]:
         try:
             log("Retrieving all jobs", "JobDatabase.get_all_jobs")
-            query = "SELECT * FROM jobdescriptions"
+            query = "SELECT * FROM jobdescriptions ORDER BY job_id ASC"
             results = Database.execute_query(query, fetch=True)
             jobs = JobFactory.from_db_rows(results)
             log("All jobs retrieved successfully", "JobDatabase.get_all_jobs")
