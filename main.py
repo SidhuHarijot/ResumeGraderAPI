@@ -481,7 +481,7 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
 
 # region Resumes
 @app.post("/resumes/", response_model=Resume, tags=["Resumes"])
-async def create_resume(request: rm.Resumes.Create) -> Resume:
+async def create_resume(request: rm.Resumes.Create, file: UploadFile=File(None)) -> Resume:
     """Creates a new resume with the provided data.
     
     :param uid: The UID of the user associated with the resume.
@@ -563,7 +563,7 @@ async def create_resume(request: rm.Resumes.Create) -> Resume:
     """
     try:
         log("Creating a new resume", "create_resume")
-        resumeS = ResumeService.create_from_request(request)
+        resumeS = ResumeService.create_from_request(request, file)
         resumeS.save_to_db()
         return resumeS.resume
     except HTTPException as e:

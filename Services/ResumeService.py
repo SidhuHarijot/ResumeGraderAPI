@@ -53,10 +53,9 @@ class ResumeService:
         return ResumeFactory.to_json(self.resume)
     
     @staticmethod
-    def create_from_request(request: rm.Resumes.Create):
-        
-        if request.file or request.resume_text:
-            resume = ResumeService.process_resume(request.file, request.resume_text)
+    def create_from_request(request: rm.Resumes.Create, file: UploadFile = None):
+        if file:
+            resume = ResumeService.process_resume(file)
         else:
             resume = request.to_resume()
         resume.uid = request.uid
@@ -73,11 +72,10 @@ class ResumeService:
             FileUtility.initialize_temp_dir()
             temp_file_path = FileUtility.save_temp_file(file)
             resume_text = FileUtility.extract_text(temp_file_path)
-
-        resume_json = OpenAIUtility.extract_resume_json(resume_text)
-        resume_data = ResumeFactory.from_json(resume_json)
-        log(f"Resume processed: {resume_data.uid}", "ResumeService.process_resume")
-        return resume_data
+            resume_json = OpenAIUtility.extract_resume_json(resume_text)
+            resume_data = ResumeFactory.from_json(resume_json)
+            log(f"Resume processed: {resume_data.uid}", "ResumeService.process_resume")
+            return resume_data
     
     def validate(self):
         return True
