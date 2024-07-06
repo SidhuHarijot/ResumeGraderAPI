@@ -53,23 +53,30 @@ class JobFactory:
     def from_json(data: dict) -> Job:
         try:
             log(f"Creating Job object from JSON: {data['title']} at {data['company']}", "from_json")
-            try:
-                job_id = data['job_id']
-            except TypeError:
+            if isinstance(data, str):
                 data = json.loads(data)
-                job_id = data['job_id']
-            return Job(
-                job_id=job_id,
-                title=data['title'],
-                company=data['company'],
-                description=data['description'],
-                required_skills=data['required_skills'],
-                application_deadline=Date.create(data['application_deadline']),
-                location=data['location'],
-                salary=data['salary'],
-                job_type=data['job_type'],
-                active=data['active']
-            )
+            job = Job.generate_default()
+            if 'job_id' in data:
+                job.job_id = data['job_id']
+            if 'title' in data:
+                job.title = data['title']
+            if 'company' in data:
+                job.company = data['company']
+            if 'description' in data:
+                job.description = data['description']
+            if 'required_skills' in data:
+                job.required_skills = data['required_skills']
+            if 'application_deadline' in data:
+                job.application_deadline = Date.create(data['application_deadline'])
+            if 'location' in data:
+                job.location = data['location']
+            if 'salary' in data:
+                job.salary = data['salary']
+            if 'job_type' in data:
+                job.job_type = data['job_type']
+            if 'active' in data:
+                job.active = data['active']
+            return job
         except Exception as e:
             logError(f"Error creating Job object from JSON: {data}. \n", e, "from_json")
             raise
@@ -110,45 +117,4 @@ class JobFactory:
             return [JobFactory.to_db_row(job) for job in jobs]
         except Exception as e:
             logError(f"Error converting list of Job objects to db rows. \n", e, "to_db_rows")
-            raise
-    
-
-    def from_dict(data: Dict) -> Job:
-        try:
-            log(f"Creating Job object from dict: {data['title']} at {data['company']}", "from_dict")
-            if 'job_id' not in data:
-                data['job_id'] = -1
-            return Job(
-                job_id=data['job_id'],
-                title=data['title'],
-                company=data['company'],
-                description=data['description'],
-                required_skills=data['required_skills'],
-                application_deadline=Date.create(data['application_deadline']),
-                location=data['location'],
-                salary=data['salary'],
-                job_type=data['job_type'],
-                active=data['active']
-            )
-        except Exception as e:
-            logError(f"Error creating Job object from dict: {data}. \n", e, "from_dict")
-            raise
-
-    def to_dict(job: Job) -> Dict:
-        try:
-            log(f"Converting Job object to dict: {job.title} at {job.company}", "to_dict")
-            return {
-                'job_id': job.job_id,
-                'title': job.title,
-                'company': job.company,
-                'description': job.description,
-                'required_skills': job.required_skills,
-                'application_deadline': str(job.application_deadline),
-                'location': job.location,
-                'salary': job.salary,
-                'job_type': job.job_type,
-                'active': job.active
-            }
-        except Exception as e:
-            logError(f"Error converting Job object to dict: {job}. \n", e, "to_dict")
             raise

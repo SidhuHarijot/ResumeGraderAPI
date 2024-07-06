@@ -53,8 +53,6 @@ class JobDescriptionValidation:
                     job['salary'] = 0.0
                 if job['job_type'] not in ['FULL', 'PART', 'CONT', 'UNKN']:
                     job['job_type'] = "UNKN"
-                if not isinstance(job['active'], bool):
-                    job['active'] = True
                 return job
             return {
                 'title': "",

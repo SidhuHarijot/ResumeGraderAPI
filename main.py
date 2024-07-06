@@ -22,6 +22,7 @@ import os
 import sys
 from Utilities.OpenAIUtility import OpenAIUtility
 from Services.getServices import *
+import asyncio
 
 # endregion
 
@@ -1031,7 +1032,8 @@ async def create_match(request: rm.Matches.Create) -> Match:
         request:
         {
             "uid": "12345",
-            "job_id": 1
+            "job_id": 1,
+            "selected_skills": ["skill1", "skill2"]
         }
 
     Returns:
@@ -1041,7 +1043,10 @@ async def create_match(request: rm.Matches.Create) -> Match:
             "match_id": 1,
             "uid": "12345",
             "job_id": 1,
-            "status": "PENDING"
+            "status": "PENDING",
+            "status_code": 0,
+            "grade": -1,
+            "selected_skills": [],
         }
 
     Raises:
@@ -1049,17 +1054,8 @@ async def create_match(request: rm.Matches.Create) -> Match:
     """
     try:
         log("Creating a new match", "create_match")
-        match = Match(
-            uid=request.uid,
-            job_id=request.job_id,
-            status="PENDING"
-        )
-        
-        if not Validation.validate_match(match):
-            raise HTTPException(status_code=400, detail="Invalid match data.")
-        
-        MatchDatabase.create_match(match)
-        return match
+        matchS:MatchService = MatchService.create_from_request(request)
+        return matchS.match
     except HTTPException as e:
         logError(f"Validation error in create_match: ", e, "create_match")
         raise e
@@ -1093,14 +1089,14 @@ async def get_match(match_id: int) -> Match:
         HTTPException: If an error occurs while retrieving the match.
     """
     try:
-        log(f"Retrieving match with ID: {match_id}", "get_match")
-        return MatchDatabase.get_match(match_id)
+        log(f"Retrieving match with match id: {match_id}", "get_match")
+        return MatchService.get_from_db(match_id).match
     except Exception as e:
         logError(f"Error in get_match: ", e, "get_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/matches/{match_id}", response_model=Match, tags=["Matches"])
-async def update_match(match_id: int, request: rm.Matches.Update) -> Match:
+async def update_match(request: rm.Matches.Update) -> Match:
     """Updates a match with the provided data.
     
     :param match_id: The ID of the match to update.
@@ -1134,21 +1130,10 @@ async def update_match(match_id: int, request: rm.Matches.Update) -> Match:
         HTTPException: If an error occurs while updating the match.
     """
     try:
-        log(f"Updating match with ID: {match_id}", "update_match")
-        match = MatchDatabase.get_match(match_id)
-        
-        if request.uid:
-            match.uid = request.uid
-        if request.job_id:
-            match.job_id = request.job_id
-        if request.status:
-            match.status = request.status
-        
-        if not Validation.validate_match(match):
-            raise HTTPException(status_code=400, detail="Invalid match data.")
-        
-        MatchDatabase.update_match(match)
-        return match
+        log(f"Updating match with ID: {request.match_id}", "update_match")
+        matchS = MatchService.get_from_db(request.match_id)
+        matchS.update_from_request(request)
+        return matchS.match
     except HTTPException as e:
         logError(f"Validation error in update_match: ", e, "update_match")
         raise e
@@ -1180,14 +1165,14 @@ async def delete_match(match_id: int) -> dict:
     """
     try:
         log(f"Deleting match with ID: {match_id}", "delete_match")
-        MatchDatabase.delete_match(match_id)
+        MatchService.delete_from_db(match_id)
         return {"message": "Match deleted successfully."}
     except Exception as e:
         logError(f"Error in delete_match: ", e, "delete_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/matches/", response_model=List[Match], tags=["Matches"])
-async def get_all_matches() -> List[Match]:
+async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
     """Retrieves all matches.
     
     :rtype: List[Match]
@@ -1209,7 +1194,7 @@ async def get_all_matches() -> List[Match]:
     """
     try:
         log("Retrieving all matches", "get_all_matches")
-        return MatchDatabase.get_all_matches()
+        return MatchService.get_from_request(request)
     except Exception as e:
         logError(f"Error in get_all_matches: ", e, "get_all_matches")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -1507,7 +1492,6 @@ async def grade_job(job_id: int) -> List[Match]:
         raise HTTPException(status_code=500, detail="Internal Server Error")
 # endregion
 
-
 # region DebugPrints:
 @app.get("/print/users/{auth_id}", tags=["Debug"], include_in_schema=False)
 def printUsers(auth_id: str):
@@ -1532,3 +1516,28 @@ def printResumes(auth_id: str):
     except Exception as e:
         logError(f"Error in printResumes: ", e, "printResumes")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.get("/print/jobs/{auth_id}", tags=["Debug"], include_in_schema=False)
+def printJobs(auth_id: str):
+    try:
+        log(f"Printing all jobs for UID: {auth_id}", "printJobs")
+        request = rm.User.Privileges.Update(target_uid="", auth_uid=auth_id)
+        return HTMLResponse(JobService.print_all(request))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except Exception as e:
+        logError(f"Error in printJobs: ", e, "printJobs")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.get("/print/matches/{auth_id}", tags=["Debug"], include_in_schema=False)
+def printMatches(auth_id: str):
+    try:
+        log(f"Printing all matches for UID: {auth_id}", "printMatches")
+        request = rm.User.Privileges.Update(target_uid="", auth_uid=auth_id)
+        return HTMLResponse(MatchService.print_all(request))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except Exception as e:
+        logError(f"Error in printMatches: ", e, "printMatches")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+# endregion

@@ -10,3 +10,15 @@ class Match(BaseModel):
     grade: float = Field(..., description="Grade assigned to the match.")
     selected_skills: Optional[List[str]] = Field(None, description="List of skills selected by the user for the job.")
 
+    @staticmethod
+    def generate_default():
+        return Match(
+            match_id = 0,
+            uid = "",
+            job_id = 0,
+            status = "",
+            status_code = 0,
+            grade = 0.0,
+            selected_skills = []
+        )
+

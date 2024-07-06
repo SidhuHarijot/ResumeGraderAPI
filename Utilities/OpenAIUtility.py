@@ -163,11 +163,19 @@ class OpenAIUtility:
         system_message = """
         Convert the given job description data into a structured JSON format. Adhere strictly to this format:
         {
-            "Title": "Job Title",
+            "title": "Job Title",
             "description": "Job Description",
-            "employer": "Employer Name",
-            "Must Haves": ["Requirement 1", "Requirement 2"]
+            "company": "Employer Name",
+            "required_skills": ["Requirement 1", "Requirement 2"],
+            "application_deadline": "DDMMYYYY",
+            "location": "Job Location",
+            "salary": 0.0,
+            "job_type": "FULL",
         }
+        job type can be 'FULL', 'PART', 'CONT', or 'UNKN'.
+        DEFAULT UNKN
+        APPLICATION DATE MUST BE DDMMYYYY FORMAT
+        Required skills are skills expected like [	"Product Management", "SQL", "Data Visualization"] these are not experience but skills. experience is in the description
         Ensure that the job description is concise and clearly describes the role, responsibilities, and requirements for the position.
         For must-have requirements, list them only if given in the job description. Must haves are the responsibilities or requirements that are mandatory for the job.
         """
@@ -177,6 +185,6 @@ class OpenAIUtility:
         if response != cleaned_response:
             logError(f"""Job description had a invalid response, defaulting to -1\n
                             INFORMATION:\n
-                            RESPONSE: {response}""", "OpenAIUtility.extract_job_description_json")
+                            RESPONSE: {response}""", ValueError("Error invalid response"), "OpenAIUtility.extract_job_description_json")
         log("Job description JSON extracted", "OpenAIUtility.extract_job_description_json")
-        return response
+        return cleaned_response

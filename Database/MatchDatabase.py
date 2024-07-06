@@ -10,11 +10,12 @@ class MatchDatabase:
             log(f"Creating match {match.match_id} for user {match.uid} and job {match.job_id}", "MatchDatabase.create_match")
             query = """
                 INSERT INTO matches (uid, job_id, status, status_code, grade, selected_skills)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s) RETURNING match_id
             """
             params = MatchFactory.to_db_row(match, False)
-            Database.execute_query(query, params)
+            match_id = Database.execute_query(query, params, True)[0][0]
             log(f"Match {match.match_id} created successfully", "MatchDatabase.create_match")
+            return match_id
         except Exception as e:
             logError(e, "MatchDatabase.create_match")
             raise
@@ -43,7 +44,7 @@ class MatchDatabase:
                 UPDATE matches SET uid = %s, job_id = %s, status = %s, status_code = %s, grade = %s, selected_skills = %s
                 WHERE match_id = %s
             """
-            params = MatchFactory.to_db_row(match) + (match.match_id,)
+            params = MatchFactory.to_db_row(match, False) + (match.match_id,)
             Database.execute_query(query, params)
             log(f"Match {match.match_id} updated successfully", "MatchDatabase.update_match")
         except Exception as e:
@@ -74,14 +75,18 @@ class MatchDatabase:
             logError(e, "MatchDatabase.get_all_matches")
             raise
     
-    def get_matches_for_job(job_id: int) -> List[Match]:
+    def find(params: dict) -> List[Match]:
         try:
-            log(f"Retrieving all matches for job {job_id}", "MatchDatabase.get_matches_for_job")
-            query = "SELECT * FROM matches WHERE job_id = %s"
-            results = Database.execute_query(query, (job_id,), fetch=True)
+            log(f"Finding matches with parameters: {params}", "MatchDatabase.find")
+            query = "SELECT * FROM matches WHERE "
+            if isinstance(list(params.keys())[0], str):
+                query += " AND ".join([f"{key} = %s" for key in params.keys()])
+            else:
+                query += " AND ".join([f"{key[0]} {key[1]} %s" for key in params.keys()])
+            results = Database.execute_query(query, tuple(params.values()), fetch=True)
             matches = MatchFactory.from_db_rows(results)
-            log(f"All matches for job {job_id} retrieved successfully", "MatchDatabase.get_matches_for_job")
+            log(f"Matches found successfully", "MatchDatabase.find")
             return matches
         except Exception as e:
-            logError(e, "MatchDatabase.get_matches_for_job")
+            logError(e, "MatchDatabase.find")
             raise

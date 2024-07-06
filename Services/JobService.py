@@ -85,4 +85,75 @@ class JobService:
         if request.skills:
             all_jobs = [job for job in all_jobs if all(skill.upper() in [skill.upper() for skill in job.required_skills] for skill in request.skills)]
         return all_jobs
+    
+    @staticmethod
+    @authorizeAdmin
+    def print_all(request):
+        log("Printing all jobs", "JobService.print_all")
+        try:
+            all_jobs = JobDatabase.get_all_jobs()
+            html_data = """
+            <html>
+            <head>
+                <title>All Jobs</title>
+                <style>
+                table {
+                    font-family: Arial, sans-serif;
+                    border-collapse: collapse;
+                    width: 100%;
+                }
+
+                th {
+                    background-color: #f2f2f2;
+                }
+
+                th, td {
+                    border: 1px solid #dddddd;
+                    text-align: left;
+                    padding: 8px;
+                }
+
+                tr:nth-child(even) {
+                    background-color: #f2f2f2;
+                }
+
+                </style>
+            </head>
+            <body>
+            <h1>All Jobs</h1>
+            <table>
+                <tr>
+                    <th>Job ID</th>
+                    <th>Title</th>
+                    <th>Company</th>
+                    <th>Location</th>
+                    <th>Salary</th>
+                    <th>Job Type</th>
+                    <th>Required Skills</th>
+                    <th>Active</th>
+                </tr>
+            """
+            for job in all_jobs:
+                html_data += f"""
+                <tr>
+                    <td>{job.job_id}</td>
+                    <td>{job.title}</td>
+                    <td>{job.company}</td>
+                    <td>{job.location}</td>
+                    <td>{job.salary}</td>
+                    <td>{job.job_type}</td>
+                    <td>{", <br>".join(job.required_skills)}</td>
+                    <td>{job.active}</td>
+                </tr>
+                """
+            html_data += """
+            </table>
+            </body>
+            </html>
+            """
+            return html_data
+        except Exception as e:
+            logError("Error in JobService print_all", e, "print_all")
+            raise
+
         

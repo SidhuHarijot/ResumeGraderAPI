@@ -27,17 +27,7 @@ class MatchFactory:
         try:
             log(f"Converting Match object to db row: {match.match_id}", "to_db_row")
 
-            if not with_id:
-                return (
-                    match.uid,
-                    match.job_id,
-                    match.status,
-                    match.status_code,
-                    match.grade,
-                    match.selected_skills
-                )
-            return (
-                match.match_id,
+            params = (
                 match.uid,
                 match.job_id,
                 match.status,
@@ -45,6 +35,10 @@ class MatchFactory:
                 match.grade,
                 match.selected_skills
             )
+            if with_id:
+                return (match.match_id,) + params
+            else:
+                return params
         except Exception as e:
             logError(f"Error converting Match object to db row: {match}. \n", e, "to_db_row")
             raise
@@ -53,20 +47,24 @@ class MatchFactory:
     def from_json(data: dict) -> Match:
         try:
             log(f"Creating Match object from JSON: {data['match_id']}", "from_json")
-            try:
-                match_id = data['match_id']
-            except TypeError:
+            if isinstance(data, str):
                 data = json.loads(data)
-                match_id = data['match_id']
-            return Match(
-                match_id=match_id,
-                uid=data['uid'],
-                job_id=data['job_id'],
-                status=data['status'],
-                status_code=data['status_code'],
-                grade=data['grade'],
-                selected_skills=data.get('selected_skills')
-            )
+            match = Match.generate_default()
+            if 'match_id' in data:
+                match.match_id = data['match_id']
+            if 'uid' in data:
+                match.uid = data['uid']
+            if 'job_id' in data:
+                match.job_id = data['job_id']
+            if 'status' in data:
+                match.status = data['status']
+            if 'status_code' in data:
+                match.status_code = data['status_code']
+            if 'grade' in data:
+                match.grade = data['grade']
+            if 'selected_skills' in data:
+                match.selected_skills = data['selected_skills']
+            return match
         except Exception as e:
             logError(f"Error creating Match object from JSON: {data}. \n", e, "from_json")
             raise

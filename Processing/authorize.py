@@ -39,6 +39,9 @@ def find_auth_id(*args, **kwargs):
             return value
         if hasattr(value, "auth_uid"):
             return value.auth_uid
+    for arg in args:
+        if isinstance(arg, str) and len(arg) != 0:
+            return arg
     return None
 
 def authorizeOwner(func):

@@ -14,6 +14,22 @@ class Job(BaseModel):
     job_type: str = Field(..., description="Type of the job. Options: FULL, PART, CONT, UNKN")
     active: bool = Field(..., description="Status of the job, whether it is active or not.")
 
+    @staticmethod
+    def generate_default():
+        return Job(
+            job_id=-1,
+            title="",
+            company="",
+            description="",
+            required_skills=[],
+            application_deadline=Date.create("00000000"),
+            location="",
+            salary=0.0,
+            job_type="UNKN",
+            active=True
+        )
+
+
     def __str__(self) -> str:
         return f"{self.title} at {self.company} in {self.location}. Salary: {self.salary}. Job type: {self.job_type}. Deadline: {str(self.application_deadline)}. Description: {self.description}. Required skills: {', '.join(self.required_skills)}. "
 
