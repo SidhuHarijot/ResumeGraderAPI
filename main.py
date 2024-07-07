@@ -1231,16 +1231,7 @@ async def create_feedback(request: rm.Feedback.Create) -> Feedback:
     """
     try:
         log("Creating a new feedback", "create_feedback")
-        feedback = Feedback(
-            match_id=request.match_id,
-            feedback_text=request.feedback_text
-        )
-        
-        if not Validation.validate_feedback(feedback):
-            raise HTTPException(status_code=400, detail="Invalid feedback data.")
-        
-        FeedbackDatabase.create_feedback(feedback)
-        return feedback
+        return FeedbackService.create_feedback(request).feedback
     except HTTPException as e:
         logError(f"Validation error in create_feedback: ", e, "create_feedback")
         raise e
@@ -1274,13 +1265,13 @@ async def get_feedback(feedback_id: int) -> Feedback:
     """
     try:
         log(f"Retrieving feedback with ID: {feedback_id}", "get_feedback")
-        return FeedbackDatabase.get_feedback(feedback_id)
+        return FeedbackService.get_feedback(feedback_id).feedback
     except Exception as e:
         logError(f"Error in get_feedback: ", e, "get_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.put("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
-async def update_feedback(feedback_id: int, request: rm.Feedback.Update) -> Feedback:
+async def update_feedback(request: rm.Feedback.Update) -> Feedback:
     """Updates a feedback with the provided data.
     
     :param feedback_id: The ID of the feedback to update.
@@ -1311,17 +1302,8 @@ async def update_feedback(feedback_id: int, request: rm.Feedback.Update) -> Feed
         HTTPException: If an error occurs while updating the feedback.
     """
     try:
-        log(f"Updating feedback with ID: {feedback_id}", "update_feedback")
-        feedback = FeedbackDatabase.get_feedback(feedback_id)
-        
-        if request.feedback_text:
-            feedback.feedback_text = request.feedback_text
-        
-        if not Validation.validate_feedback(feedback):
-            raise HTTPException(status_code=400, detail="Invalid feedback data.")
-        
-        FeedbackDatabase.update_feedback(feedback)
-        return feedback
+        log(f"Updating feedback with ID: {request.feedback_id}", "update_feedback")
+        return FeedbackService.update_feedback(request).feedback
     except HTTPException as e:
         logError(f"Validation error in update_feedback: ", e, "update_feedback")
         raise e
@@ -1353,14 +1335,14 @@ async def delete_feedback(feedback_id: int) -> dict:
     """
     try:
         log(f"Deleting feedback with ID: {feedback_id}", "delete_feedback")
-        FeedbackDatabase.delete_feedback(feedback_id)
+        FeedbackService.delete_feedback(feedback_id)
         return {"message": "Feedback deleted successfully."}
     except Exception as e:
         logError(f"Error in delete_feedback: ", e, "delete_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/feedback/", response_model=List[Feedback], tags=["Feedback"])
-async def get_all_feedbacks() -> List[Feedback]:
+async def get_multiple_feedbacks(request: rm.Feedback.Get=Depends()) -> List[Feedback]:
     """Retrieves all feedbacks.
     
     :rtype: List[Feedback]
@@ -1380,8 +1362,7 @@ async def get_all_feedbacks() -> List[Feedback]:
         HTTPException: If an error occurs while retrieving all feedbacks.
     """
     try:
-        log("Retrieving all feedbacks", "get_all_feedbacks")
-        return FeedbackDatabase.get_all_feedbacks()
+        return FeedbackService.get_feedbacks(request)
     except Exception as e:
         logError(f"Error in get_all_feedbacks: ", e, "get_all_feedbacks")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -1539,5 +1520,17 @@ def printMatches(auth_id: str):
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
     except Exception as e:
         logError(f"Error in printMatches: ", e, "printMatches")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.get("/print/feedback/{auth_id}", tags=["Debug"], include_in_schema=False)
+def printFeedback(auth_id: str):
+    try:
+        log(f"Printing all feedback for UID: {auth_id}", "printFeedback")
+        request = rm.User.Privileges.Update(target_uid="", auth_uid=auth_id)
+        return HTMLResponse(FeedbackService.print_all(request))
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except Exception as e:
+        logError(f"Error in printFeedback: ", e, "printFeedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 # endregion

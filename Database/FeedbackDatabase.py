@@ -1,7 +1,7 @@
 from typing import List
 from Models.DataModels.GetModels import *
 from Processing.Factories.FeedbackFactory import *
-from .database import Database
+from .database import Database, log, logError
 
 
 class FeedbackDatabase:
@@ -10,12 +10,14 @@ class FeedbackDatabase:
         try:
             log(f"Creating feedback {feedback.feedback_id} for match {feedback.match_id}", "FeedbackDatabase.create_feedback")
             query = """
-                INSERT INTO feedback (match_id, feedback_text)
-                VALUES (%s, %s)
+                INSERT INTO feedback (match_id, feedback_text, auth_uid)
+                VALUES (%s, %s, %s) RETURNING feedback_id
             """
-            params = FeedbackFactory.to_db_row(feedback)
-            Database.execute_query(query, params)
+            params = FeedbackFactory.to_db_row(feedback, False)
+            log(f"Creating feedback with params: {params}", "FeedbackDatabase.create_feedback")
+            feedback_id = Database.execute_query(query, params, fetch=True)[0][0]
             log(f"Feedback {feedback.feedback_id} created successfully", "FeedbackDatabase.create_feedback")
+            return feedback_id
         except Exception as e:
             logError(e, "FeedbackDatabase.create_feedback")
             raise
@@ -41,7 +43,7 @@ class FeedbackDatabase:
         try:
             log(f"Updating feedback {feedback.feedback_id} for match {feedback.match_id}", "FeedbackDatabase.update_feedback")
             query = """
-                UPDATE feedback SET match_id = %s, feedback_text = %s
+                UPDATE feedback SET match_id = %s, feedback_text = %s, auth_uid = %s
                 WHERE feedback_id = %s
             """
             params = FeedbackFactory.to_db_row(feedback, False) + (feedback.feedback_id,)
@@ -61,18 +63,18 @@ class FeedbackDatabase:
         except Exception as e:
             logError(e, "FeedbackDatabase.delete_feedback")
             raise
-
-    @staticmethod
-    def get_all_feedbacks() -> List[Feedback]:
+    
+    def find(params):
         try:
-            log("Retrieving all feedbacks", "FeedbackDatabase.get_all_feedbacks")
-            query = "SELECT * FROM feedback"
-            results = Database.execute_query(query, fetch=True)
+            log(f"Finding feedback with params: {params}", "FeedbackDatabase.find")
+            query = "SELECT * FROM feedback WHERE "
+            query += " AND ".join([f"{key} = %s" for key in params.keys()])
+            results = Database.execute_query(query, tuple(params.values()), fetch=True)
             feedbacks = FeedbackFactory.from_db_rows(results)
-            log("All feedbacks retrieved successfully", "FeedbackDatabase.get_all_feedbacks")
+            log(f"Feedback found: {feedbacks}", "FeedbackDatabase.find")
             return feedbacks
         except Exception as e:
-            logError(e, "FeedbackDatabase.get_all_feedbacks")
+            logError(e, "FeedbackDatabase.find")
             raise
 
     @staticmethod

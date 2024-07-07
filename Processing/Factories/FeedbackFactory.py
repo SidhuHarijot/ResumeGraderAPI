@@ -12,7 +12,8 @@ class FeedbackFactory:
             return Feedback(
                 feedback_id=row[0],
                 match_id=row[1],
-                feedback_text=row[2]
+                feedback_text=row[2],
+                auth_uid=row[3]
             )
         except Exception as e:
             logError(f"Error creating Feedback object from row: {row}. \n", e, "from_db_row")
@@ -22,16 +23,10 @@ class FeedbackFactory:
     def to_db_row(feedback: Feedback, with_id=True):
         try:
             log(f"Converting Feedback object to db row: {feedback.feedback_id}", "to_db_row")
-            if not with_id:
-                return (
-                    feedback.match_id,
-                    feedback.feedback_text
-                )
-            return (
-                feedback.feedback_id,
-                feedback.match_id,
-                feedback.feedback_text
-            )
+            params = (feedback.match_id, feedback.feedback_text, feedback.auth_uid)
+            if with_id:
+                return (feedback.feedback_id,) + params
+            return params
         except Exception as e:
             logError(f"Error converting Feedback object to db row: {feedback}. \n", e, "to_db_row")
             raise
@@ -40,15 +35,13 @@ class FeedbackFactory:
     def from_json(data: dict) -> Feedback:
         try:
             log(f"Creating Feedback object from JSON: {data['feedback_id']}", "from_json")
-            try:
-                feedback_id = data['feedback_id']
-            except TypeError:
+            if isinstance(data, str):
                 data = json.loads(data)
-                feedback_id = data['feedback_id']
             return Feedback(
-                feedback_id=feedback_id,
+                feedback_id=data['feedback_id'],
                 match_id=data['match_id'],
-                feedback_text=data['feedback_text']
+                feedback_text=data['feedback_text'],
+                auth_uid=data['auth_uid']
             )
         except Exception as e:
             logError(f"Error creating Feedback object from JSON: {data}. \n", e, "from_json")
@@ -61,7 +54,8 @@ class FeedbackFactory:
             return {
                 'feedback_id': feedback.feedback_id,
                 'match_id': feedback.match_id,
-                'feedback_text': feedback.feedback_text
+                'feedback_text': feedback.feedback_text,
+                'auth_uid': feedback.auth_uid
             }
         except Exception as e:
             logError(f"Error converting Feedback object to JSON: {feedback}. \n", e, "to_json")
