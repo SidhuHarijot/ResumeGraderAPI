@@ -481,7 +481,7 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
 
 # region Resumes
 @app.post("/resumes/", response_model=Resume, tags=["Resumes"])
-async def create_resume(request: rm.Resumes.Create, file: UploadFile=File(None)) -> Resume:
+async def create_resume(request: rm.Resumes.Create=Depends(), file: UploadFile=File(None)) -> Resume:
     """Creates a new resume with the provided data.
     
     :param uid: The UID of the user associated with the resume.

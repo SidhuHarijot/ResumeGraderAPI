@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
+import time
 
 
 class Date(BaseModel):
@@ -55,7 +56,15 @@ class Date(BaseModel):
     def create(cls, data):
         if isinstance(data, dict):
             return cls.from_json(data)
-        return cls.from_string(data)
+        return cls.from_string(data)\
+    
+    def display(self):
+        return f"[{self.day:02d}/{self.month:02d}/{self.year:04d}]"
+    
+    @staticmethod
+    def today():
+        today = time.localtime()
+        return Date(day=today.tm_mday, month=today.tm_mon, year=today.tm_year)
     
     def __eq__(self, value: object) -> bool:
         return self.day == value.day and self.month == value.month and self.year == value.year

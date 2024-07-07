@@ -11,7 +11,6 @@ class Create(BaseModel):
     skills: Optional[List[str]] = Field(default=[], description="List of skills selected by the user for the job.")
     education: Optional[List[Education]] = Field(default=[], description="Education level of the user.")
     experience: Optional[List[Experience]] = Field(default=[], description="Experience of the user.")
-    resume_text: Optional[str] = Field(default=None, description="Resume text of the user.")
 
     def to_resume(self):
         return Resume(

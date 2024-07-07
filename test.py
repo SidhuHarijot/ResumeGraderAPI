@@ -5,6 +5,7 @@ from Services.UserService import UserService
 
 
 Database.initialize()
+Database.migrate_data()
 tables = Database.list_tables()
 for table in tables:
     print(table[0])

@@ -4,7 +4,6 @@ from Models.RequestModels.GetModels import RequestModels as rm
 from Processing.Factories.UserFactory import UserFactory
 from Database.UserDatabase import UserDatabase
 from typing import Dict
-import json
 from Processing.authorize import authorizeAdmin, authorizeOwner
 
 
@@ -15,10 +14,8 @@ class UserService:
     def __init__(self, user: User=None, new_user: rm.User.Create = None, dict: Dict= None, json_str: str=None, db_row: str=None):
         log("Initializing UserService", "__init__")
         try:
-            if dict:
-                user = UserFactory.from_json(self, dict)
-            elif json_str:
-                user = UserFactory.from_json(self, json.loads(json_str))
+            if dict or json_str:
+                user = UserFactory.from_json(self, json_str)
             elif db_row:
                 user = UserFactory.from_db_row(self, db_row)
             elif new_user:

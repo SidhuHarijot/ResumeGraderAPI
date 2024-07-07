@@ -13,9 +13,7 @@ class ResumeService:
     in_db = False
 
     def __init__(self, resume: Resume = None, dict: dict = None, json_str: str = None, db_row: str = None):
-        if dict:
-            resume = ResumeFactory.from_json(dict)
-        elif json_str:
+        if dict or json_str:
             resume = ResumeFactory.from_json(json_str)
         elif db_row:
             resume = ResumeFactory.from_db_row(db_row)

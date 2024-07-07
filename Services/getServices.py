@@ -3,6 +3,7 @@ from .AuthService import AuthService
 from .ResumeService import ResumeService
 from .JobService import JobService
 from .MatchService import MatchService
+from .FeedbackService import FeedbackService
 
 
 class UserService(UserService):
@@ -22,4 +23,8 @@ class JobService(JobService):
 
 
 class MatchService(MatchService):
+    pass
+
+
+class FeedbackService(FeedbackService):
     pass

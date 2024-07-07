@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.pool
 from ServerLogging.serverLogger import Logger
 import traceback
-from psycopg2.errors import DuplicateTable, UniqueViolation
+from psycopg2.errors import DuplicateTable, UniqueViolation, OperationalError
 # endregion
 
 # region logging
@@ -31,8 +31,7 @@ old_schemas = {
     """,
     "resumes": """
         CREATE TABLE resumes (
-            resume_id SERIAL PRIMARY KEY,
-            uid VARCHAR(50) NOT NULL,
+            uid VARCHAR(50) PRIMARY KEY,  -- Changed primary key
             skills TEXT[],
             experience JSONB,
             education JSONB,
@@ -78,18 +77,19 @@ old_schemas = {
 
 new_schemas = {
     "users": old_schemas["users"],
-    "resumes": """
-        CREATE TABLE resumes (
-            uid VARCHAR(50) PRIMARY KEY,  -- Changed primary key
-            skills TEXT[],
-            experience JSONB,
-            education JSONB,
-            FOREIGN KEY (uid) REFERENCES users(uid) ON DELETE CASCADE
-        );
-    """,
+    "resumes": old_schemas["resumes"],
     "jobdescriptions": old_schemas["jobdescriptions"],
     "matches": old_schemas["matches"],
-    "feedback": old_schemas["feedback"]
+    "feedback": """
+        CREATE TABLE feedback (
+            feedback_id SERIAL PRIMARY KEY,
+            match_id INT NOT NULL,
+            feedback_text TEXT NOT NULL,
+            auth_uid VARCHAR(50) NOT NULL,
+            FOREIGN KEY (match_id) REFERENCES matches(match_id) ON DELETE CASCADE,
+            FOREIGN KEY (auth_uid) REFERENCES users(uid) ON DELETE CASCADE
+        );
+    """
 }
 
 # region Database
@@ -110,8 +110,8 @@ class Database:
             )
             if Database.connection_pool:
                 log("Connection to internal URL successful", "Database.initialize")
-        except (Exception, psycopg2.DatabaseError) as internal_error:
-            logError(internal_error, "Database.initialize")
+        except OperationalError as internal_error:
+            log("Could not connect to internal database trying external", "Database.initialize")
             
             try:
                 # Fallback to the external URL if internal fails
@@ -126,6 +126,9 @@ class Database:
                     log("Connection to external URL successful", "Database.initialize")
             except (Exception, psycopg2.DatabaseError) as external_error:
                 logError(external_error, "Database.initialize")
+        except Exception as e:
+            logError(e, "Database.initialize")
+            raise
 
     @staticmethod
     def get_connection():
@@ -157,9 +160,13 @@ class Database:
                 Database.return_connection(con)
 
     @staticmethod
-    def create_tables():
+    def create_tables(table_name=None):
         try:
             log("Creating tables", "Database.create_tables")
+            if table_name:
+                Database.execute_query(new_schemas[table_name])
+                log(f"Table {table_name} created successfully", "Database.create_tables")
+                return
             for table_name, table_schema in old_schemas.items().__reversed__():
                 Database.execute_query(f"DROP TABLE IF EXISTS {table_name} CASCADE")
             for table_name, table_schema in new_schemas.items():
@@ -192,29 +199,21 @@ class Database:
     def migrate_data():
         try:
             log("Starting data migration", "Database.migrate_data")
-            #for table_name in old_schemas.keys():
-             #   Database.execute_query(f"ALTER TABLE {table_name} RENAME TO old_{table_name}")
+            
+
+            tables_to_create = [table_name for table_name in new_schemas.keys() if new_schemas[table_name] != old_schemas[table_name]]
+
+            # Rename old tables
+            for table_name in tables_to_create:
+                Database.execute_query(f"ALTER TABLE {table_name} RENAME TO old_{table_name}")
+            
+            log("Tables renamed", "Database.migrate_data")
 
             # Create new tables
-            Database.create_tables()
-
+            for table_name in tables_to_create:
+                Database.create_tables(table_name)
             log("Migrating data", "Database.migrate_data")
-
-            # Migrate data with specific logic for each table
-            try:
-                Database.execute_query("""
-                    INSERT INTO resumes (uid, skills, experience, education)
-                    SELECT uid, skills, experience, education
-                    FROM old_resumes;
-                """)
-            except UniqueViolation:
-                pass
-            for table_name in ["users", "jobdescriptions", "matches", "feedback"]:
-                Database.execute_query(f"""
-                    INSERT INTO {table_name}
-                    SELECT *
-                    FROM old_{table_name};
-                """)
+            # No data in feedback Table
 
             log("Data migration completed", "Database.migrate_data")
         except psycopg2.Error as e:

@@ -54,14 +54,11 @@ class UserFactory:
     def from_json(data: dict) -> User:
         try:
             log(f"Creating User object from JSON: {data['name']}", "UserFactory.from_json")
-            try:
-                name = Name.create(data['name'])
-            except TypeError:
+            if isinstance(data, str):
                 data = json.loads(data)
-                name = Name.create(data['name'])
             return User(
                 uid=data['uid'],
-                name=name,
+                name=Name.create(data['name']),
                 dob=Date.create(data['dob']),
                 is_owner=data.get('is_owner', False),
                 is_admin=data.get('is_admin', False),

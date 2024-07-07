@@ -12,9 +12,7 @@ class JobService:
     job: Job = None
 
     def __init__(self, job: Job = None, dict: dict = None, json_str: str = None, db_row: str = None):
-        if dict:
-            job = JobFactory.from_json(dict)
-        elif json_str:
+        if dict or json_str:
             job = JobFactory.from_json(json_str)
         elif db_row:
             job = JobFactory.from_db_row(db_row)
