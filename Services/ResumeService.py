@@ -57,14 +57,16 @@ class ResumeService:
         else:
             resume = request.to_resume()
         resume.uid = request.uid
-        return ResumeService(resume)
+        rs = ResumeService(resume)
+        rs.save_to_db()
+        return rs
 
     @staticmethod
     def create_from_db(uid: str):
         return ResumeService(ResumeDatabase.get_resume(uid))
 
     @staticmethod
-    def process_resume(file: UploadFile = None, resume_text: str = None) -> Resume:
+    def process_resume(file: UploadFile = None) -> Resume:
         log("Processing resume", "ResumeService.process_resume")
         if file:
             FileUtility.initialize_temp_dir()

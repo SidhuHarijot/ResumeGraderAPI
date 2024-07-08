@@ -181,6 +181,7 @@ class OpenAIUtility:
         """
         log("Extracting job description JSON", "OpenAIUtility.extract_job_description_json")
         response = self.getResponse(system_message, job_description_text, "dict")
+        response["active"] = True
         cleaned_response = JDV.clean_output(response)
         if response != cleaned_response:
             logError(f"""Job description had a invalid response, defaulting to -1\n

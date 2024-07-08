@@ -1,5 +1,6 @@
 import json
 from .Validation import logError
+from Models.DataModels.GetModels import Date
 
 class JobDescriptionValidation:
     @staticmethod
@@ -49,6 +50,17 @@ class JobDescriptionValidation:
                     job['required_skills'] = [skill for skill in job['required_skills'] if isinstance(skill, str) and skill]
                 if not job['location'] or not isinstance(job['location'], str):
                     job['location'] = " "
+                if not job["application_deadline"] or not isinstance(job["application_deadline"], str):
+                    job["application_deadline"] = "00000000"
+                else:
+                    if not len(job["application_deadline"]) == 8:
+                        job["application_deadline"] = "00000000"
+                    else:
+                        try:
+                            Date.create(job["application_deadline"])
+                        except Exception as e:
+                            logError(f"Error creating date object: {job['application_deadline']}. \n", e, "JobDescriptionValidation.clean_output")
+                            job["application_deadline"] = "00000000"
                 if not isinstance(job['salary'], float):
                     job['salary'] = 0.0
                 if job['job_type'] not in ['FULL', 'PART', 'CONT', 'UNKN']:
@@ -106,6 +118,62 @@ class ResumeDataValidation:
                     resume['experience'] = [experience for experience in resume['experience'] if isinstance(experience, dict)]
                 if not all(isinstance(education, dict) for education in resume['education']):
                     resume['education'] = [education for education in resume['education'] if isinstance(education, dict)]
+                for experience in resume['experience']:
+                    if not experience['title'] or not isinstance(experience['title'], str):
+                        experience['title'] = " "
+                    if not experience['company_name'] or not isinstance(experience['company_name'], str):
+                        experience['company_name'] = " "
+                    if not experience['start_date'] or not isinstance(experience['start_date'], str):
+                        experience['start_date'] = "00000000"
+                    else:
+                        if not len(experience['start_date']) == 8:
+                            experience['start_date'] = "00000000"
+                        else:
+                            try:
+                                Date.create(experience['start_date'])
+                            except Exception as e:
+                                logError(f"Error creating date object: {experience['start_date']}. \n", e, "ResumeDataValidation.clean_output")
+                                experience['start_date'] = "00000000"
+                    if not experience['end_date'] or not isinstance(experience['end_date'], str):
+                        experience['end_date'] = "00000000"
+                    else:
+                        if not len(experience['end_date']) == 8:
+                            experience['end_date'] = "00000000"
+                        else:
+                            try:
+                                Date.create(experience['end_date'])
+                            except Exception as e:
+                                logError(f"Error creating date object: {experience['end_date']}. \n", e, "ResumeDataValidation.clean_output")
+                                experience['end_date'] = "00000000"
+                    if not experience['description'] or not isinstance(experience['description'], str):
+                        experience['description'] = " "
+                for education in resume['education']:
+                    if not education['course_name'] or not isinstance(education['course_name'], str):
+                        education['course_name'] = " "
+                    if not education['institution'] or not isinstance(education['institution'], str):
+                        education['institution'] = " "
+                    if not education['start_date'] or not isinstance(education['start_date'], str):
+                        education['start_date'] = "00000000"
+                    else:
+                        if not len(education['start_date']) == 8:
+                            education['start_date'] = "00000000"
+                        else:
+                            try:
+                                Date.create(education['start_date'])
+                            except Exception as e:
+                                logError(f"Error creating date object: {education['start_date']}. \n", e, "ResumeDataValidation.clean_output")
+                                education['start_date'] = "00000000"
+                    if not education['end_date'] or not isinstance(education['end_date'], str):
+                        education['end_date'] = "00000000"
+                    else:
+                        if not len(education['end_date']) == 8:
+                            education['end_date'] = "00000000"
+                        else:
+                            try:
+                                Date.create(education['end_date'])
+                            except Exception as e:
+                                logError(f"Error creating date object: {education['end_date']}. \n", e, "ResumeDataValidation.clean_output")
+                                education['end_date'] = "00000000"
                 return resume
             return {
                 'uid': " ",

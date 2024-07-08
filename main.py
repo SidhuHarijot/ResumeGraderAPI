@@ -481,7 +481,7 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
 
 # region Resumes
 @app.post("/resumes/", response_model=Resume, tags=["Resumes"])
-async def create_resume(request: rm.Resumes.Create=Depends(), file: UploadFile=File(None)) -> Resume:
+async def create_resume(request: rm.Resumes.Create) -> Resume:
     """Creates a new resume with the provided data.
     
     :param uid: The UID of the user associated with the resume.
@@ -563,14 +563,86 @@ async def create_resume(request: rm.Resumes.Create=Depends(), file: UploadFile=F
     """
     try:
         log("Creating a new resume", "create_resume")
-        resumeS = ResumeService.create_from_request(request, file)
-        resumeS.save_to_db()
+        resumeS = ResumeService.create_from_request(request, None)
         return resumeS.resume
     except HTTPException as e:
         logError(f"Validation error in create_resume: ", e, "create_resume")
         raise e
     except Exception as e:
         logError(f"Error in create_resume: ", e, "create_resume")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post("/resumes/{uid}", tags=["Resumes"])
+async def upload_resume(uid: str, file: UploadFile=File(...)) -> Resume:
+    """Uploads a resume file for a user with the provided UID.
+    
+    :param uid: The UID of the user associated with the resume.
+    :type uid: str
+    :param file: The resume file to upload.
+    :type file: UploadFile
+        
+    
+    :rtype: Resume
+    
+    Example:
+        "12345"
+        resume.pdf
+        
+    Returns:
+        
+        Resume: The resume object created.
+        
+        Example:
+        {
+            "uid": "12345",
+            "skills": ["Python", "Java", "SQL"],
+            "experience": [
+                {
+                    "start_date": {
+                        "day": 1,
+                        "month": 1,
+                        "year": 2000
+                    },
+                    "end_date": {
+                        "day": 1,
+                        "month": 1,
+                        "year": 2001
+                    },
+                    "title": "Software Engineer",
+                    "company_name": "Company",
+                    "description": "Description of the experience."
+                }
+            ],
+            "education": [
+                {
+                    "start_date": {
+                        "day": 1,
+                        "month": 1,
+                        "year": 2000
+                    },
+                    "end_date": {
+                        "day": 1,
+                        "month": 1,
+                        "year": 2001
+                    },
+                    "institution": "Institution",
+                    "course_name": "Course Name"
+                }
+            ]
+        }
+
+    Raises:
+        HTTPException: If an error occurs while uploading the resume.
+    """
+    try:
+        log(f"Uploading resume for UID: {uid}", "upload_resume")
+        resumeS = ResumeService.create_from_request(rm.Resumes.Create(uid=uid), file)
+        return resumeS.resume
+    except HTTPException as e:
+        logError(f"Validation error in upload_resume: ", e, "upload_resume")
+        raise e
+    except Exception as e:
+        logError(f"Error in upload_resume: ", e, "upload_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
@@ -765,7 +837,7 @@ async def delete_resume(uid: str):
 
 # region Jobs
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
-async def create_job(request: rm.Jobs.Create=Depends(), file: UploadFile=File(None)) -> Job:
+async def create_job(request: rm.Jobs.Create=Depends()) -> Job:
     """Creates a new job with the provided data.
     
     :param request: The request object containing the job data.
@@ -814,7 +886,7 @@ async def create_job(request: rm.Jobs.Create=Depends(), file: UploadFile=File(No
     """
     try:
         log("Creating a new job", "create_job")
-        jobS = JobService.create_from_request(request, file)
+        jobS = JobService.create_from_request(request, None)
         return jobS.job
     except PermissionError as e:
         logError(f"Authorization error in create_job: ", e, "create_job")
@@ -825,6 +897,47 @@ async def create_job(request: rm.Jobs.Create=Depends(), file: UploadFile=File(No
     except Exception as e:
         logError(f"Error in create_job: ", e, "create_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/jobs/{auth_uid}", tags=["Jobs"])
+async def upload_job_file(auth_uid: str, file: UploadFile=File(...)) -> Job:
+    """Uploads a file for a job with the provided ID.
+    
+    :param job_id: The ID of the job to upload the file for.
+    :type job_id: int
+    :param file: The file to upload.
+    :type file: UploadFile
+    
+    :rtype: dict
+    
+    Example:
+        1
+        job_description.pdf
+        
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "File uploaded successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while uploading the file.
+    """
+    try:
+        log(f"Uploading file for job.", "upload_job_file")
+        jS = JobService.create_from_request(rm.Jobs.Create(auth_uid=auth_uid), file)
+        return jS.job
+    except PermissionError as e:
+        logError(f"Authorization error in upload_job_file: ", e, "upload_job_file")
+        raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except HTTPException as e:
+        logError(f"Validation error in upload_job_file: ", e, "upload_job_file")
+        raise e
+    except Exception as e:
+        logError(f"Error in upload_job_file: ", e, "upload_job_file")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: int) -> Job:
