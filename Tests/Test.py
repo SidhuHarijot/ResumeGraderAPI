@@ -5,7 +5,7 @@ import json
 
 # Constants for API interaction
 API_URL = "http://127.0.0.1:8000"
-API_KEY = os.environ["OPENAI_RESUMEGRADER_APIKEY"]
+#API_KEY = os.environ["OPENAI_RESUMEGRADER_APIKEY"]
 
 def upload_file(file_path, endpoint):
     """Uploads a file to the specified API endpoint and returns the response."""
@@ -75,4 +75,5 @@ def main():
         os.remove(job_path)
 
 if __name__ == "__main__":
-    main()
+    dictionary = {"key": "value"}
+    print(dictionary["not_key"]) 
