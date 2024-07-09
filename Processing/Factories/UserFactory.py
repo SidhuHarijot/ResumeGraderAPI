@@ -16,7 +16,8 @@ class UserFactory:
                 is_owner=row[3],
                 is_admin=row[4],
                 phone_number=row[5],
-                email=row[6]
+                saved_jobs=row[6],
+                email=row[7]
             )
         except Exception as e:
             logError(f"Error creating User object from row: {row}. \n", e, "UserFactory.from_db_row")
@@ -28,24 +29,18 @@ class UserFactory:
         try:
             log(f"Converting User object to db row: {str(user.name)}", "UserFactory.to_db_row")
             dob_str = str(user.dob)
-            if with_uid:
-                return (
-                    user.uid,
+            params = (
                     str(user.name),
                     dob_str,
                     user.is_owner,
                     user.is_admin,
                     user.phone_number,
+                    user.saved_jobs,
                     user.email
                 )
-            return (
-                str(user.name),
-                dob_str,
-                user.is_owner,
-                user.is_admin,
-                user.phone_number,
-                user.email
-            )
+            if with_uid:
+                return (user.uid,) + params
+            return params
         except Exception as e:
             logError(f"Error converting User object to db row: {user}. \n", e, "UserFactory.to_db_row")
             raise
@@ -63,6 +58,7 @@ class UserFactory:
                 is_owner=data.get('is_owner', False),
                 is_admin=data.get('is_admin', False),
                 phone_number=data['phone_number'],
+                saved_jobs=data.get('saved_jobs', []),
                 email=data['email']
             )
         except Exception as e:
@@ -80,6 +76,7 @@ class UserFactory:
                 'is_owner': user.is_owner,
                 'is_admin': user.is_admin,
                 'phone_number': user.phone_number,
+                'saved_jobs': user.saved_jobs,
                 'email': user.email
             }
         except Exception as e:

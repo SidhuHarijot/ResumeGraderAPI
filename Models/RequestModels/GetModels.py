@@ -1,5 +1,5 @@
 from .Feedback import Create as FeedbackCreate, Update as FeedbackUpdate, Get as FeedbackGet
-from .User import Create as UserCreate, Update as UserUpdate
+from .User import Create as UserCreate, Update as UserUpdate, SaveJob as UserSaveJob
 from .UserPrivileges import Update as UserPrivilegesUpdate
 from .Resumes import Create as ResumeCreate, Update as ResumeUpdate
 from .Matches import Create as MatchCreate, Get as MatchGet, Update as MatchUpdate
@@ -16,6 +16,9 @@ class RequestModels:
         class Privileges:
             class Update(UserPrivilegesUpdate):
                 pass
+        
+        class SaveJob(UserSaveJob):
+            pass
 
 
     class Resumes:

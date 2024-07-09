@@ -141,6 +141,7 @@ class UserService:
                         <th>Admin</th>
                         <th>Phone</th>
                         <th>Email</th>
+                        <th>Saved Jobs</th>
                     </tr>
             """
 
@@ -154,6 +155,7 @@ class UserService:
                         <td>{user.is_admin}</td>
                         <td>{user.phone_number}</td>
                         <td>{user.email}</td>
+                        <td>{user.saved_jobs}</td>
                     </tr>
                 """
 
@@ -201,4 +203,26 @@ class UserService:
 
     def __str__(self):
         return str(self.user)
+
+    @staticmethod
+    def save_job_from_request(request: rm.User.SaveJob):
+        log(f"Saving job {request.job_id} for user {request.uid}", "save_job")
+        try:
+            user = UserService.get_from_db(request.uid)
+            user.user.saved_jobs.append(request.job_id)
+            user.save_to_db()
+        except Exception as e:
+            logError("Error in UserService save_job", e, "save_job")
+            raise
+    
+    @staticmethod
+    def remove_job_from_request(request: rm.User.SaveJob):
+        log(f"Removing job {request.job_id} for user {request.uid}", "remove_job")
+        try:
+            user = UserService.get_from_db(request.uid)
+            user.user.saved_jobs.remove(request.job_id)
+            user.save_to_db()
+        except Exception as e:
+            logError("Error in UserService remove_job", e, "remove_job")
+            raise
 

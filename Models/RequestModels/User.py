@@ -42,3 +42,13 @@ class Update(BaseModel):
         if self.email:
             current.email = self.email
         return current
+
+
+class SaveJob(BaseModel):
+    uid: str = Field(..., description="Unique identifier for the user.")
+    job_id: int = Field(..., description="Unique identifier for the job.")
+
+    def to_user(self, current: User):
+        current.saved_jobs.append(self.job_id)
+        return current
+
