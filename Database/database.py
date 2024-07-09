@@ -76,20 +76,22 @@ old_schemas = {
 }
 
 new_schemas = {
-    "users": old_schemas["users"],
+    "users": """
+        CREATE TABLE users (
+            uid VARCHAR(50) PRIMARY KEY,
+            name VARCHAR(100),
+            dob VARCHAR(8),
+            is_owner BOOLEAN DEFAULT FALSE,
+            is_admin BOOLEAN DEFAULT FALSE,
+            phone_number CHAR(13),
+            jobs_saved INT[] DEFAULT '{}',
+            email VARCHAR(100) NOT NULL UNIQUE
+        );
+    """,
     "resumes": old_schemas["resumes"],
     "jobdescriptions": old_schemas["jobdescriptions"],
     "matches": old_schemas["matches"],
-    "feedback": """
-        CREATE TABLE feedback (
-            feedback_id SERIAL PRIMARY KEY,
-            match_id INT NOT NULL,
-            feedback_text TEXT NOT NULL,
-            auth_uid VARCHAR(50) NOT NULL,
-            FOREIGN KEY (match_id) REFERENCES matches(match_id) ON DELETE CASCADE,
-            FOREIGN KEY (auth_uid) REFERENCES users(uid) ON DELETE CASCADE
-        );
-    """
+    "feedback": old_schemas["feedback"]
 }
 
 # region Database
@@ -213,8 +215,11 @@ class Database:
             for table_name in tables_to_create:
                 Database.create_tables(table_name)
             log("Migrating data", "Database.migrate_data")
-            # No data in feedback Table
-
+            # migrate user data
+            user_data = Database.execute_query("SELECT * FROM old_users;", fetch=True)
+            for user in user_data:
+                Database.execute_query("INSERT INTO users (uid, name, dob, is_owner, is_admin, phone_number, email) VALUES (%s, %s, %s, %s, %s, %s, %s);", user)
+                
             log("Data migration completed", "Database.migrate_data")
         except psycopg2.Error as e:
             logError(e, "Database.migrate_data")

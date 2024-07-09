@@ -11,7 +11,7 @@ class UserDatabase:
             log(f"Creating user {user.uid}", "UserDatabase.create_user")
             print(UserFactory.to_db_row(user))
             query = """
-                INSERT INTO users (uid, name, dob, is_owner, is_admin, phone_number, email)
+                INSERT INTO users (uid, name, dob, is_owner, is_admin, phone_number, jobs_saved, email)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             params = UserFactory.to_db_row(user)
@@ -59,7 +59,7 @@ class UserDatabase:
         try:
             log(f"Updating user {user.uid}", "UserDatabase.update_user")
             query = """
-                UPDATE users SET name = %s, dob = %s, is_owner = %s, is_admin = %s, phone_number = %s, email = %s
+                UPDATE users SET name = %s, dob = %s, is_owner = %s, is_admin = %s, phone_number = %s, jobs_saved = %s, email = %s
                 WHERE uid = %s
             """
             params = UserFactory.to_db_row(user, False) + (user.uid,)

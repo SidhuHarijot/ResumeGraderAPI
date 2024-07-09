@@ -12,3 +12,4 @@ class User(BaseModel):
     is_admin: Optional[bool] = Field(..., description="Whether the user is an admin.")
     phone_number: str = Field(..., description="Phone number of the user. Format: XX-XXXXXXXXXX")
     email: str = Field(..., description="Email of the user.")
+    saved_jobs: List[int] = Field(..., description="List of job IDs saved by the user.")

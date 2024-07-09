@@ -401,6 +401,105 @@ async def get_all_users(auth_uid: str) -> List[User]:
     except Exception as e:
         logError(f"Error in get_all_users: ", e, "get_all_users")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.post("/users/saved_jobs", tags=["Users"])
+async def add_job_to_user(request: rm.User.SaveJob) -> dict:
+    """Saves a job to a user with the provided data.
+    
+    :param request: The request object containing the user UID and job ID.
+    :type request: rm.User.SaveJob
+    
+    :rtype: dict
+    
+    Example:
+        request:
+        {
+            "uid": "12345",
+            "job_id": 123
+        }
+
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Job saved successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while saving the job to the user.
+    """
+    try:
+        us = UserService.save_job_from_request(request)
+        return {"message": "Job saved successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
+    except Exception as e:
+        logError(f"Error in add_job_to_user: ", e, "add_job_to_user")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.get("/users/{uid}/jobs", response_model=List[int], tags=["Users"])
+async def get_saved_jobs(uid: str) -> List[int]:
+    """Retrieves the saved jobs of a user with the provided UID.
+
+    :param uid: The UID of the user whose saved jobs are to be retrieved.
+    :type uid: str
+    
+    :rtype: List[int]
+
+    Example:
+        "12345"
+
+    Returns:
+        List[int]: A list of job IDs saved by the user.
+        Example:
+        [123, 456, 789]
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the user's saved jobs.
+    """
+    try:
+        us = UserService.get_from_db(uid)
+        return us.user.saved_jobs
+    except Exception as e:
+        logError(f"Error in get_saved_jobs: ", e, "get_saved_jobs")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.delete("/user/saved_jobs", tags=["Users"])
+async def remove_job_from_user(request: rm.User.SaveJob) -> dict:
+    """Removes a job from a user with the provided data.
+    
+    :param request: The request object containing the user UID and job ID.
+    :type request: rm.User.SaveJob
+    
+    :rtype: dict
+    
+    Example:
+        request:
+        {
+            "uid": "12345",
+            "job_id": 123
+        }
+
+    Returns:
+        dict: A dictionary containing a success message.
+        Example:
+        {
+            "message": "Job removed successfully."
+        }
+
+    Raises:
+        HTTPException: If an error occurs while removing the job from the user.
+    """
+    try:
+        us = UserService.remove_job_from_request(request)
+        return {"message": "Job removed successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in remove_job_from_user: ", e, "remove_job_from_user")
+        raise e
+    except Exception as e:
+        logError(f"Error in remove_job_from_user: ", e, "remove_job_from_user")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 # endregion
 
 # region User Privileges
