@@ -19,7 +19,8 @@ class Create(BaseModel):
                     is_owner=False,
                     is_admin=False,
                     phone_number=self.phone_number,
-                    email=self.email)
+                    email=self.email,
+                    saved_jobs=[])
 
 
 class Update(BaseModel):

@@ -12,7 +12,7 @@ class UserDatabase:
             print(UserFactory.to_db_row(user))
             query = """
                 INSERT INTO users (uid, name, dob, is_owner, is_admin, phone_number, jobs_saved, email)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
             params = UserFactory.to_db_row(user)
             Database.execute_query(query, params)
