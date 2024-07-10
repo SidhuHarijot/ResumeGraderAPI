@@ -104,7 +104,7 @@ class Database:
             # Attempt to connect using the internal URL
             log("Connecting to internal URL", "Database.initialize")
             Database.connection_pool = psycopg2.pool.SimpleConnectionPool(
-                1, 10,
+                1, 95,
                 database="resume_grader",
                 user="bugslayerz",
                 password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
@@ -118,7 +118,7 @@ class Database:
             try:
                 # Fallback to the external URL if internal fails
                 Database.connection_pool = psycopg2.pool.SimpleConnectionPool(
-                    1, 10,
+                    1, 95,
                     database="resume_grader",
                     user="bugslayerz",
                     password="dZLAsglBKDPxeXaRwgncaoHr9nTKGZXi",
