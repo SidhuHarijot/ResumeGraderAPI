@@ -14,7 +14,8 @@ The Resume Grader API is an advanced, feature-rich platform designed to enhance 
 
 ## Resources
 - [Endpoints](/Endpoints.md)
-- [Documentation](https://resumegraderapi.onrender.com/docs)
+- [Documentation Swagger UI Custom Dark](https://resumegraderapi.onrender.com/darkDocs)
+- [Documentation Swagger UI](https://resumegraderapi.onrender.com/docs)
 - [Documentation Redoc](https://resumegraderapi.onrender.com/redoc)
 
 ### Key Functionalities
@@ -55,177 +56,109 @@ The Resume Grader API is designed to be a dynamic, responsive tool that adapts t
 **COMPLETE DOCS FOR THE API CAN BE FOUND [HERE](https://resumegraderapi.onrender.com/docs).**
 
 # What's Next for this API
+### 1. Complete Grading Service
 
-### 1. Authorization Checks
+**Objective**: Implement a complete grading service that grades multiple resumes simultaneously and streams data back to the client in real-time. This will enhance the user experience and reduce the time taken to grade multiple resumes.
 
-**Objective**: Ensure that only authorized users can make changes to data within the API.
+### 2. Implement Database Sessions
 
-**Steps**:
+**Objective**: Introduce database sessions to manage transactions and ensure data integrity. This will improve the reliability and consistency of the API's interactions with the database.
 
-- **User Roles and Permissions**: Define user roles (e.g., admin, user, owner) and their respective permissions.
-- **Middleware for UID Verification**: Implement middleware functions to check UID (user identification) against these roles and permissions for each endpoint. For example, only admins or owners should be able to update job descriptions or grade resumes.
-- **Endpoint Security**: Update all endpoints to include UID verification. This involves checking the UID provided in the request against the database to confirm the user's role and permissions before allowing the operation.
+### 3. Data Validation and Error Handling
 
-**Example**:
+**Objective**: Enhance data validation and error handling mechanisms to provide more detailed feedback to users and improve the overall robustness of the API.
+Also resort to defaults when data is missing.
 
-    ```python
-    def check_permission(uid: str, required_role: str):
-        con = connection_pool.getconn()
-        try:
-            with con.cursor() as cursor:
-                cursor.execute("SELECT role FROM Users WHERE uid = %s", (uid,))
-                user_role = cursor.fetchone()[0]
-                if user_role != required_role:
-                    raise HTTPException(status_code=403, detail="Permission denied.")
-        finally:
-            connection_pool.putconn(con)
 
-    @app.put("/update/job/{job_id}")
-    async def update_job(job_id: int, job_data: dict, uid: str):
-        check_permission(uid, "admin")
-        # Proceed with updating the job
-    ```
+### 4. Documentation
 
-### 2. In-House Data Models
+**Objective**: Expand the API documentation to include detailed examples, use cases, and best practices for integrating the API into various applications. This will help users leverage the full potential of the API.
 
-**Objective**: Develop custom models for resume data extraction and grading to improve control, accuracy, and reduce reliance on third-party services.
+### 5. Logger Create new logging mechanism and platform for real time data
 
-**Steps**:
+**Objective**: Implement a comprehensive logging mechanism to track API usage, errors, and performance metrics. This will help in monitoring and optimizing the API's performance and reliability.
 
-- **Resume Data Extraction Model**:
-    - **Data Collection**: Gather a diverse set of resumes to train and validate the model.
-    - **Model Development**: Use NLP techniques and libraries (such as spaCy, NLTK, or custom deep learning models) to build a parser that can accurately extract relevant information (e.g., name, contact details, skills, experience) from resume text.
-    - **Testing and Validation**: Thoroughly test the model on various resume formats to ensure robustness and accuracy.
-- **Resume Grading Model**:
-    - **Criteria Definition**: Define the criteria for grading resumes (e.g., relevance to job description, skills match, experience level).
-    - **Model Training**: Train a machine learning model (using algorithms like decision trees, random forests, or neural networks) to evaluate resumes based on these criteria.
-    - **Continuous Improvement**: Implement feedback loops to continuously improve the model based on user inputs and grading outcomes.
+### 6. Develop Tests and CI/CD Pipeline
 
-**Example**:
+**Objective**: Create a suite of tests to validate the API's functionalities and implement a CI/CD pipeline for automated testing and deployment. This will ensure the stability and quality of the API across different environments.
 
-    ```python
-    def extract_resume_data(resume_text: str) -> dict:
-        # Placeholder function for in-house resume data extraction model
-        extracted_data = {
-            "name": ["John", "Doe"],
-            "phoneNo": "+XX-XXXXXXXXXX",
-            "email": "john.doe@example.com",
-            "experience": [{"01012020-01012021": {"Company A": "Job Description"}}],
-            "skills": ["Python", "Data Analysis"],
-            "education": [{"01012015-01012019": {"University A": "Degree"}}],
-            "certificates": {"Institution A": "Certificate"}
-        }
-        return extracted_data
-
-    @app.post("/extract/resumeJSON/inhouse")
-    async def extract_resume_json(requestData: ExtractRequestData):
-        extracted_data = extract_resume_data(requestData.stringData)
-        return extracted_data
-    ```
-
-### 3. Performance Enhancements
+### 7. Performance and Efficiency Enhancements
 
 **Objective**: Optimize the performance of the "grade all resumes for a job" endpoint and implement real-time updates to the client.
 
-**Steps**:
+### 8. TAGS model
 
-- **Parallel Processing**: Use asynchronous programming and parallel processing to grade multiple resumes simultaneously, reducing the overall processing time.
-- **Batch Updates**: Update the database in batches to minimize the number of transactions and improve performance.
-- **Real-Time Updates**: Implement WebSocket or similar technology to push updates to the client application in real-time as each resume is graded.
+**Objective**: Implement a TAGS model to grade resumes based on the skills required for a job. This will provide a more granular and accurate assessment of resume-job fit.
 
-**Example**:
+### 9. Create models for resume and job description parsing
 
-    ```python
-    @app.post("/grade/ChatGPT/job/{job_id}")
-    async def grade_all_from_job(request: GradingRequest):
-        import asyncio
-
-        async def grade_resume(resume_id):
-            grade = await _grade_resume_chatGPT(request.apiKey, request.job_id, [resume_id], request.maxGrade)
-            grade = grade[resume_id]
-            await save_grade(resume_id, request.job_id, grade)
-            # Push real-time update to client
-            await websocket_manager.send_update(request.client_id, grade)
-            return grade
-
-        con = connection_pool.getconn()
-        try:
-            with con.cursor() as cursor:
-                cursor.execute("SELECT resume_id FROM matches WHERE job_id = %s", (request.job_id,))
-                resume_ids = cursor.fetchall()
-        finally:
-            connection_pool.putconn(con)
-
-        tasks = [grade_resume(resume_id[0]) for resume_id in resume_ids]
-        grades = await asyncio.gather(*tasks)
-        return {"status": "Success", "grades": grades}
-    ```
-
-### 4. Additional Improvements
-
-**Objective**: Enhance the overall functionality, maintainability, and user experience of the API.
-
-**Steps**:
-
-- **Continuous Integration and Deployment (CI/CD)**:
-    - Set up CI/CD pipelines using tools like GitHub Actions, Travis CI, or Jenkins to automate testing and deployment processes. This ensures that any changes are thoroughly tested and deployed efficiently.
-- **Logging and Monitoring**:
-    - Implement comprehensive logging using libraries like loguru or logging to track API requests, responses, and errors.
-    - Set up monitoring tools like Prometheus and Grafana to keep track of the API's performance and health.
-- **Documentation Updates**:
-    - Update the API documentation to reflect new features and changes. Use tools like Swagger or Redoc to generate interactive API documentation.
-    - Provide detailed guides and examples to help users understand how to use the new features.
-
-**Example CI/CD Pipeline (GitHub Actions)**:
-
-    ```yaml
-    name: CI/CD Pipeline
-
-    on:
-      push:
-        branches:
-          - main
-      pull_request:
-        branches:
-          - main
-
-    jobs:
-      build:
-        runs-on: ubuntu-latest
-
-        steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-
-        - name: Set up Python
-          uses: actions/setup-python@v2
-          with:
-            python-version: '3.8'
-
-        - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt
-
-        - name: Run tests
-          run: |
-            pytest
-
-        - name: Deploy to Production
-          if: github.ref == 'refs/heads/main'
-          run: |
-            # Add deployment commands here
-    ```
-
-By focusing on these detailed improvements, the API will become more secure, efficient, and user-friendly, while also being easier to maintain and scale.
-
-
+**Objective**: Develop models for parsing resume and job description data to extract relevant information and improve the grading accuracy.
 
 # Updates
 - [Version 1.0.0](#version-100)
 - [Version 2.0.0](#version-200)
 - [version 2.5.0](#version-250)
 - [version 3.0.0](#version-300)
+- [version 4.0.0](#version-400)
+
+
+# Version 4.0.0
+### Introduction
+Version 4.0.0 is a reliability focused update that aims to enhance the performance, security, and scalability of the Resume Grader API. This version introduces new features, optimizations, and improvements to ensure a robust and efficient API experience. Here's a detailed look at the changes and enhancements in this update. The second thing this version focuses on is its maintainability and scalability. The source code is now divided into different packages talking with each other and doing their own specific tasks. This makes the codebase more modular and easier to maintain.
+
+### Key Updates
+
+#### Dark Mode Documentation
+
+**Custom Swagger UI**
+
+- **Dark Mode**: Introduced a dark mode for Swagger UI to provide a more comfortable user experience for those who prefer dark-themed interfaces. This is accessible via the `/darkDocs` endpoint.
+
+#### Creation of Service Classes
+
+**Services for Reusable Operations**
+
+- **Service Classes**: Created service classes to provide a consistent and reusable way to handle complex operations. This includes handling user management, resume processing, job management, and more. Service classes encapsulate business logic, making the codebase more modular and maintainable.
+
+#### API Key Authentication
+
+**Enhanced Security**
+
+- **Authentication**: Implemented API key authentication for certain endpoints to ensure that only authorized users can access these resources. This includes the creation and update endpoints for jobs.
+
+**Endpoints with Authentication**:
+    - **POST** `/jobs/`: Create a new job (requires API key)
+    - **PUT** `/jobs/`: Update a job (requires API key)
+
+#### Enhanced Endpoint Functionality
+
+**Flexible Query Parameters**
+
+- **Get Jobs**: Added query parameters to the **GET** `/jobs/` endpoint to allow filtering based on variables like active status and required skills.
+- **Get Matches**: Enhanced the **GET** `/matches/` endpoint to support filtering based on various criteria, improving the flexibility and usefulness of the match retrieval process.
+
+**New Functionalities**
+
+- **Saved Jobs**: Introduced functionality for users to save jobs they are interested in. This feature helps users keep track of job opportunities they find appealing.
+
+#### Refactoring and Code Organization
+
+**Modular Codebase**
+
+- **Packages**: The source code is now organized into different packages, each handling specific functionalities such as database operations, API endpoints, and utility functions. This modular structure enhances maintainability and scalability.
+
+    - ['Database'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/Database): Contains database connection and query functions.
+    - ['ServerLogging'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/ServerLogging): Manages logging operations and log file handling.
+    - ['Models'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/Models): Defines data models and Pydantic schemas for request and response objects.
+    - ['Services'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/Services): Implements business logic and operations for grading, file handling, and data processing.
+    - ['Utilities'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/Utilities): Contains utility functions for file operations, data validation, and API interactions.
+    - ['Processing/Factories'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/Processing/Factories): Handles the creation of objects and data processing tasks.
+    - ['Processing/DataValidation'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/Processing/DataValidation): Validates data integrity and formats for requests and responses.
+    - ['static'](https://github.com/SidhuHarijot/ResumeGraderAPI/tree/main/static): Contains static files like custom css for the documentation.
+
+#### Conclusion
+
+Version 4.0.0 of the Resume Grader API represents a substantial upgrade, introducing new functionalities, improving existing features, and enhancing the overall structure and maintainability of the codebase. With modular code organization, enhanced documentation, robust logging, and efficient data handling, this version is well-equipped to meet the demands of modern recruitment processes.
 
 # Version 3.0.0
 ### Introduction
