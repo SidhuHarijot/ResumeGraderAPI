@@ -104,15 +104,10 @@ async def custom_swagger_ui_html():
 @app.get("/", tags=["Root"])
 async def read_root() -> HTMLResponse:
     """Root endpoint for the API. Returns a welcome message and information about the API.
-    
-    :rtype: HTMLResponse
-    
-    Params:
-        None
 
     Returns:
         HTMLResponse: An HTML response containing the welcome message and API information.
-        
+
     Raises:
         HTTPException: If an error occurs while accessing the root endpoint.
     """
@@ -169,42 +164,9 @@ async def read_root() -> HTMLResponse:
 @app.post("/users/", response_model=User, tags=["Users"])
 async def create_user(request: rm.User.Create) -> User:
     """Creates a new user with the provided data.
-    
-    :param request: The request object containing the user data.
-    :type request: rm.User.Create
-    
-    :rtype: User
-    
-    Example:
-        request:
-        {
-            "uid": "12345",
-            "first_name": "John",
-            "last_name": "Doe",
-            "dob": "01012000",
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com"
-        }
 
     Returns:
         User: The user object created.
-        Example:
-        {
-            "uid": "12345",
-            "name": {
-                "first_name": "John",
-                "last_name": "Doe"
-            },
-            "dob": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "is_owner": false,
-            "is_admin": false,
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com"
-        }
 
     Raises:
         HTTPException: If an error occurs while creating the user.
@@ -224,33 +186,8 @@ async def create_user(request: rm.User.Create) -> User:
 async def get_user(uid: str) -> User:
     """Retrieves a user with the provided UID.
 
-    :param uid: The UID of the user to retrieve.
-    :type uid: str
-    
-    :rtype: User
-
-    Example:
-        "12345"
-
     Returns:
         User: The user object retrieved.
-        Example:
-        {
-            "uid": "12345",
-            "name": {
-                "first_name": "John",
-                "last_name": "Doe"
-            },
-            "dob": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "is_owner": false,
-            "is_admin": false,
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com"
-        }
 
     Raises:
         HTTPException: If an error occurs while retrieving the user.
@@ -265,46 +202,9 @@ async def get_user(uid: str) -> User:
 @app.put("/users/", response_model=User, tags=["Users"])
 async def update_user(request: rm.User.Update) -> User:
     """Updates a user with the provided data.
-    
-    :param uid: The UID of the user to update.
-    :type uid: str
-    :param request: The request object containing the updated user data.
-    :type request: rm.User.Update
-    
-    :rtype: User
-    
-    Example:
-        request:
-        {
-            "uid": "12345",
-            "first_name": "John",
-            "last_name": "Doe",
-            "dob": "01012000",
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com",
-            "is_owner": false,
-            "is_admin": false
-        }
 
     Returns:
         User: The user object updated.
-        Example:
-        {
-            "uid": "12345",
-            "name": {
-                "first_name": "John",
-                "last_name": "Doe"
-            },
-            "dob": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "is_owner": false,
-            "is_admin": false,
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com"
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the user.
@@ -325,20 +225,8 @@ async def update_user(request: rm.User.Update) -> User:
 async def delete_user(uid: str) -> dict:
     """Deletes a user with the provided UID.
 
-    :param uid: The UID of the user to delete.
-    :type uid: str
-    
-    :rtype: dict
-
-    Example:
-        "12345"
-
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "User deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the user.
@@ -356,35 +244,8 @@ async def delete_user(uid: str) -> dict:
 async def get_all_users(auth_uid: str) -> List[User]:
     """Retrieves all users.
 
-    :param auth_uid: The UID of the user requesting the information.
-    :type auth_uid: str
-    
-    :rtype: List[User]
-
-    Example:
-        "12345"
-
     Returns:
         List[User]: A list of all users.
-        Example:
-        [
-            {
-                "uid": "12345",
-                "name": {
-                    "first_name": "John",
-                    "last_name": "Doe"
-                },
-                "dob": {
-                    "day": 1,
-                    "month": 1,
-                    "year": 2000
-                },
-                "is_owner": false,
-                "is_admin": false,
-                "phone_number": "00-1234567890",
-                "email": "abc@email.com"
-            }
-        ]
 
     Raises:
         HTTPException: If an error occurs while retrieving all users.
@@ -402,28 +263,12 @@ async def get_all_users(auth_uid: str) -> List[User]:
         logError(f"Error in get_all_users: ", e, "get_all_users")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.post("/users/saved_jobs", tags=["Users"])
+@app.post("/users/saved_jobs", tags=["User > Saved Jobs"])
 async def add_job_to_user(request: rm.User.SaveJob) -> dict:
     """Saves a job to a user with the provided data.
-    
-    :param request: The request object containing the user UID and job ID.
-    :type request: rm.User.SaveJob
-    
-    :rtype: dict
-    
-    Example:
-        request:
-        {
-            "uid": "12345",
-            "job_id": 123
-        }
 
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Job saved successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while saving the job to the user.
@@ -438,22 +283,12 @@ async def add_job_to_user(request: rm.User.SaveJob) -> dict:
         logError(f"Error in add_job_to_user: ", e, "add_job_to_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.get("/users/{uid}/jobs", response_model=List[int], tags=["Users"])
+@app.get("/users/{uid}/jobs", response_model=List[int], tags=["User > Saved Jobs"])
 async def get_saved_jobs(uid: str) -> List[int]:
     """Retrieves the saved jobs of a user with the provided UID.
 
-    :param uid: The UID of the user whose saved jobs are to be retrieved.
-    :type uid: str
-    
-    :rtype: List[int]
-
-    Example:
-        "12345"
-
     Returns:
         List[int]: A list of job IDs saved by the user.
-        Example:
-        [123, 456, 789]
 
     Raises:
         HTTPException: If an error occurs while retrieving the user's saved jobs.
@@ -465,28 +300,12 @@ async def get_saved_jobs(uid: str) -> List[int]:
         logError(f"Error in get_saved_jobs: ", e, "get_saved_jobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.delete("/user/saved_jobs", tags=["Users"])
+@app.delete("/user/saved_jobs", tags=["User > Saved Jobs"])
 async def remove_job_from_user(request: rm.User.SaveJob) -> dict:
     """Removes a job from a user with the provided data.
-    
-    :param request: The request object containing the user UID and job ID.
-    :type request: rm.User.SaveJob
-    
-    :rtype: dict
-    
-    Example:
-        request:
-        {
-            "uid": "12345",
-            "job_id": 123
-        }
 
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Job removed successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while removing the job from the user.
@@ -503,22 +322,12 @@ async def remove_job_from_user(request: rm.User.SaveJob) -> dict:
 # endregion
 
 # region User Privileges
-@app.get("/users/privileges/{uid}", response_model=str, tags=["Users"])
+@app.get("/users/privileges/{uid}", response_model=str, tags=["User Privileges"])
 async def get_user_privileges(uid: str) -> str:
     """Retrieves the privileges of a user with the provided UID.
 
-    :param uid: The UID of the user whose privileges are to be retrieved.
-    :type uid: str
-    
-    :rtype: str
-
-    Example:
-        "12345"
-
     Returns:
         str: The privilege level of the user.
-        Example:
-        "ADMIN"
 
     Raises:
         HTTPException: If an error occurs while retrieving the user's privileges.
@@ -536,32 +345,15 @@ async def get_user_privileges(uid: str) -> str:
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.post("/users/privileges", tags=["Users"])
+@app.post("/users/privileges", tags=["User Privileges"])
 async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
     """Updates the privileges of a user with the provided data.
-    
-    :param request: The request object containing the updated user privileges.
-    :type request: rm.User.Privileges.Update
-    
-    :rtype: dict
-    
-    Example:
-        request:
-        {
-            "target_uid": "12345",
-            "is_admin": false,
-            "is_owner": false
-        }
 
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "User privileges updated successfully."
-        }
 
     Raises:
-        HTTPException: If an error occurs while updating the user privileges.
+        HTTPException: If an error occurs while updating the user privileges.ee
     """
     try:
         log("Updating user privileges", "update_user_privileges")
@@ -582,80 +374,9 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
 @app.post("/resumes/", response_model=Resume, tags=["Resumes"])
 async def create_resume(request: rm.Resumes.Create) -> Resume:
     """Creates a new resume with the provided data.
-    
-    :param uid: The UID of the user associated with the resume.
-    :type uid: str
-    :param request: The request object containing the resume data.
-    :type request: rm.Resumes.Create
-    
-    :rtype: Resume
-    
-    Example:
-        request:
-        {
-            "uid": "12345",
-            "skills": ["Python", "Java", "SQL"],
-            "experience": [
-                {
-                    "start_date": "01012000",
-                    "end_date": "01012001",
-                    "title": "Software Engineer",
-                    "company_name": "Company",
-                    "description": "Description of the experience."
-                }
-            ],
-            "education": [
-                {
-                    "start_date": "01012000",
-                    "end_date": "01012001",
-                    "institution": "Institution",
-                    "course_name": "Course Name"
-                }
-            ],
-            "file": "resume.pdf",
-            "resume_text": "John Doe Software Engineer Skills: Python, Java, SQL Experience: 2 years Education: Bachelor's in Computer Science"
-        }
 
     Returns:
         Resume: The resume object created.
-        Example:
-        {
-            "uid": "12345",
-            "skills": ["Python", "Java", "SQL"],
-            "experience": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "title": "Software Engineer",
-                    "company_name": "Company",
-                    "description": "Description of the experience."
-                }
-            ],
-            "education": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "institution": "Institution",
-                    "course_name": "Course Name"
-                }
-            ]
-        }
 
     Raises:
         HTTPException: If an error occurs while creating the resume.
@@ -674,128 +395,29 @@ async def create_resume(request: rm.Resumes.Create) -> Resume:
 @app.post("/resumes/{uid}", tags=["Resumes"])
 async def upload_resume(uid: str, file: UploadFile=File(...)) -> Resume:
     """Uploads a resume file for a user with the provided UID.
-    
-    :param uid: The UID of the user associated with the resume.
-    :type uid: str
-    :param file: The resume file to upload.
-    :type file: UploadFile
-        
-    
-    :rtype: Resume
-    
-    Example:
-        "12345"
-        resume.pdf
-        
+
     Returns:
-        
         Resume: The resume object created.
-        
-        Example:
-        {
-            "uid": "12345",
-            "skills": ["Python", "Java", "SQL"],
-            "experience": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "title": "Software Engineer",
-                    "company_name": "Company",
-                    "description": "Description of the experience."
-                }
-            ],
-            "education": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "institution": "Institution",
-                    "course_name": "Course Name"
-                }
-            ]
-        }
 
     Raises:
-        HTTPException: If an error occurs while uploading the resume.
+        HTTPException: If an error occurs while retrieving the resume.
     """
     try:
-        log(f"Uploading resume for UID: {uid}", "upload_resume")
-        resumeS = ResumeService.create_from_request(rm.Resumes.Create(uid=uid), file)
-        return resumeS.resume
-    except HTTPException as e:
-        logError(f"Validation error in upload_resume: ", e, "upload_resume")
-        raise e
+        log(f"Retrieving resume with UID: {uid}", "get_resume")
+        return ResumeDatabase.get_resume(uid)
+    except ValueError as e:
+        logError(f"Resume not found: {uid}", e, "get_resume")
+        raise HTTPException(status_code=404, detail="Resume not found.")
     except Exception as e:
-        logError(f"Error in upload_resume: ", e, "upload_resume")
+        logError(f"Error in get_resume: ", e, "get_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
 async def get_resume(uid: str) -> Resume:
     """Retrieves a resume with the provided UID.
-    
-    :param uid: The UID of the resume to retrieve.
-    :type uid: str
-    
-    :rtype: Resume
 
-    Example:
-        "12345"
-            
     Returns:
         Resume: The resume object retrieved.
-        Example:
-        {
-            "uid": "12345",
-            "skills": ["Python", "Java", "SQL"],
-            "experience": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "title": "Software Engineer",
-                    "company_name": "Company",
-                    "description": "Description of the experience."
-                }
-            ],
-            "education": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "institution": "Institution",
-                    "course_name": "Course Name"
-                }
-            ]
-        }
 
     Raises:
         HTTPException: If an error occurs while retrieving the resume.
@@ -813,80 +435,9 @@ async def get_resume(uid: str) -> Resume:
 @app.put("/resumes/", response_model=Resume, tags=["Resumes"])
 async def update_resume(request: rm.Resumes.Update) -> Resume:
     """Updates a resume with the provided data.
-    
-    :param uid: The UID of the resume to update.
-    :type uid: str
-    :param request: The request object containing the updated resume data.
-    :type request: rm.Resumes.Update
-    
-    :rtype: Resume
-    
-    Example:
-        uid:
-        "12345"
-        request:
-        {
-            "uid": "12345",
-            "skills": ["Python", "Java", "SQL"],
-            "experience": [
-                {
-                    "start_date": "01012000",
-                    "end_date": "01012001",
-                    "title": "Software Engineer",
-                    "company_name": "Company",
-                    "description": "Description of the experience."
-                }
-            ],
-            "education": [
-                {
-                    "start_date": "01012000",
-                    "end_date": "01012001",
-                    "institution": "Institution",
-                    "course_name": "Course Name"
-                }
-            ]
-        }
 
     Returns:
         Resume: The resume object updated.
-        Example:
-        {
-            "uid": "12345",
-            "skills": ["Python", "Java", "SQL"],
-            "experience": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "title": "Software Engineer",
-                    "company_name": "Company",
-                    "description": "Description of the experience."
-                }
-            ],
-            "education": [
-                {
-                    "start_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2000
-                    },
-                    "end_date": {
-                        "day": 1,
-                        "month": 1,
-                        "year": 2001
-                    },
-                    "institution": "Institution",
-                    "course_name": "Course Name"
-                }
-            ]
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the resume.
@@ -907,20 +458,8 @@ async def update_resume(request: rm.Resumes.Update) -> Resume:
 async def delete_resume(uid: str):
     """Deletes a resume with the provided UID.
 
-    :param uid: The UID of the resume to delete.
-    :type uid: str
-    
-    :rtype: dict
-
-    Example:
-        "12345"
-
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Resume deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the resume.
@@ -938,47 +477,9 @@ async def delete_resume(uid: str):
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
 async def create_job(request: rm.Jobs.Create=Depends()) -> Job:
     """Creates a new job with the provided data.
-    
-    :param request: The request object containing the job data.
-    :type request: rm.Jobs.Create
-    
-    :rtype: Job
-    
-    Example:
-        request:
-        {
-            "title": "Software Engineer",
-            "company": "XYZ",
-            "description": "Job Description",
-            "required_skills": ["Python", "Java", "SQL"],
-            "application_deadline": "01012000",
-            "location": "Location",
-            "salary": 100000,
-            "job_type": "FULL",
-            "active": true,
-            "file": "job_description.pdf",
-            "auth_uid": "12345"
-        }
 
     Returns:
         Job: The job object created.
-        Example:
-        {
-            "job_id": 1,
-            "title": "Software Engineer",
-            "company": "XYZ",
-            "description": "Job Description",
-            "required_skills": ["Python", "Java", "SQL"],
-            "application_deadline": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "location": "Location",
-            "salary": 100000,
-            "job_type": "FULL",
-            "active": true
-        }
 
     Raises:
         HTTPException: If an error occurs while creating the job.
@@ -1001,24 +502,9 @@ async def create_job(request: rm.Jobs.Create=Depends()) -> Job:
 @app.post("/jobs/{auth_uid}", tags=["Jobs"])
 async def upload_job_file(auth_uid: str, file: UploadFile=File(...)) -> Job:
     """Uploads a file for a job with the provided ID.
-    
-    :param job_id: The ID of the job to upload the file for.
-    :type job_id: int
-    :param file: The file to upload.
-    :type file: UploadFile
-    
-    :rtype: dict
-    
-    Example:
-        1
-        job_description.pdf
-        
+
     Returns:
-        dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "File uploaded successfully."
-        }
+        Job: The job object created.
 
     Raises:
         HTTPException: If an error occurs while uploading the file.
@@ -1041,34 +527,9 @@ async def upload_job_file(auth_uid: str, file: UploadFile=File(...)) -> Job:
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: int) -> Job:
     """Retrieves a job with the provided ID.
-    
-    :param job_id: The ID of the job to retrieve.
-    :type job_id: int
-    
-    :rtype: Job
 
-    Example:
-        1
-            
     Returns:
         Job: The job object retrieved.
-        Example:
-        {
-            "job_id": 1,
-            "title": "Software Engineer",
-            "company": "XYZ",
-            "description": "Job Description",
-            "required_skills": ["Python", "Java", "SQL"],
-            "application_deadline": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "location": "Location",
-            "salary": 100000,
-            "job_type": "FULL",
-            "active": true
-        }
 
     Raises:
         HTTPException: If an error occurs while retrieving the job.
@@ -1083,49 +544,9 @@ async def get_job(job_id: int) -> Job:
 @app.put("/jobs/", response_model=Job, tags=["Jobs"])
 async def update_job(request: rm.Jobs.Update) -> Job:
     """Updates a job with the provided data.
-    
-    :param job_id: The ID of the job to update.
-    :type job_id: int
-    :param request: The request object containing the updated job data.
-    :type request: rm.Jobs.Update
-    
-    :rtype: Job
-    
-    Example:
-        request:
-        {
-            "job_id": 1,
-            "title": "Software Engineer",
-            "company": "XYZ",
-            "description": "Job Description",
-            "required_skills": ["Python", "Java", "SQL"],
-            "application_deadline": "01012000",
-            "location": "Location",
-            "salary": 100000,
-            "job_type": "FULL",
-            "active": true,
-            "auth_uid": "12345"
-        }
 
     Returns:
         Job: The job object updated.
-        Example:
-        {
-            "job_id": 1,
-            "title": "Software Engineer",
-            "company": "XYZ",
-            "description": "Job Description",
-            "required_skills": ["Python", "Java", "SQL"],
-            "application_deadline": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "location": "Location",
-            "salary": 100000,
-            "job_type": "FULL",
-            "active": true
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the job.
@@ -1151,21 +572,8 @@ async def update_job(request: rm.Jobs.Update) -> Job:
 @app.delete("/jobs/{job_id}", tags=["Jobs"])
 async def delete_job(job_id: int) -> dict:
     """Deletes a job with the provided ID.
-    
-    :param job_id: The ID of the job to delete.
-    :type job_id: int
-    
-    :rtype: dict
-
-    Example:
-        1
-            
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Job deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the job.
@@ -1182,38 +590,9 @@ async def delete_job(job_id: int) -> dict:
 async def get_all_jobs(active: Optional[bool]=Query(None, description="Get all active jobs"),
                     skills: Optional[List[str]]=Query(None, description="Get jobs for specific skills")) -> List[Job]:
     """Retrieves all jobs.
-    
-    :rtype: List[Job]
-
-    Params:
-        active: Get all active jobs.
-        skills: Get jobs for specific skills.
-
-        example:
-        active: true
-        skills: ["Python", "Java", "SQL"]
 
     Returns:
         List[Job]: A list of all jobs.
-        Example:
-        [
-            {
-                "job_id": 1,
-                "title": "Software Engineer",
-                "company": "XYZ",
-                "description": "Job Description",
-                "required_skills": ["Python", "Java", "SQL"],
-                "application_deadline": {
-                    "day": 1,
-                    "month": 1,
-                    "year": 2000
-                },
-                "location": "Location",
-                "salary": 100000,
-                "job_type": "FULL",
-                "active": true
-            }
-        ]
 
     Raises:
         HTTPException: If an error occurs while retrieving all jobs.
@@ -1234,32 +613,9 @@ async def get_all_jobs(active: Optional[bool]=Query(None, description="Get all a
 @app.post("/matches/", response_model=Match, tags=["Matches"])
 async def create_match(request: rm.Matches.Create) -> Match:
     """Creates a new match with the provided data.
-    
-    :param request: The request object containing the match data.
-    :type request: rm.Matches.Create
-    
-    :rtype: Match
-    
-    Example:
-        request:
-        {
-            "uid": "12345",
-            "job_id": 1,
-            "selected_skills": ["skill1", "skill2"]
-        }
 
     Returns:
         Match: The match object created.
-        Example:
-        {
-            "match_id": 1,
-            "uid": "12345",
-            "job_id": 1,
-            "status": "PENDING",
-            "status_code": 0,
-            "grade": -1,
-            "selected_skills": [],
-        }
 
     Raises:
         HTTPException: If an error occurs while creating the match.
@@ -1278,24 +634,9 @@ async def create_match(request: rm.Matches.Create) -> Match:
 @app.get("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def get_match(match_id: int) -> Match:
     """Retrieves a match with the provided ID.
-    
-    :param match_id: The ID of the match to retrieve.
-    :type match_id: int
-    
-    :rtype: Match
 
-    Example:
-        1
-            
     Returns:
         Match: The match object retrieved.
-        Example:
-        {
-            "match_id": 1,
-            "uid": "12345",
-            "job_id": 1,
-            "status": "PENDING"
-        }
 
     Raises:
         HTTPException: If an error occurs while retrieving the match.
@@ -1310,33 +651,9 @@ async def get_match(match_id: int) -> Match:
 @app.put("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def update_match(request: rm.Matches.Update) -> Match:
     """Updates a match with the provided data.
-    
-    :param match_id: The ID of the match to update.
-    :type match_id: int
-    :param request: The request object containing the updated match data.
-    :type request: rm.Matches.Update
-    
-    :rtype: Match
-    
-    Example:
-        match_id:
-        1
-        request:
-        {
-            "uid": "12345",
-            "job_id": 1,
-            "status": "ACCEPTED"
-        }
 
     Returns:
         Match: The match object updated.
-        Example:
-        {
-            "match_id": 1,
-            "uid": "12345",
-            "job_id": 1,
-            "status": "ACCEPTED"
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the match.
@@ -1356,21 +673,8 @@ async def update_match(request: rm.Matches.Update) -> Match:
 @app.delete("/matches/{match_id}", tags=["Matches"])
 async def delete_match(match_id: int) -> dict:
     """Deletes a match with the provided ID.
-    
-    :param match_id: The ID of the match to delete.
-    :type match_id: int
-    
-    :rtype: dict
-
-    Example:
-        1
-            
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Match deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the match.
@@ -1386,20 +690,9 @@ async def delete_match(match_id: int) -> dict:
 @app.get("/matches/", response_model=List[Match], tags=["Matches"])
 async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
     """Retrieves all matches.
-    
-    :rtype: List[Match]
 
     Returns:
         List[Match]: A list of all matches.
-        Example:
-        [
-            {
-                "match_id": 1,
-                "uid": "12345",
-                "job_id": 1,
-                "status": "PENDING"
-            }
-        ]
 
     Raises:
         HTTPException: If an error occurs while retrieving all matches.
@@ -1416,27 +709,9 @@ async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
 @app.post("/feedback/", response_model=Feedback, tags=["Feedback"])
 async def create_feedback(request: rm.Feedback.Create) -> Feedback:
     """Creates a new feedback with the provided data.
-    
-    :param request: The request object containing the feedback data.
-    :type request: rm.Feedback.Create
-    
-    :rtype: Feedback
-    
-    Example:
-        request:
-        {
-            "match_id": 1,
-            "feedback_text": "Great job!"
-        }
 
     Returns:
         Feedback: The feedback object created.
-        Example:
-        {
-            "feedback_id": 1,
-            "match_id": 1,
-            "feedback_text": "Great job!"
-        }
 
     Raises:
         HTTPException: If an error occurs while creating the feedback.
@@ -1454,23 +729,9 @@ async def create_feedback(request: rm.Feedback.Create) -> Feedback:
 @app.get("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def get_feedback(feedback_id: int) -> Feedback:
     """Retrieves a feedback with the provided ID.
-    
-    :param feedback_id: The ID of the feedback to retrieve.
-    :type feedback_id: int
-    
-    :rtype: Feedback
 
-    Example:
-        1
-            
     Returns:
         Feedback: The feedback object retrieved.
-        Example:
-        {
-            "feedback_id": 1,
-            "match_id": 1,
-            "feedback_text": "Great job!"
-        }
 
     Raises:
         HTTPException: If an error occurs while retrieving the feedback.
@@ -1485,30 +746,9 @@ async def get_feedback(feedback_id: int) -> Feedback:
 @app.put("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def update_feedback(request: rm.Feedback.Update) -> Feedback:
     """Updates a feedback with the provided data.
-    
-    :param feedback_id: The ID of the feedback to update.
-    :type feedback_id: int
-    :param request: The request object containing the updated feedback data.
-    :type request: rm.Feedback.Update
-    
-    :rtype: Feedback
-    
-    Example:
-        feedback_id:
-        1
-        request:
-        {
-            "feedback_text": "Excellent job!"
-        }
 
     Returns:
         Feedback: The feedback object updated.
-        Example:
-        {
-            "feedback_id": 1,
-            "match_id": 1,
-            "feedback_text": "Excellent job!"
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the feedback.
@@ -1526,21 +766,8 @@ async def update_feedback(request: rm.Feedback.Update) -> Feedback:
 @app.delete("/feedback/{feedback_id}", tags=["Feedback"])
 async def delete_feedback(feedback_id: int) -> dict:
     """Deletes a feedback with the provided ID.
-    
-    :param feedback_id: The ID of the feedback to delete.
-    :type feedback_id: int
-    
-    :rtype: dict
-
-    Example:
-        1
-            
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Feedback deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the feedback.
@@ -1556,19 +783,9 @@ async def delete_feedback(feedback_id: int) -> dict:
 @app.get("/feedback/", response_model=List[Feedback], tags=["Feedback"])
 async def get_multiple_feedbacks(request: rm.Feedback.Get=Depends()) -> List[Feedback]:
     """Retrieves all feedbacks.
-    
-    :rtype: List[Feedback]
 
     Returns:
         List[Feedback]: A list of all feedbacks.
-        Example:
-        [
-            {
-                "feedback_id": 1,
-                "match_id": 1,
-                "feedback_text": "Great job!"
-            }
-        ]
 
     Raises:
         HTTPException: If an error occurs while retrieving all feedbacks.
@@ -1584,15 +801,10 @@ async def get_multiple_feedbacks(request: rm.Feedback.Get=Depends()) -> List[Fee
 @app.get("/logs/download", tags=["Logs"])
 async def download_logs() -> FileResponse:
     """Downloads the log files as a zip archive.
-    
-    :rtype: FileResponse
-    
-    Params:
-        None
-        
+
     Returns:
         FileResponse: The zip archive containing the log files.
-        
+
     Raises:
         HTTPException: If an error occurs while downloading the logs.
     """
@@ -1623,18 +835,9 @@ async def download_logs() -> FileResponse:
 async def compress_logs() -> dict:
     """Compresses the log files into a zip archive.
 
-    :rtype: dict
-
-    Params:
-        None
-    
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Logs compressed successfully."
-        }
-    
+
     Raises:
         HTTPException: If an error occurs while compressing the logs.
     """
@@ -1651,28 +854,10 @@ async def compress_logs() -> dict:
 @app.post("/grade/job/{job_id}", tags=["Grading"])
 async def grade_job(job_id: int) -> List[Match]:
     """Grades resumes for a job.
-    
-    :param job_id: The ID of the job for which to grade resumes.
-    :type job_id: int
-    
-    :rtype: List[Match]
-    
-    Example:
-        job_id:
-        1
-    
+
     Returns:
         List[Match]: A list of matches for the job.
-        Example:
-        [
-            {
-                "match_id": 1,
-                "uid": "12345",
-                "job_id": 1,
-                "status": "PENDING"
-            }
-        ]
-    
+
     Raises:
         HTTPException: If an error occurs while grading the job.
     """
