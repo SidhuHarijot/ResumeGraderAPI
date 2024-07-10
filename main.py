@@ -83,7 +83,11 @@ def add_current_directory_to_path():
     current_directory = os.getcwd()
     if current_directory not in sys.path:
         sys.path.append(current_directory)
+<<<<<<< Updated upstream
         log(f"Added {current_directory} to PYTHONPATH", "main.add_current_directory_to_path")
+=======
+        log(f"Added {current_directory to PYTHONPATH}", "main.add_current_directory_to_path")
+>>>>>>> Stashed changes
     else:
         log(f"{current_directory} is already in PYTHONPATH", "main.add_current_directory_to_path")
 # endregion
@@ -104,6 +108,7 @@ async def custom_swagger_ui_html():
 @app.get("/", tags=["Root"])
 async def read_root() -> HTMLResponse:
     """Root endpoint for the API. Returns a welcome message and information about the API.
+<<<<<<< Updated upstream
     
     :rtype: HTMLResponse
     
@@ -113,6 +118,12 @@ async def read_root() -> HTMLResponse:
     Returns:
         HTMLResponse: An HTML response containing the welcome message and API information.
         
+=======
+
+    Returns:
+        HTMLResponse: An HTML response containing the welcome message and API information.
+
+>>>>>>> Stashed changes
     Raises:
         HTTPException: If an error occurs while accessing the root endpoint.
     """
@@ -169,6 +180,7 @@ async def read_root() -> HTMLResponse:
 @app.post("/users/", response_model=User, tags=["Users"])
 async def create_user(request: rm.User.Create) -> User:
     """Creates a new user with the provided data.
+<<<<<<< Updated upstream
     
     :param request: The request object containing the user data.
     :type request: rm.User.Create
@@ -185,26 +197,11 @@ async def create_user(request: rm.User.Create) -> User:
             "phone_number": "00-1234567890",
             "email": "abc@email.com"
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         User: The user object created.
-        Example:
-        {
-            "uid": "12345",
-            "name": {
-                "first_name": "John",
-                "last_name": "Doe"
-            },
-            "dob": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "is_owner": false,
-            "is_admin": false,
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com"
-        }
 
     Raises:
         HTTPException: If an error occurs while creating the user.
@@ -224,6 +221,7 @@ async def create_user(request: rm.User.Create) -> User:
 async def get_user(uid: str) -> User:
     """Retrieves a user with the provided UID.
 
+<<<<<<< Updated upstream
     :param uid: The UID of the user to retrieve.
     :type uid: str
     
@@ -232,25 +230,10 @@ async def get_user(uid: str) -> User:
     Example:
         "12345"
 
+=======
+>>>>>>> Stashed changes
     Returns:
         User: The user object retrieved.
-        Example:
-        {
-            "uid": "12345",
-            "name": {
-                "first_name": "John",
-                "last_name": "Doe"
-            },
-            "dob": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "is_owner": false,
-            "is_admin": false,
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com"
-        }
 
     Raises:
         HTTPException: If an error occurs while retrieving the user.
@@ -265,6 +248,7 @@ async def get_user(uid: str) -> User:
 @app.put("/users/", response_model=User, tags=["Users"])
 async def update_user(request: rm.User.Update) -> User:
     """Updates a user with the provided data.
+<<<<<<< Updated upstream
     
     :param uid: The UID of the user to update.
     :type uid: str
@@ -285,26 +269,11 @@ async def update_user(request: rm.User.Update) -> User:
             "is_owner": false,
             "is_admin": false
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         User: The user object updated.
-        Example:
-        {
-            "uid": "12345",
-            "name": {
-                "first_name": "John",
-                "last_name": "Doe"
-            },
-            "dob": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "is_owner": false,
-            "is_admin": false,
-            "phone_number": "00-1234567890",
-            "email": "abc@email.com"
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the user.
@@ -325,6 +294,7 @@ async def update_user(request: rm.User.Update) -> User:
 async def delete_user(uid: str) -> dict:
     """Deletes a user with the provided UID.
 
+<<<<<<< Updated upstream
     :param uid: The UID of the user to delete.
     :type uid: str
     
@@ -333,12 +303,10 @@ async def delete_user(uid: str) -> dict:
     Example:
         "12345"
 
+=======
+>>>>>>> Stashed changes
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "User deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the user.
@@ -356,6 +324,7 @@ async def delete_user(uid: str) -> dict:
 async def get_all_users(auth_uid: str) -> List[User]:
     """Retrieves all users.
 
+<<<<<<< Updated upstream
     :param auth_uid: The UID of the user requesting the information.
     :type auth_uid: str
     
@@ -385,6 +354,10 @@ async def get_all_users(auth_uid: str) -> List[User]:
                 "email": "abc@email.com"
             }
         ]
+=======
+    Returns:
+        List[User]: A list of all users.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving all users.
@@ -405,6 +378,7 @@ async def get_all_users(auth_uid: str) -> List[User]:
 @app.post("/users/saved_jobs", tags=["Users"])
 async def add_job_to_user(request: rm.User.SaveJob) -> dict:
     """Saves a job to a user with the provided data.
+<<<<<<< Updated upstream
     
     :param request: The request object containing the user UID and job ID.
     :type request: rm.User.SaveJob
@@ -424,6 +398,11 @@ async def add_job_to_user(request: rm.User.SaveJob) -> dict:
         {
             "message": "Job saved successfully."
         }
+=======
+
+    Returns:
+        dict: A dictionary containing a success message.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while saving the job to the user.
@@ -442,6 +421,7 @@ async def add_job_to_user(request: rm.User.SaveJob) -> dict:
 async def get_saved_jobs(uid: str) -> List[int]:
     """Retrieves the saved jobs of a user with the provided UID.
 
+<<<<<<< Updated upstream
     :param uid: The UID of the user whose saved jobs are to be retrieved.
     :type uid: str
     
@@ -454,6 +434,10 @@ async def get_saved_jobs(uid: str) -> List[int]:
         List[int]: A list of job IDs saved by the user.
         Example:
         [123, 456, 789]
+=======
+    Returns:
+        List[int]: A list of job IDs saved by the user.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving the user's saved jobs.
@@ -468,6 +452,7 @@ async def get_saved_jobs(uid: str) -> List[int]:
 @app.delete("/user/saved_jobs", tags=["Users"])
 async def remove_job_from_user(request: rm.User.SaveJob) -> dict:
     """Removes a job from a user with the provided data.
+<<<<<<< Updated upstream
     
     :param request: The request object containing the user UID and job ID.
     :type request: rm.User.SaveJob
@@ -487,6 +472,11 @@ async def remove_job_from_user(request: rm.User.SaveJob) -> dict:
         {
             "message": "Job removed successfully."
         }
+=======
+
+    Returns:
+        dict: A dictionary containing a success message.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while removing the job from the user.
@@ -507,6 +497,7 @@ async def remove_job_from_user(request: rm.User.SaveJob) -> dict:
 async def get_user_privileges(uid: str) -> str:
     """Retrieves the privileges of a user with the provided UID.
 
+<<<<<<< Updated upstream
     :param uid: The UID of the user whose privileges are to be retrieved.
     :type uid: str
     
@@ -519,6 +510,10 @@ async def get_user_privileges(uid: str) -> str:
         str: The privilege level of the user.
         Example:
         "ADMIN"
+=======
+    Returns:
+        str: The privilege level of the user.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving the user's privileges.
@@ -539,6 +534,7 @@ async def get_user_privileges(uid: str) -> str:
 @app.post("/users/privileges", tags=["Users"])
 async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
     """Updates the privileges of a user with the provided data.
+<<<<<<< Updated upstream
     
     :param request: The request object containing the updated user privileges.
     :type request: rm.User.Privileges.Update
@@ -552,13 +548,11 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
             "is_admin": false,
             "is_owner": false
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "User privileges updated successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the user privileges.
@@ -582,6 +576,7 @@ async def update_user_privileges(request: rm.User.Privileges.Update) -> dict:
 @app.post("/resumes/", response_model=Resume, tags=["Resumes"])
 async def create_resume(request: rm.Resumes.Create) -> Resume:
     """Creates a new resume with the provided data.
+<<<<<<< Updated upstream
     
     :param uid: The UID of the user associated with the resume.
     :type uid: str
@@ -615,9 +610,12 @@ async def create_resume(request: rm.Resumes.Create) -> Resume:
             "file": "resume.pdf",
             "resume_text": "John Doe Software Engineer Skills: Python, Java, SQL Experience: 2 years Education: Bachelor's in Computer Science"
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         Resume: The resume object created.
+<<<<<<< Updated upstream
         Example:
         {
             "uid": "12345",
@@ -656,6 +654,8 @@ async def create_resume(request: rm.Resumes.Create) -> Resume:
                 }
             ]
         }
+=======
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while creating the resume.
@@ -674,6 +674,7 @@ async def create_resume(request: rm.Resumes.Create) -> Resume:
 @app.post("/resumes/{uid}", tags=["Resumes"])
 async def upload_resume(uid: str, file: UploadFile=File(...)) -> Resume:
     """Uploads a resume file for a user with the provided UID.
+<<<<<<< Updated upstream
     
     :param uid: The UID of the user associated with the resume.
     :type uid: str
@@ -796,6 +797,11 @@ async def get_resume(uid: str) -> Resume:
                 }
             ]
         }
+=======
+
+    Returns:
+        Resume: The resume object created.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving the resume.
@@ -810,6 +816,7 @@ async def get_resume(uid: str) -> Resume:
         logError(f"Error in get_resume: ", e, "get_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+<<<<<<< Updated upstream
 @app.put("/resumes/", response_model=Resume, tags=["Resumes"])
 async def update_resume(request: rm.Resumes.Update) -> Resume:
     """Updates a resume with the provided data.
@@ -887,6 +894,34 @@ async def update_resume(request: rm.Resumes.Update) -> Resume:
                 }
             ]
         }
+=======
+@app.get("/resumes/{uid}", response_model=Resume, tags=["Resumes"])
+async def get_resume(uid: str) -> Resume:
+    """Retrieves a resume with the provided UID.
+
+    Returns:
+        Resume: The resume object retrieved.
+
+    Raises:
+        HTTPException: If an error occurs while retrieving the resume.
+    """
+    try:
+        log(f"Retrieving resume with UID: {uid}", "get_resume")
+        return ResumeDatabase.get_resume(uid)
+    except ValueError as e:
+        logError(f"Resume not found: {uid}", e, "get_resume")
+        raise HTTPException(status_code=404, detail="Resume not found.")
+    except Exception as e:
+        logError(f"Error in get_resume: ", e, "get_resume")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.put("/resumes/", response_model=Resume, tags=["Resumes"])
+async def update_resume(request: rm.Resumes.Update) -> Resume:
+    """Updates a resume with the provided data.
+
+    Returns:
+        Resume: The resume object updated.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while updating the resume.
@@ -907,6 +942,7 @@ async def update_resume(request: rm.Resumes.Update) -> Resume:
 async def delete_resume(uid: str):
     """Deletes a resume with the provided UID.
 
+<<<<<<< Updated upstream
     :param uid: The UID of the resume to delete.
     :type uid: str
     
@@ -915,12 +951,10 @@ async def delete_resume(uid: str):
     Example:
         "12345"
 
+=======
+>>>>>>> Stashed changes
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Resume deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the resume.
@@ -938,6 +972,7 @@ async def delete_resume(uid: str):
 @app.post("/jobs/", response_model=Job, tags=["Jobs"])
 async def create_job(request: rm.Jobs.Create=Depends()) -> Job:
     """Creates a new job with the provided data.
+<<<<<<< Updated upstream
     
     :param request: The request object containing the job data.
     :type request: rm.Jobs.Create
@@ -980,6 +1015,12 @@ async def create_job(request: rm.Jobs.Create=Depends()) -> Job:
             "active": true
         }
 
+=======
+
+    Returns:
+        Job: The job object created.
+
+>>>>>>> Stashed changes
     Raises:
         HTTPException: If an error occurs while creating the job.
     """
@@ -1001,6 +1042,7 @@ async def create_job(request: rm.Jobs.Create=Depends()) -> Job:
 @app.post("/jobs/{auth_uid}", tags=["Jobs"])
 async def upload_job_file(auth_uid: str, file: UploadFile=File(...)) -> Job:
     """Uploads a file for a job with the provided ID.
+<<<<<<< Updated upstream
     
     :param job_id: The ID of the job to upload the file for.
     :type job_id: int
@@ -1019,6 +1061,11 @@ async def upload_job_file(auth_uid: str, file: UploadFile=File(...)) -> Job:
         {
             "message": "File uploaded successfully."
         }
+=======
+
+    Returns:
+        Job: The job object created.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while uploading the file.
@@ -1041,6 +1088,7 @@ async def upload_job_file(auth_uid: str, file: UploadFile=File(...)) -> Job:
 @app.get("/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: int) -> Job:
     """Retrieves a job with the provided ID.
+<<<<<<< Updated upstream
     
     :param job_id: The ID of the job to retrieve.
     :type job_id: int
@@ -1070,6 +1118,12 @@ async def get_job(job_id: int) -> Job:
             "active": true
         }
 
+=======
+
+    Returns:
+        Job: The job object retrieved.
+
+>>>>>>> Stashed changes
     Raises:
         HTTPException: If an error occurs while retrieving the job.
     """
@@ -1083,6 +1137,7 @@ async def get_job(job_id: int) -> Job:
 @app.put("/jobs/", response_model=Job, tags=["Jobs"])
 async def update_job(request: rm.Jobs.Update) -> Job:
     """Updates a job with the provided data.
+<<<<<<< Updated upstream
     
     :param job_id: The ID of the job to update.
     :type job_id: int
@@ -1106,26 +1161,11 @@ async def update_job(request: rm.Jobs.Update) -> Job:
             "active": true,
             "auth_uid": "12345"
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         Job: The job object updated.
-        Example:
-        {
-            "job_id": 1,
-            "title": "Software Engineer",
-            "company": "XYZ",
-            "description": "Job Description",
-            "required_skills": ["Python", "Java", "SQL"],
-            "application_deadline": {
-                "day": 1,
-                "month": 1,
-                "year": 2000
-            },
-            "location": "Location",
-            "salary": 100000,
-            "job_type": "FULL",
-            "active": true
-        }
 
     Raises:
         HTTPException: If an error occurs while updating the job.
@@ -1151,6 +1191,7 @@ async def update_job(request: rm.Jobs.Update) -> Job:
 @app.delete("/jobs/{job_id}", tags=["Jobs"])
 async def delete_job(job_id: int) -> dict:
     """Deletes a job with the provided ID.
+<<<<<<< Updated upstream
     
     :param job_id: The ID of the job to delete.
     :type job_id: int
@@ -1160,12 +1201,11 @@ async def delete_job(job_id: int) -> dict:
     Example:
         1
             
+=======
+
+>>>>>>> Stashed changes
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Job deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the job.
@@ -1182,6 +1222,7 @@ async def delete_job(job_id: int) -> dict:
 async def get_all_jobs(active: Optional[bool]=Query(None, description="Get all active jobs"),
                     skills: Optional[List[str]]=Query(None, description="Get jobs for specific skills")) -> List[Job]:
     """Retrieves all jobs.
+<<<<<<< Updated upstream
     
     :rtype: List[Job]
 
@@ -1215,6 +1256,12 @@ async def get_all_jobs(active: Optional[bool]=Query(None, description="Get all a
             }
         ]
 
+=======
+
+    Returns:
+        List[Job]: A list of all jobs.
+
+>>>>>>> Stashed changes
     Raises:
         HTTPException: If an error occurs while retrieving all jobs.
     """
@@ -1234,6 +1281,7 @@ async def get_all_jobs(active: Optional[bool]=Query(None, description="Get all a
 @app.post("/matches/", response_model=Match, tags=["Matches"])
 async def create_match(request: rm.Matches.Create) -> Match:
     """Creates a new match with the provided data.
+<<<<<<< Updated upstream
     
     :param request: The request object containing the match data.
     :type request: rm.Matches.Create
@@ -1247,9 +1295,12 @@ async def create_match(request: rm.Matches.Create) -> Match:
             "job_id": 1,
             "selected_skills": ["skill1", "skill2"]
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         Match: The match object created.
+<<<<<<< Updated upstream
         Example:
         {
             "match_id": 1,
@@ -1260,6 +1311,8 @@ async def create_match(request: rm.Matches.Create) -> Match:
             "grade": -1,
             "selected_skills": [],
         }
+=======
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while creating the match.
@@ -1278,6 +1331,7 @@ async def create_match(request: rm.Matches.Create) -> Match:
 @app.get("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def get_match(match_id: int) -> Match:
     """Retrieves a match with the provided ID.
+<<<<<<< Updated upstream
     
     :param match_id: The ID of the match to retrieve.
     :type match_id: int
@@ -1296,6 +1350,11 @@ async def get_match(match_id: int) -> Match:
             "job_id": 1,
             "status": "PENDING"
         }
+=======
+
+    Returns:
+        Match: The match object retrieved.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving the match.
@@ -1310,6 +1369,7 @@ async def get_match(match_id: int) -> Match:
 @app.put("/matches/{match_id}", response_model=Match, tags=["Matches"])
 async def update_match(request: rm.Matches.Update) -> Match:
     """Updates a match with the provided data.
+<<<<<<< Updated upstream
     
     :param match_id: The ID of the match to update.
     :type match_id: int
@@ -1327,9 +1387,12 @@ async def update_match(request: rm.Matches.Update) -> Match:
             "job_id": 1,
             "status": "ACCEPTED"
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         Match: The match object updated.
+<<<<<<< Updated upstream
         Example:
         {
             "match_id": 1,
@@ -1337,6 +1400,8 @@ async def update_match(request: rm.Matches.Update) -> Match:
             "job_id": 1,
             "status": "ACCEPTED"
         }
+=======
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while updating the match.
@@ -1356,6 +1421,7 @@ async def update_match(request: rm.Matches.Update) -> Match:
 @app.delete("/matches/{match_id}", tags=["Matches"])
 async def delete_match(match_id: int) -> dict:
     """Deletes a match with the provided ID.
+<<<<<<< Updated upstream
     
     :param match_id: The ID of the match to delete.
     :type match_id: int
@@ -1365,12 +1431,11 @@ async def delete_match(match_id: int) -> dict:
     Example:
         1
             
+=======
+
+>>>>>>> Stashed changes
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Match deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the match.
@@ -1386,6 +1451,7 @@ async def delete_match(match_id: int) -> dict:
 @app.get("/matches/", response_model=List[Match], tags=["Matches"])
 async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
     """Retrieves all matches.
+<<<<<<< Updated upstream
     
     :rtype: List[Match]
 
@@ -1400,6 +1466,11 @@ async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
                 "status": "PENDING"
             }
         ]
+=======
+
+    Returns:
+        List[Match]: A list of all matches.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving all matches.
@@ -1416,6 +1487,7 @@ async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
 @app.post("/feedback/", response_model=Feedback, tags=["Feedback"])
 async def create_feedback(request: rm.Feedback.Create) -> Feedback:
     """Creates a new feedback with the provided data.
+<<<<<<< Updated upstream
     
     :param request: The request object containing the feedback data.
     :type request: rm.Feedback.Create
@@ -1428,15 +1500,20 @@ async def create_feedback(request: rm.Feedback.Create) -> Feedback:
             "match_id": 1,
             "feedback_text": "Great job!"
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         Feedback: The feedback object created.
+<<<<<<< Updated upstream
         Example:
         {
             "feedback_id": 1,
             "match_id": 1,
             "feedback_text": "Great job!"
         }
+=======
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while creating the feedback.
@@ -1454,6 +1531,7 @@ async def create_feedback(request: rm.Feedback.Create) -> Feedback:
 @app.get("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def get_feedback(feedback_id: int) -> Feedback:
     """Retrieves a feedback with the provided ID.
+<<<<<<< Updated upstream
     
     :param feedback_id: The ID of the feedback to retrieve.
     :type feedback_id: int
@@ -1471,6 +1549,11 @@ async def get_feedback(feedback_id: int) -> Feedback:
             "match_id": 1,
             "feedback_text": "Great job!"
         }
+=======
+
+    Returns:
+        Feedback: The feedback object retrieved.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving the feedback.
@@ -1485,6 +1568,7 @@ async def get_feedback(feedback_id: int) -> Feedback:
 @app.put("/feedback/{feedback_id}", response_model=Feedback, tags=["Feedback"])
 async def update_feedback(request: rm.Feedback.Update) -> Feedback:
     """Updates a feedback with the provided data.
+<<<<<<< Updated upstream
     
     :param feedback_id: The ID of the feedback to update.
     :type feedback_id: int
@@ -1500,15 +1584,20 @@ async def update_feedback(request: rm.Feedback.Update) -> Feedback:
         {
             "feedback_text": "Excellent job!"
         }
+=======
+>>>>>>> Stashed changes
 
     Returns:
         Feedback: The feedback object updated.
+<<<<<<< Updated upstream
         Example:
         {
             "feedback_id": 1,
             "match_id": 1,
             "feedback_text": "Excellent job!"
         }
+=======
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while updating the feedback.
@@ -1526,6 +1615,7 @@ async def update_feedback(request: rm.Feedback.Update) -> Feedback:
 @app.delete("/feedback/{feedback_id}", tags=["Feedback"])
 async def delete_feedback(feedback_id: int) -> dict:
     """Deletes a feedback with the provided ID.
+<<<<<<< Updated upstream
     
     :param feedback_id: The ID of the feedback to delete.
     :type feedback_id: int
@@ -1535,12 +1625,11 @@ async def delete_feedback(feedback_id: int) -> dict:
     Example:
         1
             
+=======
+
+>>>>>>> Stashed changes
     Returns:
         dict: A dictionary containing a success message.
-        Example:
-        {
-            "message": "Feedback deleted successfully."
-        }
 
     Raises:
         HTTPException: If an error occurs while deleting the feedback.
@@ -1556,6 +1645,7 @@ async def delete_feedback(feedback_id: int) -> dict:
 @app.get("/feedback/", response_model=List[Feedback], tags=["Feedback"])
 async def get_multiple_feedbacks(request: rm.Feedback.Get=Depends()) -> List[Feedback]:
     """Retrieves all feedbacks.
+<<<<<<< Updated upstream
     
     :rtype: List[Feedback]
 
@@ -1569,6 +1659,11 @@ async def get_multiple_feedbacks(request: rm.Feedback.Get=Depends()) -> List[Fee
                 "feedback_text": "Great job!"
             }
         ]
+=======
+
+    Returns:
+        List[Feedback]: A list of all feedbacks.
+>>>>>>> Stashed changes
 
     Raises:
         HTTPException: If an error occurs while retrieving all feedbacks.
@@ -1584,6 +1679,7 @@ async def get_multiple_feedbacks(request: rm.Feedback.Get=Depends()) -> List[Fee
 @app.get("/logs/download", tags=["Logs"])
 async def download_logs() -> FileResponse:
     """Downloads the log files as a zip archive.
+<<<<<<< Updated upstream
     
     :rtype: FileResponse
     
@@ -1593,6 +1689,12 @@ async def download_logs() -> FileResponse:
     Returns:
         FileResponse: The zip archive containing the log files.
         
+=======
+
+    Returns:
+        FileResponse: The zip archive containing the log files.
+
+>>>>>>> Stashed changes
     Raises:
         HTTPException: If an error occurs while downloading the logs.
     """
@@ -1623,6 +1725,7 @@ async def download_logs() -> FileResponse:
 async def compress_logs() -> dict:
     """Compresses the log files into a zip archive.
 
+<<<<<<< Updated upstream
     :rtype: dict
 
     Params:
@@ -1635,6 +1738,11 @@ async def compress_logs() -> dict:
             "message": "Logs compressed successfully."
         }
     
+=======
+    Returns:
+        dict: A dictionary containing a success message.
+
+>>>>>>> Stashed changes
     Raises:
         HTTPException: If an error occurs while compressing the logs.
     """
@@ -1651,6 +1759,7 @@ async def compress_logs() -> dict:
 @app.post("/grade/job/{job_id}", tags=["Grading"])
 async def grade_job(job_id: int) -> List[Match]:
     """Grades resumes for a job.
+<<<<<<< Updated upstream
     
     :param job_id: The ID of the job for which to grade resumes.
     :type job_id: int
@@ -1673,6 +1782,12 @@ async def grade_job(job_id: int) -> List[Match]:
             }
         ]
     
+=======
+
+    Returns:
+        List[Match]: A list of matches for the job.
+
+>>>>>>> Stashed changes
     Raises:
         HTTPException: If an error occurs while grading the job.
     """
