@@ -53,7 +53,10 @@ FastAPI's automatic Swagger UI documentation provides interactive, real-time doc
 The Resume Grader API is designed to be a dynamic, responsive tool that adapts to the evolving needs of the modern recruitment landscape. It offers both granular control over data management and high-level analytics, providing users with the insights needed to optimize their recruitment processes effectively.
 
 ## Documentation
-**COMPLETE DOCS FOR THE API CAN BE FOUND [HERE](https://resumegraderapi.onrender.com/docs).**
+**COMPLETE DOCS FOR THE API CAN BE FOUND AT THE FOLLOWING LINKS**
+    - [Documentation Swagger UI Custom Dark](https://resumegraderapi.onrender.com/darkDocs)
+    - [Documentation Swagger UI](https://resumegraderapi.onrender.com/docs)
+    - [Documentation Redoc](https://resumegraderapi.onrender.com/redoc)
 
 # What's Next for this API
 ### 1. Complete Grading Service
