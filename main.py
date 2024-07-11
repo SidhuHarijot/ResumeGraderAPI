@@ -23,6 +23,7 @@ import sys
 from Utilities.OpenAIUtility import OpenAIUtility
 from Services.getServices import *
 import asyncio
+from Models.CustomReturnModels.GetModels import CustomReturnModels as crm
 
 # endregion
 
@@ -631,7 +632,7 @@ async def create_match(request: rm.Matches.Create) -> Match:
         logError(f"Error in create_match: ", e, "create_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.get("/matches/{match_id}", response_model=Match, tags=["Matches"])
+@app.get("/matches/{match_id}", response_model=crm.Match.Return, tags=["Matches"])
 async def get_match(match_id: int) -> Match:
     """Retrieves a match with the provided ID.
 
@@ -643,7 +644,7 @@ async def get_match(match_id: int) -> Match:
     """
     try:
         log(f"Retrieving match with match id: {match_id}", "get_match")
-        return MatchService.get_from_db(match_id).match
+        return MatchService.get_from_db(match_id).get_return_model()
     except Exception as e:
         logError(f"Error in get_match: ", e, "get_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -687,7 +688,7 @@ async def delete_match(match_id: int) -> dict:
         logError(f"Error in delete_match: ", e, "delete_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.get("/matches/", response_model=List[Match], tags=["Matches"])
+@app.get("/matches/", response_model=List[crm.Match.Return], tags=["Matches"])
 async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
     """Retrieves all matches.
 
@@ -699,7 +700,8 @@ async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
     """
     try:
         log("Retrieving all matches", "get_all_matches")
-        return MatchService.get_from_request(request)
+        matches = MatchService.get_from_request(request, return_type=crm.Match.Return)
+        return matches
     except Exception as e:
         logError(f"Error in get_all_matches: ", e, "get_all_matches")
         raise HTTPException(status_code=500, detail="Internal Server Error")
