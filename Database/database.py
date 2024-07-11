@@ -11,7 +11,7 @@ def log(message, func):
     Logger.logDatabase(message, func)
 
 def logError(e: Exception, func):
-    error_message = "".join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__))
+    error_message = "".join(traceback.format_exception(None, e, e.__traceback__)[0])
     message = f"An error occurred: {error_message}"
     Logger.logDatabase(message, func, "ERROR")
 # endregion
