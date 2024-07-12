@@ -115,7 +115,12 @@ async def read_root() -> HTMLResponse:
     try:
         log("Accessing root endpoint", "read_root")
         html_data = """
-        <html>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Job Matching System API</title>
             <style>
                 body {
                     font-family: Arial, sans-serif;
@@ -135,25 +140,48 @@ async def read_root() -> HTMLResponse:
                     text-decoration: underline;
                 }
             </style>
-            <head>
-                <title>Job Matching System API</title>
-            </head>
-            <body>
-                <h1>Welcome to the API!</h1>
-                <p>This is a FastAPI project backend for a job matching system.</p>
-                <p>Author: BugSlayerz.HarijotSingh</p>
-                <p>Technologies used: FastAPI, PostgreSQL, Firebase, Python</p>
-                <p>Contact us:
-                    <a href="mailto:sidhuharijot@gmail.com"><strong>Email</strong></a>
-                </p>
-                <p>Version: 4.0</p>
-                <p>Documentation:
-                    <a href="/docs"><strong>Swagger UI</strong></a>
-                    <a href="/redoc"><strong>ReDoc</strong></a>
-                    <a href="/darkDocs"><strong>Dark Swagger UI</strong></a>
-                </p>
-            </body>
+        </head>
+        <body>
+            <h1>Welcome to the API!</h1>
+            <p>This is a FastAPI project backend for a job matching system.</p>
+            <p>Author: BugSlayerz.HarijotSingh</p>
+            <p>Technologies used: FastAPI, PostgreSQL, Firebase, Python</p>
+            <p>Contact us:
+                <a href="mailto:sidhuharijot@gmail.com"><strong>Email</strong></a>
+            </p>
+            <p>Version: 4.0</p>
+            <p>Documentation:<br>
+                &emsp;<a href="/docs"><strong>Swagger UI</strong></a><br>
+                &emsp;<a href="/redoc"><strong>ReDoc</strong></a><br>
+                &emsp;<a href="/darkDocs"><strong>Dark Swagger UI</strong></a><br>
+            </p>
+            <p>Debug Tables:<br>
+                <form id="debug-form" onsubmit="handleDebugSubmit(event)">
+                    <label for="table-select">Select Table:</label><br>
+                    <select id="table-select" name="table-select" required>
+                        <option value="users">Users</option>
+                        <option value="jobs">Jobs</option>
+                        <option value="matches">Matches</option>
+                        <option value="resumes">Resumes</option>
+                        <option value="feedback">Feedback</option>
+                    </select><br><br>
+                    <label for="debug-key">Enter Debug Key:</label><br>
+                    <input type="text" id="debug-key" name="debug-key" required><br><br>
+                    <input type="submit" value="Submit">
+                </form>
+            </p>
+            <script>
+                function handleDebugSubmit(event) {
+                    event.preventDefault();
+                    const table = document.getElementById('table-select').value;
+                    const key = document.getElementById('debug-key').value;
+                    const url = `/print/${table}/${encodeURIComponent(key)}`;
+                    window.location.href = url;
+                }
+            </script>
+        </body>
         </html>
+
         """
         return HTMLResponse(content=html_data, status_code=200)
     except Exception as e:
@@ -405,7 +433,8 @@ async def upload_resume(uid: str, file: UploadFile=File(...)) -> Resume:
     """
     try:
         log(f"Retrieving resume with UID: {uid}", "get_resume")
-        return ResumeDatabase.get_resume(uid)
+        resumeS = ResumeService.create_from_request(rm.Resumes.Create(uid=uid), file)
+        return resumeS.resume
     except ValueError as e:
         logError(f"Resume not found: {uid}", e, "get_resume")
         raise HTTPException(status_code=404, detail="Resume not found.")
@@ -854,7 +883,7 @@ async def compress_logs() -> dict:
 
 # region Grading
 @app.post("/grade/job/{job_id}", tags=["Grading"])
-async def grade_job(job_id: int) -> List[Match]:
+async def grade_job(job_id: int, auth_uid: str):
     """Grades resumes for a job.
 
     Returns:
@@ -865,8 +894,7 @@ async def grade_job(job_id: int) -> List[Match]:
     """
     try:
         log("Grading job", "grade_job")
-        matches = GradingService.grade_resumes_for_job(job_id=job_id)
-        return matches
+        GradingService(job_id, auth_uid).grade_all()
     except Exception as e:
         logError(f"Error in grade_job: ", e, "grade_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")

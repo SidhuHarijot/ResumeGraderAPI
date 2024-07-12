@@ -31,7 +31,7 @@ old_schemas = {
     """,
     "resumes": """
         CREATE TABLE resumes (
-            uid VARCHAR(50) PRIMARY KEY,  -- Changed primary key
+            uid VARCHAR(50) PRIMARY KEY,
             skills TEXT[],
             experience JSONB,
             education JSONB,
@@ -70,7 +70,9 @@ old_schemas = {
             feedback_id SERIAL PRIMARY KEY,
             match_id INT NOT NULL,
             feedback_text TEXT NOT NULL,
-            FOREIGN KEY (match_id) REFERENCES matches(match_id) ON DELETE CASCADE
+            auth_uid VARCHAR(50) NOT NULL,
+            FOREIGN KEY (match_id) REFERENCES matches(match_id) ON DELETE CASCADE,
+            FOREIGN KEY (auth_uid) REFERENCES users(uid) ON DELETE CASCADE
         );
     """
 }
@@ -202,9 +204,7 @@ class Database:
         try:
             log("Starting data migration", "Database.migrate_data")
             
-
-            tables_to_create = [table_name for table_name in new_schemas.keys() if new_schemas[table_name] != old_schemas[table_name]]
-
+            tables_to_create = new_schemas.keys()
             # Rename old tables
             for table_name in tables_to_create:
                 Database.execute_query(f"ALTER TABLE {table_name} RENAME TO old_{table_name}")

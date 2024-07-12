@@ -26,6 +26,9 @@ class JobService:
             raise ValueError("Invalid job data")
         self.job.job_id = JobDatabase.create_job(self.job)
     
+    def to_text(self, exclude=[]):
+        return JobFactory.to_text(self.job, exclude=exclude)
+    
     @staticmethod
     def get_from_db(job_id: int):
         return JobService(JobDatabase.get_job(job_id))

@@ -118,3 +118,18 @@ class JobFactory:
         except Exception as e:
             logError(f"Error converting list of Job objects to db rows. \n", e, "to_db_rows")
             raise
+    
+    @staticmethod
+    def to_text(job: Job, exclude:List[str]=[]) -> str:
+        try:
+            log(f"Converting Job object to text: {job.title} at {job.company}", "to_text")
+            job_dict = JobFactory.to_json(job)
+            return_string = ""
+            for key in exclude:
+                del job_dict[key]
+            for key, value in job_dict.items():
+                return_string += f"{key}: {value}||\n"
+            return return_string
+        except Exception as e:
+            logError(f"Error converting Job object to text: {job}. \n", e, "to_text")
+            raise

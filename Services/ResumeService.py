@@ -52,7 +52,7 @@ class ResumeService:
     
     @staticmethod
     def create_from_request(request: rm.Resumes.Create, file: UploadFile = None):
-        if file:
+        if file is not None:
             resume = ResumeService.process_resume(file)
         else:
             resume = request.to_resume()
@@ -87,6 +87,10 @@ class ResumeService:
     @staticmethod
     def delete_from_db(uid: str):
         ResumeDatabase.delete_resume(uid)
+    
+    @staticmethod
+    def get_from_job(job_id):
+        return ResumeDatabase.find_with_join("JOIN matches ON resumes.uid = matches.uid", {"job_id": job_id})
 
     @staticmethod
     @authorizeAdmin

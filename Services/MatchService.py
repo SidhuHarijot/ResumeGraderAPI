@@ -83,6 +83,14 @@ class MatchService:
         return result
 
     @staticmethod
+    def generate_for_job(job_id: int):
+        matches = MatchDatabase.find({"job_id": job_id})
+        matchS = []
+        for match in matches:
+            matchS.append(MatchService(match))
+        return matchS
+
+    @staticmethod
     def clean_match(match):
         return match
     
