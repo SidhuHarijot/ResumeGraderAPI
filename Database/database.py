@@ -4,6 +4,7 @@ import psycopg2.pool
 from ServerLogging.serverLogger import Logger
 import traceback
 from psycopg2.errors import DuplicateTable, UniqueViolation, OperationalError
+import time
 # endregion
 
 # region logging
@@ -135,18 +136,23 @@ class Database:
             raise
 
     @staticmethod
-    def get_connection():
-        return Database.connection_pool.getconn()
+    def _get_connection():
+        con = Database.connection_pool.getconn()
+        log(f"Connection acquired{con}", "Database._get_connection")
+        return con
 
     @staticmethod
-    def return_connection(connection):
+    def _return_connection(connection):
         Database.connection_pool.putconn(connection)
+        log(f"Connection returned{connection}", "Database._return_connection")
+
 
     @staticmethod
     def execute_query(query, params=None, fetch=False):
         con = None
+        start_time = time.time()
         try:
-            con = Database.get_connection()
+            con = Database._get_connection()
             with con.cursor() as cursor:
                 cursor.execute(query, params)
                 if fetch:
@@ -161,7 +167,8 @@ class Database:
             raise
         finally:
             if con:
-                Database.return_connection(con)
+                Database._return_connection(con)
+            log(f"Query {query} executed in {time.time() - start_time} seconds", "Database.execute_query")
 
     @staticmethod
     def create_tables(table_name=None):
