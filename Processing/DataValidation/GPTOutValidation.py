@@ -221,36 +221,36 @@ class GradeValidation:
         try:
             if isinstance(grade, int):
                 if cls.validate(grade, max_grade) == None:
-                    return -1
+                    return -3
                 return grade
             elif isinstance(grade, float):
                 if not cls.validate(grade, max_grade):
-                    return -1.0
+                    return -3.0
                 return grade
             elif isinstance(grade, list) and all(isinstance(g, int) for g in grade):
                 for i in range(len(grade)):
                     print("validating grade", grade[i], max_grade)
                     if not cls.validate(grade[i], max_grade):
                         print("invalid grade", grade[i])
-                        grade[i] = -1
+                        grade[i] = -3
                         print("invalid grade", grade[i])
                 if total_resumes is not None and len(grade) != total_resumes:
                     if response is not None:
                         positions_list = [i for i in range(total_resumes)]
                         missing_spots = list(set(positions_list) - set(response.keys()))
                         for spot in missing_spots:
-                            grade.insert(spot, -1)
+                            grade.insert(spot, -3)
                 return grade
             elif isinstance(grade, list) and all(isinstance(g, float) for g in grade):
                 for i in range(len(grade)):
                     if not cls.validate(grade[i], max_grade):
-                        grade[i] = -1.0
+                        grade[i] = -3.0
                 if total_resumes is not None and len(grade) != total_resumes:
                     if response is not None:
                         positions_list = [i for i in range(total_resumes)]
                         missing_spots = list(set(positions_list) - set(response.keys()))
                         for spot in missing_spots:
-                            grade.insert(spot, -1.0)
+                            grade.insert(spot, -3.0)
                 return grade
             else:
                 return None

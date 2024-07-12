@@ -84,4 +84,17 @@ class ResumeFactory:
         except Exception as e:
             logError(f"Error converting list of Resume objects to db rows. \n", e, "to_db_rows")
             raise
-
+    
+    @staticmethod
+    def to_text(resume: Resume, exclude: List[str]) -> str:
+        try:
+            log(f"Converting Resume object to text: {resume.uid}", "to_text")
+            resume = ResumeFactory.to_json(resume)
+            text = ""
+            for key, value in resume.items():
+                if key not in exclude:
+                    text += f"{key}: {value}\n||"
+            return text
+        except Exception as e:
+            logError(f"Error converting Resume object to text: {resume}. \n", e, "to_text")
+            raise

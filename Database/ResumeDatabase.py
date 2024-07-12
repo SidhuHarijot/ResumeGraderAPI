@@ -73,3 +73,31 @@ class ResumeDatabase:
         except Exception as e:
             logError(e, "ResumeDatabase.get_all_resumes")
             raise
+
+    @staticmethod
+    def find(params: dict):
+        try:
+            log(f"Finding resumes with parameters: {params}", "ResumeDatabase.find")
+            query = "SELECT * FROM resumes WHERE "
+            query += " AND ".join([f"{key} = %s" for key in params.keys()])
+            results = Database.execute_query(query, tuple(params.values()), fetch=True)
+            resumes = ResumeFactory.from_db_rows(results)
+            log("Resumes found successfully", "ResumeDatabase.find")
+            return resumes
+        except Exception as e:
+            logError(e, "ResumeDatabase.find")
+            raise
+    
+    @staticmethod
+    def find_with_join(join_query: str, params: dict):
+        try:
+            log(f"Finding resumes with join query: {join_query} and parameters: {params}", "ResumeDatabase.find_with_join")
+            query = f"SELECT * FROM resumes {join_query} WHERE "
+            query += " AND ".join([f"{key} = %s" for key in params.keys()])
+            results = Database.execute_query(query, tuple(params.values()), fetch=True)
+            resumes = ResumeFactory.from_db_rows(results)
+            log("Resumes found successfully", "ResumeDatabase.find_with_join")
+            return resumes
+        except Exception as e:
+            logError(e, "ResumeDatabase.find_with_join")
+            raise
