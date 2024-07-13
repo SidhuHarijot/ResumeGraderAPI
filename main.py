@@ -900,7 +900,7 @@ async def grade_job(job_id: int, auth_uid: str):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.post("/grade/job/real-time/{job_id}", tags=["Grading"])
+@app.websocket("/grade/job/real-time/{job_id}")
 async def grade_real_time(job_id:int, auth_uid:str, websocket: WebSocket):
     """Grades resumes for a job in real-time.
 
