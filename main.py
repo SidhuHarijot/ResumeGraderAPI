@@ -1,5 +1,5 @@
 # region imports
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -897,6 +897,24 @@ async def grade_job(job_id: int, auth_uid: str):
         GradingService(job_id, auth_uid).grade_all()
     except Exception as e:
         logError(f"Error in grade_job: ", e, "grade_job")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/grade/job/real-time/{job_id}", tags=["Grading"])
+async def grade_real_time(job_id:int, auth_uid:str, websocket: WebSocket):
+    """Grades resumes for a job in real-time.
+
+    Returns:
+        List[Match]: A list of matches for the job.
+
+    Raises:
+        HTTPException: If an error occurs while grading the job.
+    """
+    try:
+        log("Grading job in real-time", "grade_real_time")
+        await GradingService(job_id, auth_uid).grade_real_time(websocket)
+    except Exception as e:
+        logError(f"Error in grade_real_time: ", e, "grade_real_time")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 # endregion
 
