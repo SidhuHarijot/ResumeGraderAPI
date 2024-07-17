@@ -15,7 +15,7 @@ import time
 class GradingService(WebsocketService):
     max_grade = 100
     resume_per_request = 10
-    graded_code = 200
+    grade_codes = [600, 601]
 
     @authorizeAdmin
     def __init__(self, job_id: int, auth_uid: str):
@@ -44,7 +44,7 @@ class GradingService(WebsocketService):
         log(f"Cleaning resumes for job: {self.jobS.job.job_id}", "GradingService.clean_resumes_for_job")
         total_resumes = len(self.resumes)
         for matchS in self.matchesS:
-            if matchS.match.status_code != self.graded_code:
+            if matchS.match.status_code not in self.grade_codes:
                 self.matchesS.remove(matchS)
                 self.resumes.remove([r for r in self.resumes if r.uid == matchS.match.uid][0])
         log(f"Finished cleaning resumes for job: {self.jobS.job.job_id} removed {total_resumes - len(self.resumes)}", "GradingService.clean_resumes_for_job")

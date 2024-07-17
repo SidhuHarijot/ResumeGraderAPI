@@ -189,6 +189,7 @@ async def read_root() -> HTMLResponse:
     except Exception as e:
         logError(f"Error in root endpoint: ", e, "read_root")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
 # endregion
 
 # region Users
