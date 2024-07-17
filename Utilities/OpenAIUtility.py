@@ -21,7 +21,7 @@ class OpenAIUtility:
         if responseType == "dict" or responseType == "json_str":
             gpt_response_type = {"type": "json_object"}
         response = openai.ChatCompletion.create(
-            model="gpt-4o",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": systemMessage},
                 {"role": "user", "content": userMessage},
@@ -113,7 +113,7 @@ class OpenAIUtility:
     
     @classmethod
     def grade_resumes(self, job_description: str, resume_data: dict, max_grade: int):
-        log(f"Grading resume for job description: {job_description}", "OpenAIUtility.grade_resume")
+        log(f"Grading resume for job description: {job_description:<20}", "OpenAIUtility.grade_resume")
         system_message = f"Grade resumes for this job description: \"{job_description}\" Maximum grade is {max_grade}. " + \
                          "Return -2 if resume is irrelevant to the job description. " + \
                          "Return -1 if job description is not understandable or if the resume data has nothing or is not understandable or enough to make a good judgement. " + \
@@ -130,7 +130,7 @@ class OpenAIUtility:
                             INFORMATION:\n
                             JOB-DES: {job_description}
                             RESPONSE: {response}""", "OpenAIUtility.grade_resume")
-        log(f"Resumes graded: ", "OpenAIUtility.grade_resume")
+        log(f"Resumes graded result got response{response} list {grade_list} cleaned {clean_grade_list}", "OpenAIUtility.grade_resume")
         return clean_grade_list
     
     @classmethod

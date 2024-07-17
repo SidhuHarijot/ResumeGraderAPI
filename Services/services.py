@@ -13,7 +13,7 @@ def log(msg, func):
 
 
 def logError(msg, exception, func):
-    msg = f"{msg}. Exception: {traceback.format_exception(None, exception, exception.__traceback__)[0]}"
+    msg = f"{msg}. Exception: {''.join(traceback.format_exception(None, exception, exception.__traceback__))}"
     Logger.logService(msg, func, "ERROR")
 
 

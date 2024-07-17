@@ -1,32 +1,27 @@
 from fastapi import WebSocket
 from typing import List
+from .services import log, logError
 
 
 class WebsocketService:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.websocket = None
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        self.websocket = (websocket)
 
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+    async def disconnect(self, websocket: WebSocket):
+        await websocket.close()
+        self.websocket = None
 
-    async def send_text(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
+    async def send_text(self, message: str):
+        await self.websocket.send_text(message)
+        log(f"Sent message", "WebsocketService.send_text")
     
-    async def send_json(self, message: dict, websocket: WebSocket):
-        await websocket.send_json(message)
+    async def send_json(self, message: dict):
+        await self.websocket.send_json(message)
+        log(f"Sent message", "WebsocketService.send_json")
     
-    async def send_bytes(self, message: bytes, websocket: WebSocket):
-        await websocket.send_bytes(message)
-
-    async def broadcast(self, message: str=None, json: dict=None, bytes: bytes=None):
-        for connection in self.active_connections:
-            if message:
-                await connection.send_text(message)
-            if json:
-                await connection.send_json(json)
-            if bytes:
-                await connection.send_bytes(bytes)
+    async def send_bytes(self, message: bytes):
+        await self.websocket.send_bytes(message)
