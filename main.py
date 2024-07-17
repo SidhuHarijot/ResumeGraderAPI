@@ -1,5 +1,5 @@
 # region imports
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query, WebSocket
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -72,6 +72,8 @@ def logError(message, e: Exception, func):
 
 # add logs to middleware
 @app.middleware("http")
+@app.middleware("websocket")
+@app.middleware("https")
 async def add_logs(request, call_next):
     log(f"Request to {request.url.path}", "main.add_logs")
     response = await call_next(request)
@@ -900,6 +902,36 @@ async def grade_job(job_id: int, auth_uid: str):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+@app.post("/grade/job/real-time/{job_id}", tags=["Grading"])
+async def placeholder_real_time_grading(job_id: int, auth_uid: str):
+    """Grades resumes for a job in real-time.\n
+    This is a placeholder for the real-time grading functionality
+    Real time grading is a websocket based service that grades resumes as they are uploaded.
+    Websockets dont work in FastAPI's Swagger UI, so this is a placeholder for the real-time grading functionality.
+    link for websocket is ws://resumegraderapi.onrender.com/grade/job/real-time/{job_id}
+    has the same parameters as this one.
+
+    when the websocket is connected, it will start grading resumes in real-time.
+    It returns one match at a time which is graded. so recommended way to implement is
+    Get all matches:
+    - connect to the websocket
+    - update the list when you get a match: not all matches will be sent back so keep updating the list until the websocket closes
+    - websocket will close when all resumes are graded
+
+    Returns:
+        Nothing this is a placeholder for the real-time grading functionality
+
+    Raises:
+        HTTPException: If an error occurs while grading the job.
+    """
+    try:
+        log("Grading job in real-time", "placeholder_real_time_grading")
+        return {"message": "This is a placeholder. Use websocket for real-time grading. Read description for more info."}
+    except Exception as e:
+        logError(f"Error in placeholder_real_time_grading: ", e, "placeholder_real_time_grading")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
 @app.websocket("/grade/job/real-time/{job_id}")
 async def grade_real_time(job_id:int, auth_uid:str, websocket: WebSocket):
     """Grades resumes for a job in real-time.
@@ -912,10 +944,16 @@ async def grade_real_time(job_id:int, auth_uid:str, websocket: WebSocket):
     """
     try:
         log("Grading job in real-time", "grade_real_time")
-        await GradingService(job_id, auth_uid).grade_real_time(websocket)
+        gs = GradingService(job_id, auth_uid)
+        await gs.connect(websocket)
+        await gs.grade_real_time()
+    except WebSocketDisconnect:
+        log("WebSocket connection closed", "grade_real_time")
     except Exception as e:
         logError(f"Error in grade_real_time: ", e, "grade_real_time")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    finally:
+        await gs.disconnect(websocket)
 # endregion
 
 # region DebugPrints:
@@ -978,4 +1016,16 @@ def printFeedback(auth_id: str):
     except Exception as e:
         logError(f"Error in printFeedback: ", e, "printFeedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.get("/routes", tags=["Debug"])
+def get_routes():
+    routes = []
+    for route in app.routes:
+        routes.append({
+            "path": route.path,
+            "name": route.name,
+            "methods": route.methods if hasattr(route, 'methods') else "WebSocket"
+        })
+    return routes
 # endregion
