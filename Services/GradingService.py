@@ -11,6 +11,7 @@ from Processing.authorize import authorizeAdmin
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 import time
+from static.CONSTANTS import status_codes
 
 class GradingService(WebsocketService):
     max_grade = 100
@@ -36,8 +37,18 @@ class GradingService(WebsocketService):
             for grade, resume in zip(grades, current_resumes):
                 matchS = [m for m in self.matchesS if m.match.uid == resume.uid][0]
                 matchS.match.grade = grade
-                matchS.match.status = "Graded"
-                matchS.match.status_code = self.graded_code
+                if grade == -2:
+                    code = status_codes.NOT_SUITABLE
+                    matchS.match.status = status_codes.get_status(code)
+                    matchS.match.status_code = code
+                elif grade == -3:
+                    code = status_codes.ISSUE_GRADING
+                    matchS.match.status = status_codes.get_status(code)
+                    matchS.match.status_code = code
+                else:
+                    code = status_codes.GRADED
+                    matchS.match.status = status_codes.get_status(code)
+                    matchS.match.status_code = code
                 matchS.save_to_db()
             
     def remove_graded_resumes(self):
@@ -61,22 +72,27 @@ class GradingService(WebsocketService):
             for resume_batch in split_resumes:
                 task = loop.run_in_executor(executer, OpenAIUtility.grade_resumes, job_text, [ResumeFactory.to_text(r, exclude=["uid"]) for r in resume_batch], self.max_grade)
                 task_to_resumes[task] = resume_batch
-            count = 0
-            strttime  = time.time()
-            while True:
-                count += 1
-                for task in list(task_to_resumes.keys()):
-                    grades = await task
-                    resumes = task_to_resumes[task]
-                    log(f"Grading resumes for job: {self.jobS.job.job_id} batch {id(task)} result {grades} resumes: {[resume.uid for resume in resumes]}", "GradingService.grade_resumes_for_job")
-                    for grade, resume in zip(grades, resumes):
-                        matchS = [m for m in self.matchesS if m.match.uid == resume.uid][0]
-                        matchS.match.grade = grade
-                        matchS.match.status = "Graded"
-                        matchS.match.status_code = self.graded_code
-                        matchS.save_to_db()
-                        await self.send_json(MatchFactory.to_json(matchS.match))
-                        await self.send_text(f"Graded resume {resume.uid} count {count} time {time.time() - strttime}")
+            for task in list(task_to_resumes.keys()):
+                grades = await task
+                resumes = task_to_resumes[task]
+                log(f"Grading resumes for job: {self.jobS.job.job_id} batch {id(task)} result {grades} resumes: {[resume.uid for resume in resumes]}", "GradingService.grade_resumes_for_job")
+                for grade, resume in zip(grades, resumes):
+                    matchS = [m for m in self.matchesS if m.match.uid == resume.uid][0]
+                    matchS.match.grade = grade
+                    if grade == -2:
+                        code = status_codes.NOT_SUITABLE
+                        matchS.match.status = status_codes.get_status(code)
+                        matchS.match.status_code = code
+                    elif grade == -3:
+                        code = status_codes.ISSUE_GRADING
+                        matchS.match.status = status_codes.get_status(code)
+                        matchS.match.status_code = code
+                    else:
+                        code = status_codes.GRADED
+                        matchS.match.status = status_codes.get_status(code)
+                        matchS.match.status_code = code
+                    matchS.save_to_db()
+                    await self.send_json(MatchFactory.to_json(matchS.match))
         except Exception as e:
             logError("error grading resumes",e, "GradingService.grade_real_time")
             raise e

@@ -6,6 +6,9 @@ from .services import log, logError
 from Database.GetDatabases import JobDatabase
 from Processing.authorize import authorizeAdmin, authorizeOwner
 from Models.RequestModels.GetModels import RequestModels as rm
+from Errors.GetErrors import Errors as e
+from Database.check import Exists
+from .MatchService import MatchService
 
     
 class JobService:
@@ -22,8 +25,7 @@ class JobService:
             raise ValueError("No valid arguments provided to JobService constructor")
 
     def save_to_db(self):
-        if not self.validate():
-            raise ValueError("Invalid job data")
+        self.validate()
         self.job.job_id = JobDatabase.create_job(self.job)
     
     def to_text(self, exclude=[]):
@@ -51,12 +53,12 @@ class JobService:
     def update(self, request: rm.Jobs.Update = None):
         if request:
             self.job = request.to_job(self.job)
-        if not self.validate():
-            raise ValueError("Invalid job data")
+        self.validate()
+        MatchService.put_for_re_evaluation(job_id=self.job.job_id)
         JobDatabase.update_job(self.job)
     
     def validate(self):
-        return True
+        pass
     
     def delete(self):
         JobDatabase.delete_job(self.job.job_id)

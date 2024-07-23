@@ -5,7 +5,11 @@ from Models.RequestModels.GetModels import RequestModels as rm
 from Processing.Factories.GetFactories import ResumeFactory
 from Utilities.GetUtilities import OpenAIUtility, FileUtility
 from fastapi import UploadFile
-from Processing.authorize import authorizeAdmin, authorizeOwner
+from Processing.authorize import authorizeAdmin
+from .MatchService import MatchService
+from Models.RequestModels.GetModels import RequestModels as rm
+from Errors.GetErrors import Errors as e
+from Database.check import Exists
 
 
 class ResumeService:
@@ -34,8 +38,7 @@ class ResumeService:
     
     def save_to_db(self):
         if not self.in_db:
-            if not self.validate():
-                raise ValueError("Invalid resume data")
+            self.validate()
             ResumeDatabase.create_resume(self.resume)
         else:
             self.update()
@@ -43,15 +46,15 @@ class ResumeService:
     def update(self, request: rm.Resumes.Update = None):
         if request:
             self.resume = request.to_resume(self.resume)
-        if not self.validate():
-            raise ValueError("Invalid resume data")
+            self.validate()
+        MatchService.put_for_re_evaluation(self.resume.uid)
         ResumeDatabase.update_resume(self.resume)
 
     def to_json(self):
         return ResumeFactory.to_json(self.resume)
     
     @staticmethod
-    def create_from_request(request: rm.Resumes.Create, file: UploadFile = None):
+    def create_from_request(request: rm.Resumes.Create, file = None):
         if file is not None:
             resume = ResumeService.process_resume(file)
         else:
@@ -78,7 +81,8 @@ class ResumeService:
             return resume_data
     
     def validate(self):
-        return True
+        if not Exists.user(self.resume.uid):
+            raise e.ContentInvalid.UIDInvalid(self.resume.uid, "UID does not exist in the database")
     
     def delete(self):
         ResumeDatabase.delete_resume(self.resume.uid)

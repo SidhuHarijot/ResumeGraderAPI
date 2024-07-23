@@ -21,7 +21,7 @@ class UserFactory:
             )
         except Exception as e:
             logError(f"Error creating User object from row: {row}. \n", e, "UserFactory.from_db_row")
-            return User(uid=row[0], name=Name(first_name="Error", last_name="Error"), dob=Date(day=1, month=1, year=1), is_owner=False, is_admin=False, phone_number="00-0000000000", email="error@database.com")
+            return User(uid=row[0], name=Name(first_name="Error", last_name="Error"), dob=Date(day=1, month=1, year=1), is_owner=False, is_admin=False, phone_number="00-0000000000", email="error@database.com", saved_jobs=[])
             
 
     @staticmethod

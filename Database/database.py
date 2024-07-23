@@ -27,6 +27,7 @@ old_schemas = {
             is_owner BOOLEAN DEFAULT FALSE,
             is_admin BOOLEAN DEFAULT FALSE,
             phone_number CHAR(13),
+            jobs_saved INT[] DEFAULT '{}',
             email VARCHAR(100) NOT NULL UNIQUE
         );
     """,
@@ -79,18 +80,7 @@ old_schemas = {
 }
 
 new_schemas = {
-    "users": """
-        CREATE TABLE users (
-            uid VARCHAR(50) PRIMARY KEY,
-            name VARCHAR(100),
-            dob VARCHAR(8),
-            is_owner BOOLEAN DEFAULT FALSE,
-            is_admin BOOLEAN DEFAULT FALSE,
-            phone_number CHAR(13),
-            jobs_saved INT[] DEFAULT '{}',
-            email VARCHAR(100) NOT NULL UNIQUE
-        );
-    """,
+    "users": old_schemas["users"],
     "resumes": old_schemas["resumes"],
     "jobdescriptions": old_schemas["jobdescriptions"],
     "matches": old_schemas["matches"],
@@ -255,6 +245,17 @@ class Database:
         except psycopg2.Error as e:
             logError(e, "Database.view_table_data")
             raise
-
+    
+    @staticmethod
+    def has(table, columns, values):
+        try:
+            log(f"Checking if {columns} with value {values} exists in table {table}", "Database.has")
+            query = f"SELECT * FROM {table} WHERE "
+            query += " AND ".join([f"{column} = %s" for column in columns])
+            result = Database.execute_query(query, values, fetch=True)
+            return len(result) > 0
+        except psycopg2.Error as e:
+            logError(e, "Database.has")
+            raise
 
 # endregion

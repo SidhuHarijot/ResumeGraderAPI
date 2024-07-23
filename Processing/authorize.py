@@ -1,6 +1,7 @@
 import Database.database as database
 from functools import wraps
 from ServerLogging.serverLogger import Logger
+from Errors.GetErrors import Errors as e
 
 
 def log(msg, func):
@@ -39,27 +40,23 @@ def find_auth_id(*args, **kwargs):
     for arg in args:
         if isinstance(arg, str) and len(arg) != 0:
             return arg
-    return None
+    raise e.PermissionErrors.NoTokenError()
 
 def authorizeOwner(func):
     def wrapper(*args, **kwargs):
         auth_uid = find_auth_id(*args, **kwargs)
-        if not auth_uid:
-            raise PermissionError("You do not have permission to access this resource.")
         if Authorize.checkAuth(auth_uid, "OWNER"):
             log(f"authorized", "authorizeOwner")
             return func(*args, **kwargs)
-        raise PermissionError("You do not have permission to access this resource.")
+        raise e.PermissionErrors.InvalidTokenError()
     return wrapper
 
 
 def authorizeAdmin(func):
     def wrapper(*args, **kwargs):
         auth_uid = find_auth_id(*args, **kwargs)
-        if not auth_uid:
-            raise PermissionError("You do not have permission to access this resource.")
         if Authorize.checkAuth(auth_uid, "ADMIN"):
             log(f"authorized", "authorizeAdmin")
             return func(*args, **kwargs)
-        raise PermissionError("You do not have permission to access this resource.")
+        raise e.PermissionErrors.InvalidTokenError()
     return wrapper

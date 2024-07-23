@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from Models.DataModels.Match import Match
 from fastapi import Query
+from static.CONSTANTS import status_codes
 
 class Create(BaseModel):
     uid: str = Field(..., description="Unique identifier for the user.")
@@ -53,11 +54,13 @@ class Update(BaseModel):
     status_code: Optional[int] = Field(None, description="Status code of the match.")
     auth_uid: str = Field(..., description="Unique identifier for the user.")
 
-    def to_match(self, current: Match):
+    def to_match(self, current: Match, add_auth: str = None):
         match_data = current
         if self.status is not None:
-            match_data.status = self.status
+            match_data.status = self.status + " By " + add_auth if add_auth else self.status
         if self.status_code is not None:
             match_data.status_code = self.status_code
+            if self.status is None:
+                match_data.status = status_codes.get_status(self.status_code) + " BY " + add_auth if add_auth else status_codes.get_status(self.status_code)
         return match_data
 

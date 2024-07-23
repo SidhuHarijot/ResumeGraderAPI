@@ -23,18 +23,10 @@ class ExperienceFactory:
     @staticmethod
     def from_json(data: dict) -> Experience:
         try:
-            log(f"Creating Experience object from JSON: {data['title']}", "from_json")
-            return Experience(
-                start_date=Date.create(data['start_date']),
-                end_date=Date.create(data['end_date']),
-                title=data['title'],
-                company_name=data['company_name'],
-                description=data['description']
-            )
-        except TypeError:
-            log("Data is not a dictionary. Converting to json dict.", "from_json")
-            try:
+            if isinstance(data, str):
                 data = json.loads(data)
+            try:
+                log(f"Creating Experience object from JSON: {data['title']} at {data['company_name']}", "from_json")
                 return Experience(
                     start_date=Date.create(data['start_date']),
                     end_date=Date.create(data['end_date']),
