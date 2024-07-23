@@ -59,41 +59,28 @@ The Resume Grader API is designed to be a dynamic, responsive tool that adapts t
     - [Documentation Redoc](https://resumegraderapi.onrender.com/redoc)
 
 # What's Next for this API
-### 1. Complete Grading Service
 
-**Objective**: Implement a complete grading service that grades multiple resumes simultaneously and streams data back to the client in real-time. This will enhance the user experience and reduce the time taken to grade multiple resumes.
+### 1. Add queues and save local data for faster returns
 
-### 2. Implement Database Sessions
+**Objective**: Implement a queue system to handle grading requests and store processed data locally for faster retrieval. This will optimize performance and reduce latency in processing large volumes of resumes and job applications.
 
-**Objective**: Introduce database sessions to manage transactions and ensure data integrity. This will improve the reliability and consistency of the API's interactions with the database.
-
-### 3. Data Validation and Error Handling
-
-**Objective**: Enhance data validation and error handling mechanisms to provide more detailed feedback to users and improve the overall robustness of the API.
-Also resort to defaults when data is missing.
-
-
-### 4. Documentation
-
-**Objective**: Expand the API documentation to include detailed examples, use cases, and best practices for integrating the API into various applications. This will help users leverage the full potential of the API.
-
-### 5. Logger Create new logging mechanism and platform for real time data
+### 2. Logger Create new logging mechanism and platform for real time data
 
 **Objective**: Implement a comprehensive logging mechanism to track API usage, errors, and performance metrics. This will help in monitoring and optimizing the API's performance and reliability.
 
-### 6. Develop Tests and CI/CD Pipeline
+### 3. Develop Tests and CI/CD Pipeline
 
 **Objective**: Create a suite of tests to validate the API's functionalities and implement a CI/CD pipeline for automated testing and deployment. This will ensure the stability and quality of the API across different environments.
 
-### 7. Performance and Efficiency Enhancements
+### 4. Performance and Efficiency Enhancements
 
 **Objective**: Optimize the performance of the "grade all resumes for a job" endpoint and implement real-time updates to the client.
 
-### 8. TAGS model
+### 5. TAGS model
 
 **Objective**: Implement a TAGS model to grade resumes based on the skills required for a job. This will provide a more granular and accurate assessment of resume-job fit.
 
-### 9. Create models for resume and job description parsing
+### 6. Create models for resume and job description parsing
 
 **Objective**: Develop models for parsing resume and job description data to extract relevant information and improve the grading accuracy.
 
@@ -103,6 +90,44 @@ Also resort to defaults when data is missing.
 - [version 2.5.0](#version-250)
 - [version 3.0.0](#version-300)
 - [version 4.0.0](#version-400)
+- [version 4.1.0](#version-410)
+
+
+# Version 4.1.0
+### Introduction
+Version 4.1.0 of the Resume Grader API introduces new features, optimizations, and enhancements to improve the overall user experience and functionality of the API. This update focuses on enhancing the grading process, improving data validation, and providing additional flexibility in managing job applications. The API now supports more advanced grading capabilities, refined data validation mechanisms, and enhanced error handling to ensure a seamless and reliable recruitment process. Here's a detailed look at the changes and improvements in this update.
+
+### Key Updates
+
+#### Advanced Grading Capabilities
+Completed Grading Endpoints and Web sockets for real time grading of resumes.
+
+**Grading Endpoints**:
+- **POST** `/grade/job/{job_id}`: Grades all resumes attached to a specific job using OpenAI's grading capabilities. This endpoint processes resumes in parallel to optimize performance.
+
+**Web Sockets**:
+- **Real-time Grading**: Implemented web sockets to provide real-time grading updates to users. This feature allows users to monitor the grading progress and receive immediate feedback on resume scores.
+
+#### Data Validation and Error Handling
+Enhanced data validation and error handling mechanisms to ensure data integrity and improve user experience.
+
+**Data Validation**:
+- **Validation Class**: Static methods to validate email, phone numbers, dates, and the integrity of User, Resume, Job, Match, and Feedback objects. Ensures that all data entering the system adheres to expected formats and constraints.
+
+**Error Handling**:
+- **Custom Exceptions**: Introduced custom exceptions to handle errors more effectively and provide detailed feedback to users. This helps in identifying and resolving issues quickly, improving the overall reliability of the API.
+
+#### Job Application Management
+Improved job application tracking and management functionalities for better user experience.
+
+**Saved Jobs**:
+- **Saved Jobs Endpoint**: Introduced functionality for users to save jobs they are interested in. This feature helps users keep track of job opportunities they find appealing.
+
+**Match Retrieval**:
+- **Get Matches Endpoint**: Enhanced the **GET** `/matches/` endpoint to support filtering based on various criteria, improving the flexibility and usefulness of the match retrieval process.
+
+#### Documentation Updates
+Updated API documentation to reflect the new features and functionalities introduced in this version.
 
 
 # Version 4.0.0

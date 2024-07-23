@@ -2,9 +2,13 @@ from Database.FeedbackDatabase import FeedbackDatabase
 from Database.database import Database
 from .services import log, logError
 from Models.RequestModels.Feedback import Create, Update, Get
+from Models.RequestModels.Matches import Update as MatchUpdate
 from Models.DataModels.Feedback import Feedback
 from Processing.Factories.FeedbackFactory import FeedbackFactory
 from Processing.authorize import authorizeAdmin
+from Errors.GetErrors import Errors as e
+from Database.check import Exists
+from .MatchService import MatchService
 
 
 class FeedbackService:
@@ -24,33 +28,17 @@ class FeedbackService:
     
     def check_in_db(self):
         log(f"Checking if feedback is in database: {self.feedback.feedback_id}", "FeedbackService.check_in_db")
-        if self.feedback.feedback_id is None or self.feedback.feedback_id < 0:
+        if self.feedback.feedback_id == -1 or self.feedback.feedback_id is None:
             self.in_db = False
-            log("Feedback ID not provided", "FeedbackService.check_in_db")
-            feedback = FeedbackDatabase.find({"match_id": self.feedback.match_id, "auth_uid": self.feedback.auth_uid})
-            if len(feedback) > 0:
-                log(f"Feedback found in database: {feedback[0].feedback_id}", "FeedbackService.check_in_db")
-                self.feedback = Update(
-                    feedback_id=feedback[0].feedback_id, 
-                    match_id=self.feedback.match_id, 
-                    feedback_text=self.feedback.feedback_text, 
-                    auth_uid=self.feedback.auth_uid).to_feedback(feedback[0])
-                self.in_db = True
-        try:
-            log(f"Checking if feedback is in database: {self.feedback.feedback_id}", "FeedbackService.check_in_db")
-            FeedbackDatabase.get_feedback(self.feedback.feedback_id)
-            log(f"Feedback found in database: {self.feedback.feedback_id}", "FeedbackService.check_in_db")
-            self.in_db = True
-        except ValueError:
-            self.in_db = False
-            log(f"Feedback not found in database: {self.feedback.feedback_id}", "FeedbackService.check_in_db")
-        return self.in_db
+        else:
+            return Exists.feedback(feedback_id=self.feedback.feedback_id)
     
     def save_to_db(self):
         if not self.in_db:
             if not self.validate():
-                raise ValueError("Invalid feedback data")
+                raise e.ContentInvalid.FeedbackInvalid(self.feedback.feedback_text, "Match not found")
             log(f"Creating feedback: ", "FeedbackService.save_to_db")
+            MatchService.get_from_db(self.feedback.match_id).update_from_request(request=MatchUpdate(match_id=self.feedback.match_id, status_code=721, auth_uid=self.feedback.auth_uid))
             self.feedback.feedback_id = FeedbackDatabase.create_feedback(self.feedback)
         else:
             log(f"Updating feedback: ", "FeedbackService.save_to_db")
@@ -62,12 +50,14 @@ class FeedbackService:
 
     def update(self):
         if not self.validate():
-            raise ValueError("Invalid feedback data")
+            raise e.ContentInvalid.FeedbackInvalid("Invalid feedback data")
         FeedbackDatabase.update_feedback(self.feedback)
         log(f"Feedback {self.feedback.feedback_id} updated successfully", "FeedbackService.update")
     
     def validate(self):
-        return True
+        if Exists.match(self.feedback.match_id) and Exists.user(uid=self.feedback.auth_uid):
+            return True
+        return False
     
     @staticmethod
     @authorizeAdmin

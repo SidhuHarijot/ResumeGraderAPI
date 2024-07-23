@@ -11,6 +11,9 @@ while True:
         break
     try:
         result = Database.execute_query(query, fetch=fetch)
-        print(result)
+        if fetch:
+            if isinstance(result, list):
+                for row in result:
+                    print(row)
     except Exception as e:
         print(f"An error occurred: {e}")

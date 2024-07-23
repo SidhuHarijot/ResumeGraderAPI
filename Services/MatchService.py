@@ -5,7 +5,10 @@ from Models.RequestModels.GetModels import RequestModels as rm
 from Models.CustomReturnModels.Match import Return as rmReturn
 from Processing.Factories.GetFactories import MatchFactory
 from Processing.authorize import authorizeAdmin
-from .getServices import UserService, JobService
+from static.CONSTANTS import status_codes
+from Database.check import Exists
+from Errors.GetErrors import Errors as e
+from .UserService import UserService
 
 
 class MatchService:
@@ -24,15 +27,28 @@ class MatchService:
             raise ValueError("No valid arguments provided to MatchService constructor")
     
     def save_to_db(self):
-        if not self.validate():
-            raise ValueError("Invalid match data")
+        self.validate()
         if not self.match.match_id or self.match.match_id == -1:
             match_id = MatchDatabase.create_match(self.match)
             self.match.match_id = match_id
         else:
             self.update()
     
+    @classmethod
+    def put_for_re_evaluation(cls, uid: str=None, job_id: int = None):
+        matches = []
+        if uid:
+            matches = cls.get_from_request(rm.Matches.Get(uid=uid), return_type=MatchService)
+        elif job_id:
+            matches = cls.get_from_request(rm.Matches.Get(job_id=job_id), return_type=MatchService)
+        for match in matches:
+            match.match.status = status_codes.get_status(status_codes.PENDING_RE_EVALUATION)
+            match.match.status_code = status_codes.PENDING_RE_EVALUATION
+            match.match.grade = 0.0
+            match.update()
+            
     def get_return_model(self):
+        from .JobService import JobService
         if not self.return_model:
             self.return_model = rmReturn(
                 match_id = self.match.match_id,
@@ -54,13 +70,14 @@ class MatchService:
         return matchS
     
     def update(self):
-        if not self.validate():
-            raise ValueError("Invalid match data")
+        self.validate()
         MatchDatabase.update_match(self.match)
     
     @authorizeAdmin
     def update_from_request(self, request: rm.Matches.Update):
-        self.match = request.to_match(self.match)
+        author = UserService.get_from_db(request.auth_uid).user
+        name = author.name.first_name[:1] + " " + author.name.last_name
+        self.match = request.to_match(self.match, name)
         self.update()
     
     @staticmethod
@@ -80,6 +97,8 @@ class MatchService:
                 result.append(MatchService(match).get_return_model())
             elif issubclass(return_type, Match):
                 result.append(MatchService.clean_match(match))
+            elif issubclass(return_type, MatchService):
+                result.append(MatchService(match))
         return result
 
     @staticmethod
@@ -90,12 +109,17 @@ class MatchService:
             matchS.append(MatchService(match))
         return matchS
 
-    @staticmethod
-    def clean_match(match):
-        return match
     
     def validate(self):
-        return True
+        if not self.match.uid or not Exists.user(self.match.uid):
+            self.match.uid = "None" if not self.match.uid else self.match.uid
+            raise e.ContentInvalid.UIDInvalid(self.match.uid, f"User does not exist")
+        if not self.match.job_id or not Exists.job(self.match.job_id):
+            self.match.job_id = -1 if not self.match.job_id else self.match.job_id
+            raise e.ContentInvalid.JobIdInvalid(self.match.job_id, "Job does not exist")
+        if not self.match.status_code in status_codes.get_all_codes():
+            self.match.status_code = status_codes.APPLIED
+            self.match.status = status_codes.get_status(status_codes.APPLIED)
     
     def delete(self):
         MatchDatabase.delete_match(self.match.match_id)

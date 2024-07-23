@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
+from static.CONSTANTS import status_codes
+from Errors.GetErrors import Errors as e
+import regex as re
 
 class Match(BaseModel):
     match_id: int = Field(..., description="Unique identifier for the match.")
@@ -16,9 +19,51 @@ class Match(BaseModel):
             match_id = 0,
             uid = "",
             job_id = 0,
-            status = "",
-            status_code = 0,
+            status = status_codes.get_status(status_codes.APPLIED),
+            status_code = status_codes.APPLIED,
             grade = 0.0,
             selected_skills = []
         )
+    
+    @field_validator('match_id')
+    def match_id_must_be_valid(cls, v):
+        if v < -1:
+            raise e.ContentInvalid.MatchIdInvalid(v, "Match ID must be a positive integer")
+        return v
+    
+    @field_validator('uid')
+    def uid_must_be_valid(cls, v):
+        if len(v) < 10:
+            raise e.ContentInvalid.UIDInvalid(v, "UID must be at least 10 characters long")
+        if re.match(r'[=;]', v):
+            raise e.ContentInvalid.UIDInvalid(v, "UID must contain only letters and numbers.")
+        return v
+    
+    @field_validator('job_id')
+    def job_id_must_be_valid(cls, v):
+        if v < -1:
+            raise e.ContentInvalid.JobIdInvalid(v, "Job ID must be a positive integer")
+        return v
+    
+    @field_validator('status')
+    def status_must_be_valid(cls, v):
+        if len(v) < 2:
+            raise e.ContentInvalid.StatusInvalid(v, "Status must be at least 2 characters long")
+        if re.match(r'[=;]', v):
+            raise e.ContentInvalid.StatusInvalid(v, "Status must contain only letters, numbers and spaces")
+        return v
+    
+    @field_validator('status_code')
+    def status_code_must_be_valid(cls, v):
+        if v < 0:
+            raise e.ContentInvalid.StatusCodeInvalid(v, "Status code must be a positive integer")
+        return v
+    
+    @field_validator('grade')
+    def grade_must_be_valid(cls, v):
+        if v < -3.0 or v > 100.0:
+            raise e.ContentInvalid.GradeInvalid(v, "Grade must be a float between 0.0 and 10.0")
+        return v
+    
+
 

@@ -30,7 +30,18 @@ class status_codes:
         elif status_code == status_codes.ISSUE_GRADING:
             return "Issue Grading"
         else:
-            return "Unknown Status Code"
-
-
-
+            raise ValueError(f"Invalid status code: {status_code}")
+    
+    @staticmethod
+    def get_all_codes():
+        return [
+            status_codes.APPLIED,
+            status_codes.PENDING_RE_EVALUATION,
+            status_codes.GRADED,
+            status_codes.SHORTLISTED,
+            status_codes.SELECTED,
+            status_codes.CONTACTED,
+            status_codes.FEEDBACK_SENT,
+            status_codes.NOT_SUITABLE,
+            status_codes.ISSUE_GRADING
+        ]

@@ -900,7 +900,7 @@ async def grade_job(job_id: int, auth_uid: str):
         GradingService(job_id, auth_uid).grade_all()
     except Exception as e:
         logError(f"Error in grade_job: ", e, "grade_job")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail={"msg": "Internal Server Error", "code": 5002})
 
 
 @app.post("/grade/job/real-time/{job_id}", tags=["Grading"])
