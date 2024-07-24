@@ -17,7 +17,7 @@ class Match(BaseModel):
     def generate_default():
         return Match(
             match_id = 0,
-            uid = "",
+            uid = "DEFAULT UID",
             job_id = 0,
             status = status_codes.get_status(status_codes.APPLIED),
             status_code = status_codes.APPLIED,
