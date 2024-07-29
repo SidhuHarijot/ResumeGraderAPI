@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 import time
 from Errors.GetErrors import Errors as e
+from .logs import log, logError
 
 
 class Date(BaseModel):
@@ -13,7 +14,8 @@ class Date(BaseModel):
         if v == 0:
             return v
         if v < 1 or v > 31:
-            raise e.ContentInvalid.DateInvalid(v, "Day must be between 1 and 31")
+            logError("Day value out of bounds.", e.ContentInvalid.DateInvalid(v, "Day must be between 1 and 31"), "Date")
+            return 0
         return v
 
     @field_validator('month')
@@ -21,13 +23,15 @@ class Date(BaseModel):
         if v == 0:
             return v
         if v < 1 or v > 12:
-            raise e.ContentInvalid.DateInvalid(v, 'Month must be between 1 and 12')
+            logError("Month value out of bounds.", e.ContentInvalid.DateInvalid(v, 'Month must be between 1 and 12'), "Date")
+            return 0
         return v
 
     @field_validator('year')
     def year_must_be_valid(cls, v):
         if v < 0 or v > 9999:
-            raise e.ContentInvalid.DateInvalid(v, 'Year must be between 0 and 9999')
+            logError("Year value out of Bounds", e.ContentInvalid.DateInvalid(v, 'Year must be between 0 and 9999'), "Date")
+            return 0
         return v
 
     def __str__(self):
