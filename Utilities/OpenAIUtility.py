@@ -138,7 +138,7 @@ class OpenAIUtility:
         system_message = """
         Convert the given resume data into a structured JSON format. Adhere strictly to this format:
         {
-            "uid": "-1",
+            "uid": "UID",
             "experience": [{"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "title": "Job Title", "company_name": "Employer Name", description: "Job Description"}, {"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "title": "Job Title", "company_name": "Employer Name", description: "Job Description"}],
             "skills": ["skill1", "skill2"],
             "education": [{"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "course_name": "Degree", "institution": "Institution Name"}, {"start_date": "DDMMYYYY", "end_date": "DDMMYYYY", "degree": "course_name", "institution": "Institution Name"}],
@@ -146,7 +146,7 @@ class OpenAIUtility:
         Dates must be formatted as DDMMYYYY or 00000000 if no date is available. if no month or day is available, use 00. for example, if year is 2000 use 00002000.
         Ensure the phone number format includes a hyphen between the country code and the number.
         insure the phones number is total 13 chars with first two country code then hyphen then rest of the number
-        uid will always be "-1" for new resumes.
+        uid will always be "UID" for new resumes.
         """
         log("Extracting resume JSON", "OpenAIUtility.extract_resume_json")
         response = self.getResponse(system_message, resume_text, "dict")
