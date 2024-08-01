@@ -11,10 +11,20 @@ import time
 def log(message, func):
     Logger.logDatabase(message, func)
 
-def logError(e: Exception, func):
-    error_message = "".join(traceback.format_exception(None, e, e.__traceback__)[0])
-    message = f"An error occurred: {error_message}"
-    Logger.logDatabase(message, func, "ERROR")
+def logError(*args):
+    try:
+        message = args[0]
+        if len(args) == 2:
+            e = ValueError(args[0])
+            func = args[1]
+        else:    
+            e = args[1]
+            func = args[2]
+        message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
+        Logger.logMain(message, func, "ERROR")
+    except Exception as e:
+        Logger.logMain(f"Error in logError: {e}", "main.logError", "ERROR")
+        Logger.logMain(f"Original error: {message}", "main.logError", "ERROR")
 # endregion
 
 # Define the old and new schemas as global variables

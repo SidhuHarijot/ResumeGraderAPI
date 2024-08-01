@@ -39,10 +39,10 @@ class ResumeFactory:
         try:
             log(f"Creating Resume object from JSON: {data['uid']}", "from_json")
             try:
-                uid = data['uid']
+                uid = data.get('uid', "UID")
             except TypeError:
                 data = json.loads(data)
-                uid = data['uid']
+                uid = data.get('uid', "UID")
             return Resume(
                 uid=uid,
                 skills=data['skills'],

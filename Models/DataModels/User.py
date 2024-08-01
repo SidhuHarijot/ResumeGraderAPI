@@ -18,7 +18,7 @@ class User(BaseModel):
 
     @field_validator('uid')
     def uid_must_be_valid(cls, v):
-        if len(v) < 2 or len(v) > 50:
+        if len(v) < 1 or len(v) > 50:
             raise e.ContentInvalid.UIDInvalid(v, "UID must be between 2 and 50 characters")
         if re.match(r'[=;]', v):
             raise e.ContentInvalid.UIDInvalid(v, "UID contains invalid characters")

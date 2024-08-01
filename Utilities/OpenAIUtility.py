@@ -21,7 +21,7 @@ class OpenAIUtility:
         if responseType == "dict" or responseType == "json_str":
             gpt_response_type = {"type": "json_object"}
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": systemMessage},
                 {"role": "user", "content": userMessage},
@@ -154,7 +154,7 @@ class OpenAIUtility:
         if response != cleaned_response:
             logError(f"""Resume had a invalid response, defaulting to -1\n
                             INFORMATION:\n
-                            RESPONSE: {response}""", "OpenAIUtility.extract_resume_json")
+                            RESPONSE: {response}""", ValueError(), "OpenAIUtility.extract_resume_json")
         log("Resume JSON extracted", "OpenAIUtility.extract_resume_json")
         return cleaned_response
     
