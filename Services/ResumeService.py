@@ -76,6 +76,7 @@ class ResumeService:
             temp_file_path = FileUtility.save_temp_file(file)
             resume_text = FileUtility.extract_text(temp_file_path)
             resume_json = OpenAIUtility.extract_resume_json(resume_text)
+            print(resume_json)
             resume_data = ResumeFactory.from_json(resume_json)
             log(f"Resume processed: {resume_data.uid}", "ResumeService.process_resume")
             return resume_data
