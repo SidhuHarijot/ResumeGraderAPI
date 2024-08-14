@@ -43,9 +43,13 @@ origins = [
     "https://client-resume-upload.vercel.app",
     "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app",
     "https://talent-match.vercel.app/",
+    "https://talent-match.vercel.app",
     "https://talent-match-revkozdq0-harijot-singhs-projects.vercel.app",
     "https://talent-match-git-master-harijot-singhs-projects.vercel.app/",
-    "https://talent-match-harijot-singhs-projects.vercel.app/"
+    "https://talent-match-harijot-singhs-projects.vercel.app/",
+    "https://talent-match-revkozdq0-harijot-singhs-projects.vercel.app/",
+    "https://talent-match-git-master-harijot-singhs-projects.vercel.app",
+    "https://talent-match-harijot-singhs-projects.vercel.app"
 ]
 
 app.add_middleware(
