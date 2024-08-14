@@ -6,7 +6,6 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from typing import List, Optional
 from Models.DataModels.GetModels import *
 from Database.database import *
-from Processing.DataValidation.Validation import Validation
 from Processing.authorize import Authorize
 from ServerLogging.serverLogger import Logger
 from pathlib import Path

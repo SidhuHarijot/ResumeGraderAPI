@@ -1,6 +1,26 @@
 import json
-from .Validation import logError
+from ServerLogging.serverLogger import Logger
 from Models.DataModels.GetModels import Date
+import traceback
+
+
+def log(message, function_name):
+    Logger.logValidation(message, function_name)
+
+def logError(*args):
+    try:
+        message = args[0]
+        if len(args) == 2:
+            e = ValueError(args[0])
+            func = args[1]
+        else:    
+            e = args[1]
+            func = args[2]
+        message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
+        Logger.logValidation(message, func, "ERROR")
+    except Exception as e:
+        Logger.logValidation(f"Error in logError: {e}", "main.logError", "ERROR")
+
 
 class JobDescriptionValidation:
     @staticmethod

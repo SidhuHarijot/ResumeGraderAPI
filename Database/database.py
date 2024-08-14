@@ -21,10 +21,10 @@ def logError(*args):
             e = args[1]
             func = args[2]
         message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
-        Logger.logMain(message, func, "ERROR")
+        Logger.logDatabase(message, func, "ERROR")
     except Exception as e:
-        Logger.logMain(f"Error in logError: {e}", "main.logError", "ERROR")
-        Logger.logMain(f"Original error: {message}", "main.logError", "ERROR")
+        Logger.logDatabase(f"Error in logError: {e}", "main.logError", "ERROR")
+        Logger.logDatabase(f"Original error: {message}", "main.logError", "ERROR")
 # endregion
 
 # Define the old and new schemas as global variables

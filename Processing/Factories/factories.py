@@ -16,10 +16,10 @@ def logError(*args):
             e = args[1]
             func = args[2]
         message = f"{message}\n{traceback.format_exception(None, e, e.__traceback__)}"
-        Logger.logMain(message, func, "ERROR")
+        Logger.logFactories(message, func, "ERROR")
     except Exception as e:
-        Logger.logMain(f"Error in logError: {e}", "main.logError", "ERROR")
-        Logger.logMain(f"Original error: {message}", "main.logError", "ERROR")
+        Logger.logFactories(f"Error in logError: {e}", "main.logError", "ERROR")
+        Logger.logFactories(f"Original error: {message}", "main.logError", "ERROR")
 
 
 
