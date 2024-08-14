@@ -37,6 +37,7 @@ origins = [
     "http://localhost:8080",
     "http://localhost:3000",
     "http://localhost:8000",
+    "http://localhost:8089",
     "https://localhost",
     "http://localhost:3006",
     "https://client-resume-upload-p9g0bmvaf-harijot-singhs-projects.vercel.app",
