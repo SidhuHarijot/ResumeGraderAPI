@@ -96,7 +96,7 @@ class MatchService:
             if issubclass(return_type, rmReturn):
                 result.append(MatchService(match).get_return_model())
             elif issubclass(return_type, Match):
-                result.append(MatchService.clean_match(match))
+                result.append(match)
             elif issubclass(return_type, MatchService):
                 result.append(MatchService(match))
         return result

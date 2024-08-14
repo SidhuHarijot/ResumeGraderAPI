@@ -13,7 +13,7 @@ class Create(BaseModel):
         match_data = Match.generate_default()
         match_data.uid = self.uid
         match_data.job_id = self.job_id
-        match_data.selected_skills = self.selected_skills
+        match_data.selected_skills = self.selected_skills if self.selected_skills else []
         return match_data
 
 
