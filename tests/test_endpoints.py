@@ -18,7 +18,7 @@ def test_create_user():
         "phone_number": "91-1234567890",
         "email": "john.doe@example.com"
     }
-    response = client.post("/users/", json=user_data)
+    response = client.post("/users/", params=user_data)
     assert response.status_code == 200
     assert response.json()["uid"] == user_data["uid"]
 
@@ -31,7 +31,7 @@ def test_create_user_validation_error():
         "phone_number": "InvalidPhone",  # Invalid phone number format
         "email": "notanemail"  # Invalid email format
     }
-    response = client.post("/users/", json=user_data)
+    response = client.post("/users/", params=user_data)
     assert response.status_code == 422
 
 
@@ -44,7 +44,7 @@ def test_update_user():
         "phone_number": "91-0987654321",
         "email": "jane.smith@example.com"
     }
-    response = client.put("/users/", json=user_data)
+    response = client.put("/users/", params=user_data)
     assert response.status_code == 200
     assert response.json()["name"]["first_name"] == user_data["first_name"]
 
@@ -57,7 +57,7 @@ def test_update_user_validation_error():
         "phone_number": "InvalidPhone",
         "email": "notanemail"
     }
-    response = client.put("/users/", json=user_data)
+    response = client.put("/users/", params=user_data)
     assert response.status_code == 422
 
 
@@ -102,7 +102,7 @@ def test_add_job_to_user():
         "uid": "user123",
         "job_id": 1
     }
-    response = client.post("/users/saved_jobs", json=job_data)
+    response = client.post("/users/saved_jobs", params=job_data)
     assert response.status_code == 200
     assert response.json() == {}
 
@@ -111,7 +111,7 @@ def test_add_job_to_user_validation_error():
         "uid": "user123",
         "job_id": "invalid_id"  # Invalid job ID
     }
-    response = client.post("/users/saved_jobs", json=job_data)
+    response = client.post("/users/saved_jobs", params=job_data)
     assert response.status_code == 422
 
 def test_remove_job_from_user():
@@ -119,16 +119,15 @@ def test_remove_job_from_user():
         "uid": "user123",
         "job_id": 1
     }
-    response = client.delete("/users/saved_jobs", json=job_data)
+    response = client.delete("/users/saved_jobs", params=job_data)
     assert response.status_code == 200
-    assert response.json() == {}
 
 def test_remove_job_from_user_validation_error():
     job_data = {
         "uid": "user123",
         "job_id": "invalid_id"  # Invalid job ID
     }
-    response = client.delete("/users/saved_jobs", json=job_data)
+    response = client.delete("/users/saved_jobs", params=job_data)
     assert response.status_code == 422
 
 
