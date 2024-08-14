@@ -286,6 +286,9 @@ async def delete_user(uid: str) -> dict:
         us = UserService.get_from_db(uid)
         us.delete()
         return {"message": "User deleted successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in delete_user: ", e, "delete_user")
+        raise e
     except Exception as e:
         logError(f"Error in delete_user: ", e, "delete_user")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -346,6 +349,9 @@ async def get_saved_jobs(uid: str) -> List[int]:
     try:
         us = UserService.get_from_db(uid)
         return us.user.saved_jobs
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_saved_jobs: ", e, "get_saved_jobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -390,6 +396,9 @@ async def get_user_privileges(uid: str) -> str:
             return "admin"
         else:
             return "user"
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_user_privileges: ", e, "get_user_privileges")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -456,6 +465,9 @@ async def upload_resume(uid: str, file: UploadFile=File(...)) -> Resume:
         log(f"Retrieving resume with UID: {uid}", "get_resume")
         resumeS = ResumeService.create_from_request(rm.Resumes.Create(uid=uid), file)
         return resumeS.resume
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except ValueError as e:
         logError(f"Resume not found: {uid}", e, "get_resume")
         raise HTTPException(status_code=404, detail="Resume not found.")
@@ -479,6 +491,9 @@ async def get_resume(uid: str) -> Resume:
     except ValueError as e:
         logError(f"Resume not found: {uid}", e, "get_resume")
         raise HTTPException(status_code=404, detail="Resume not found.")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_resume: ", e, "get_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -519,6 +534,9 @@ async def delete_resume(uid: str):
         log(f"Deleting resume with UID: {uid}", "delete_resume")
         ResumeService.delete_from_db(uid)
         return {"message": "Resume deleted successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in delete_resume: ", e, "delete_resume")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -588,6 +606,9 @@ async def get_job(job_id: int) -> Job:
     try:
         log(f"Retrieving job with ID: {job_id}", "get_job")
         return JobService.get_from_db(job_id).job
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_job: ", e, "get_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -633,6 +654,9 @@ async def delete_job(job_id: int) -> dict:
         log(f"Deleting job with ID: {job_id}", "delete_job")
         JobDatabase.delete_job(job_id)
         return {"message": "Job deleted successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in delete_job: ", e, "delete_job")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -655,6 +679,9 @@ async def get_all_jobs(active: Optional[bool]=Query(None, description="Get all a
     except ValueError:
         logError(f"No jobs found", "get_all_jobs")
         raise HTTPException(status_code=404, detail="No jobs found.")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_all_jobs: ", e, "get_all_jobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -695,6 +722,9 @@ async def get_match(match_id: int) -> Match:
     try:
         log(f"Retrieving match with match id: {match_id}", "get_match")
         return MatchService.get_from_db(match_id).get_return_model()
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_match: ", e, "get_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -734,6 +764,9 @@ async def delete_match(match_id: int) -> dict:
         log(f"Deleting match with ID: {match_id}", "delete_match")
         MatchService.delete_from_db(match_id)
         return {"message": "Match deleted successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in delete_match: ", e, "delete_match")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -752,6 +785,9 @@ async def get_all_matches(request: rm.Matches.Get = Depends()) -> List[Match]:
         log("Retrieving all matches", "get_all_matches")
         matches = MatchService.get_from_request(request, return_type=crm.Match.Return)
         return matches
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_all_matches: ", e, "get_all_matches")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -790,7 +826,10 @@ async def get_feedback(feedback_id: int) -> Feedback:
     """
     try:
         log(f"Retrieving feedback with ID: {feedback_id}", "get_feedback")
-        return FeedbackService.get_feedback(feedback_id).feedback
+        return FeedbackService.get_from_db(feedback_id).feedback
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_feedback: ", e, "get_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -828,6 +867,9 @@ async def delete_feedback(feedback_id: int) -> dict:
         log(f"Deleting feedback with ID: {feedback_id}", "delete_feedback")
         FeedbackService.delete_feedback(feedback_id)
         return {"message": "Feedback deleted successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in delete_feedback: ", e, "delete_feedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -844,6 +886,9 @@ async def get_multiple_feedbacks(request: rm.Feedback.Get=Depends()) -> List[Fee
     """
     try:
         return FeedbackService.get_feedbacks(request)
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in get_all_feedbacks: ", e, "get_all_feedbacks")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -874,6 +919,9 @@ async def download_logs() -> FileResponse:
         shutil.make_archive(str(zip_path.with_suffix("")), 'zip', decompressed_folder)
         Logger.clearDecompressedLogs()
         return FileResponse(str(zip_path), filename="logs.zip", media_type='application/zip')
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in download_logs: ", e, "download_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -897,6 +945,9 @@ async def compress_logs() -> dict:
         log("Compressing logs", "compress_logs")
         Logger.compressLogs()
         return {"message": "Logs compressed successfully."}
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in compress_logs: ", e, "compress_logs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -916,6 +967,9 @@ async def grade_job(job_id: int, auth_uid: str):
     try:
         log("Grading job", "grade_job")
         GradingService(job_id, auth_uid).grade_all()
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in grade_job: ", e, "grade_job")
         raise HTTPException(status_code=500, detail={"msg": "Internal Server Error", "code": 5002})
@@ -946,6 +1000,9 @@ async def placeholder_real_time_grading(job_id: int, auth_uid: str):
     try:
         log("Grading job in real-time", "placeholder_real_time_grading")
         return {"message": "This is a placeholder. Use websocket for real-time grading. Read description for more info."}
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in placeholder_real_time_grading: ", e, "placeholder_real_time_grading")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -968,6 +1025,9 @@ async def grade_real_time(job_id:int, auth_uid:str, websocket: WebSocket):
         await gs.grade_real_time()
     except WebSocketDisconnect:
         log("WebSocket connection closed", "grade_real_time")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in grade_real_time: ", e, "grade_real_time")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -984,6 +1044,9 @@ def printUsers(auth_id: str):
         return HTMLResponse(UserService.print_all(request))
     except PermissionError:
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in printUsers: ", e, "printUsers")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -996,6 +1059,9 @@ def printResumes(auth_id: str):
         return HTMLResponse(ResumeService.print_all(request))
     except PermissionError:
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in printResumes: ", e, "printResumes")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -1008,6 +1074,9 @@ def printJobs(auth_id: str):
         return HTMLResponse(JobService.print_all(request))
     except PermissionError:
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in printJobs: ", e, "printJobs")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -1020,6 +1089,9 @@ def printMatches(auth_id: str):
         return HTMLResponse(MatchService.print_all(request))
     except PermissionError:
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in printMatches: ", e, "printMatches")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -1032,6 +1104,9 @@ def printFeedback(auth_id: str):
         return HTMLResponse(FeedbackService.print_all(request))
     except PermissionError:
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource.")
+    except HTTPException as e:
+        logError(f"Validation error in add_job_to_user: ", e, "add_job_to_user")
+        raise e
     except Exception as e:
         logError(f"Error in printFeedback: ", e, "printFeedback")
         raise HTTPException(status_code=500, detail="Internal Server Error")
