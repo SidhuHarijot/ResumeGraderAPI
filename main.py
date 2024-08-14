@@ -41,7 +41,8 @@ origins = [
     "http://localhost:3006",
     "https://client-resume-upload-p9g0bmvaf-harijot-singhs-projects.vercel.app",
     "https://client-resume-upload.vercel.app",
-    "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app"
+    "https://client-resume-upload-git-master-harijot-singhs-projects.vercel.app",
+    "https://talent-match.vercel.app/"
 ]
 
 app.add_middleware(

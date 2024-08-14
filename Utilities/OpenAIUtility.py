@@ -71,6 +71,7 @@ class OpenAIUtility:
 
         def extractNumbers(response, min_val, max_val):
             spliced_text = response.replace("\n", " ").split(" ")
+            log(f"Extracting numbers from response: {response}", "OpenAIUtility.extractNumbers")
             numbers = []
             for text in spliced_text:
                 if text.replace(".", "").isdigit():
@@ -123,7 +124,7 @@ class OpenAIUtility:
         response = self.getResponse(system_message, "".join([resume + "\nResumeEnd\n" for resume in resume_data]), "dict", -2, max_grade)
         grade_list = []
         for key, value in response["grade"].items():
-            grade_list.append(self.extractNumericResponse(value, -2, max_grade))
+            grade_list.append(self.extractNumericResponse(value, -3, max_grade))
         clean_grade_list = GV.clean_output(grade_list, max_grade, len(resume_data), response)
         if grade_list != clean_grade_list:
             logError(f"""Grade had a invalid response, defaulting to -1\n
