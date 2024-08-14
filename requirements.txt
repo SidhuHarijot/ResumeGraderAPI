@@ -8,3 +8,5 @@ uvicorn
 python-multipart
 psycopg2
 regex
+pytest
+httpx
